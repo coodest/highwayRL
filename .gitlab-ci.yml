@@ -1,8 +1,4 @@
-stages:
-  - run
-
 MemRL:
-  stage: run
   tags:
     - G1-B
   variables:
