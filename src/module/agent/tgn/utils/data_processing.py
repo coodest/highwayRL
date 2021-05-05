@@ -2,8 +2,6 @@ import numpy as np
 import random
 import pandas as pd
 
-from src.util.tools import Tools as T
-
 
 class Data:
     def __init__(self, sources, destinations, timestamps, edge_idxs, labels):
@@ -51,7 +49,7 @@ def get_data_node_classification(dataset_name, use_validation=False):
     return full_data, node_features, edge_features, train_data, val_data, test_data
 
 
-def get_data(dataset_name, different_new_nodes_between_val_and_test=False, randomize_features=False):
+def get_data(graph, different_new_nodes_between_val_and_test=False, randomize_features=False):
     ### Load data and train val test split
     # graph_df = pd.read_csv('./data/ml_{}.csv'.format(dataset_name))
     # edge_features = np.load('./data/ml_{}.npy'.format(dataset_name))
@@ -60,7 +58,15 @@ def get_data(dataset_name, different_new_nodes_between_val_and_test=False, rando
     # if randomize_features:
     #     node_features = np.random.rand(node_features.shape[0], node_features.shape[1])
 
-    graph_df, node_features, edge_features = T.read_disk_dump("data/atari.pkl")
+    # graph_df, node_features, edge_features = T.read_disk_dump("data/atari.pkl")
+    node_features, edge_features = [np.array(graph.node_feats), np.array(graph.edge_feats)]
+    graph_df = pd.DataFrame({
+        'u': graph.src,
+        'i': graph.dst,
+        'idx': graph.idx,
+        'ts': graph.ts,
+        'label': graph.label
+    })
 
     val_time, test_time = list(np.quantile(graph_df.ts, [0.70, 0.85]))
 

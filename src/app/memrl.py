@@ -1,19 +1,40 @@
-from test.atari_test import *
+from src.module.env.atari import Atari
+from src.module.agent.actor import Actor
+from src.module.agent.graph import Graph
+from src.module.agent.policy import Policy
+from src.module.context import Profile as P
+from src.util.tools import Funcs as F
 
 
 class MemRL:
     @staticmethod
     def start():
-        generate()
+        # 0. init
+        F.make_non_exist_dir(P.work_dir)
+        F.make_non_exist_dir(P.log_dir)
+
         # 1. make env
+        env = None
+        num_action = None
+        if P.env_type is "atari":
+            env, num_action = Atari.make_env()
 
-        # 2. make env model
+        # 2. make model-based agent
         # 2.1 make episodic memory
+        graph = Graph(num_action)
         # 2.2 make transition function
+        prob_func = None
+        # 2.3 make policy
+        policy = Policy(graph, prob_func)
 
-        # 3. interact with env using env model
+        while P.num_episodes > 0:
+            P.num_episodes -= 1
 
-        # 4. use interaction data to update env model
+            # 3. interact with env using env model
+            Actor.interact(env, policy)
+
+            # 4. use interaction data to update env model
+            policy.update_prob_function()
 
 
 if __name__ == "__main__":

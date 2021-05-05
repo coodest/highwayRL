@@ -5,7 +5,7 @@ import hashlib
 import cv2
 import numpy as np
 import pickle
-from src.util.tools import Tools as T
+from src.util.tools import Funcs as T
 
 
 class IndexedDict:
