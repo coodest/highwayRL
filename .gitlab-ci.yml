@@ -5,6 +5,7 @@ MemRL:
     WORKING_DIR: /mnt/shared/Builds/MemRL
     PROJ_DIR : $(pwd)
   script:
+    - mkdir -p ${WORKING_DIR}
     - cd ${WORKING_DIR}
     - echo ${PROJ_DIR}
     - ${CONDA_ENV_PY3_DIR}/python ${PROJ_DIR}.test.atari_test.py
