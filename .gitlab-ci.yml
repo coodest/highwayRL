@@ -1,13 +1,7 @@
 MemRL:
   tags:
     - G1-B
-  variables:
-    WORKING_DIR: /mnt/shared/Builds/MemRL
+  image: meetingdocker/ml:latest
   script:
-    - export PROJ_DIR=$(pwd)
-    - echo ${PROJ_DIR}
-    - mkdir -p ${WORKING_DIR}
-    - cd ${WORKING_DIR}
-    - ${CONDA_ENV_PY3_DIR}/python ${PROJ_DIR}/test/atari_test.py
-    - ls -al .
-    - ${CONDA_ENV_PY3_DIR}/python ${PROJ_DIR}/src/app/tgn/train_self_supervised.py --use_memory --memory_dim 64 --prefix tgn-attn --n_runs 1
+    - ${CONDA_ENV_PY3_DIR}/python -m test.atari_test
+    - ${CONDA_ENV_PY3_DIR}/python src/app/tgn/train_self_supervised.py --use_memory --memory_dim 64 --prefix tgn-attn --n_runs 1
