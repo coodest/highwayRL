@@ -1,9 +1,9 @@
 MemRL:
   tags:
-    - G1-C
-  variables:
-    WORKING_DIR: /mnt/shared/Builds/MemRL
-    PROJ_DIR : $(pwd)
+    - G1-B
+#  variables:
+#    WORKING_DIR: /mnt/shared/Builds/MemRL
+#    PROJ_DIR : $(pwd)
   script:
     - cd ${WORKING_DIR}
     - ${CONDA_ENV_PY3_DIR}/python -m ${PROJ_DIR}.test.atari_test
