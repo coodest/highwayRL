@@ -3,5 +3,6 @@ MemRL:
     - G1-B
   image: meetingdocker/ml:latest
   script:
-    - ${CONDA_ENV_PY3_DIR}/python test/atari_test.py
+    - ls -al .
+    - ${CONDA_ENV_PY3_DIR}/python3.7 -m test.atari_test
     - ${CONDA_ENV_PY3_DIR}/python src/app/tgn/train_self_supervised.py --use_memory --memory_dim 64 --prefix tgn-attn --n_runs 1
