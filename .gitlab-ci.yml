@@ -1,6 +1,6 @@
 MemRL:
   tags:
-    - G1-B
+    - G1-C
   variables:
     WORKING_DIR: /mnt/shared/Builds/MemRL
     PROJ_DIR : $(pwd)
