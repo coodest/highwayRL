@@ -1,10 +1,11 @@
 MemRL:
   tags:
     - G1-B
-#  variables:
-#    WORKING_DIR: /mnt/shared/Builds/MemRL
-#    PROJ_DIR : $(pwd)
+  variables:
+    WORKING_DIR: /mnt/shared/Builds/MemRL
+    PROJ_DIR : $(pwd)
   script:
     - cd ${WORKING_DIR}
-    - ${CONDA_ENV_PY3_DIR}/python -m ${PROJ_DIR}.test.atari_test
+    - echo ${PROJ_DIR}
+    - ${CONDA_ENV_PY3_DIR}/python ${PROJ_DIR}.test.atari_test
     - ${CONDA_ENV_PY3_DIR}/python ${PROJ_DIR}/src/app/tgn/train_self_supervised.py --use_memory --memory_dim 64 --prefix tgn-attn --n_runs 1
