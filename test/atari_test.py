@@ -29,7 +29,7 @@ class Counter:
         return self.index
 
 
-if __name__ == "__main__":
+def generate():
     # env = gym.make('SpaceInvaders-v0')
     env = gym.make('Pong-v0')
     num_action = 18

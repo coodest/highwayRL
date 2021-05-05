@@ -1,7 +1,10 @@
+from test.atari_test import *
+
+
 class MemRL:
     @staticmethod
     def go():
-        pass
+        generate()
 
 
 if __name__ == "__main__":
