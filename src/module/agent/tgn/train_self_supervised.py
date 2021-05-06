@@ -23,7 +23,7 @@ def main_func(graph):
     parser.add_argument('-d', '--data', type=str, help='Dataset name (eg. wikipedia or reddit)',
                         default='wikipedia')
     parser.add_argument('--bs', type=int, default=200, help='Batch_size')
-    parser.add_argument('--prefix', type=str, default='', help='Prefix to name the checkpoints')
+    parser.add_argument('--prefix', type=str, default='tgn-attn', help='Prefix to name the checkpoints')
     parser.add_argument('--n_degree', type=int, default=10, help='Number of neighbors to sample')
     parser.add_argument('--n_head', type=int, default=2, help='Number of heads used in attention layer')
     parser.add_argument('--n_epoch', type=int, default=50, help='Number of epochs')
@@ -83,9 +83,9 @@ def main_func(graph):
     LEARNING_RATE = args.lr
     NODE_DIM = args.node_dim
     TIME_DIM = args.time_dim
-    USE_MEMORY = args.use_memory
+    USE_MEMORY = True
     MESSAGE_DIM = args.message_dim
-    MEMORY_DIM = args.memory_dim
+    MEMORY_DIM = 82
 
     Path("./src/module/agent/tgn/saved_models/").mkdir(parents=True, exist_ok=True)
     Path("./src/module/agent/tgn/saved_checkpoints/").mkdir(parents=True, exist_ok=True)
