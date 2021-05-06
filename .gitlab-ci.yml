@@ -6,4 +6,4 @@ MemRL:
 #    - ${CONDA_ENV_PY3_DIR}/python3.7 -m src.app.memrl
     - mkdir -p ${SHARED_DIR}/Builds/MemRL/run
     - rm -rf ${SHARED_DIR}/Builds/MemRL/run/*
-    - cp -rf ./* ${SHARED_DIR}/Builds/memrl/run
+    - cp -r ./* ${SHARED_DIR}/Builds/MemRL/run
