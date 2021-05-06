@@ -3,7 +3,6 @@ import logging
 import time
 import sys
 import argparse
-import torch
 import numpy as np
 import pickle
 from pathlib import Path
@@ -13,6 +12,7 @@ from src.module.agent.tgn.evaluation.evaluation import eval_edge_prediction
 from src.module.agent.tgn.model.tgn import TGN
 from src.module.agent.tgn.utils.utils import EarlyStopMonitor, RandEdgeSampler, get_neighbor_finder
 from src.module.agent.tgn.utils.data_processing import get_data, compute_time_statistics
+import torch
 
 
 def main_func(graph):
