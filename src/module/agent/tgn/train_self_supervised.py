@@ -97,7 +97,7 @@ def main_func(graph):
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    Path("log/").mkdir(parents=True, exist_ok=True)
+    Path("./src/module/agent/tgn/log、").mkdir(parents=True, exist_ok=True)
     fh = logging.FileHandler('./src/module/agent/tgn/log/{}.log'.format(str(time.time())))
     fh.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
