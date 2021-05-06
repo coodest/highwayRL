@@ -1,0 +1,4 @@
+2021-05-06 09:30:27,469 - root - INFO - Namespace(aggregator='last', backprop_every=1, bs=200, data='wikipedia', different_new_nodes=False, drop_out=0.1, dyrep=False, embedding_module='graph_attention', gpu=0, lr=0.0001, memory_dim=82, memory_update_at_end=False, memory_updater='gru', message_dim=100, message_function='identity', n_degree=10, n_epoch=50, n_head=2, n_layer=1, n_runs=1, node_dim=100, patience=5, prefix='tgn-attn', randomize_features=False, time_dim=100, uniform=False, use_destination_embedding_in_message=False, use_memory=False, use_source_embedding_in_message=False)
+2021-05-06 09:30:28,041 - root - INFO - num of training instances: 23567
+2021-05-06 09:30:28,041 - root - INFO - num of batches per epoch: 118
+2021-05-06 09:30:28,054 - root - INFO - start 0 epoch

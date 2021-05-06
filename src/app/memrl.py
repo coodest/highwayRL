@@ -16,7 +16,7 @@ class MemRL:
         # 1. make env
         env = None
         num_action = None
-        if P.env_type is "atari":
+        if P.env_type == "atari":
             env, num_action = Atari.make_env()
 
         # 2. make model-based agent

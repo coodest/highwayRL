@@ -33,7 +33,7 @@ def main_func(graph):
     parser.add_argument('--n_runs', type=int, default=1, help='Number of runs')
     parser.add_argument('--drop_out', type=float, default=0.1, help='Dropout probability')
     parser.add_argument('--gpu', type=int, default=0, help='Idx for the gpu to use')
-    parser.add_argument('--node_dim', type=int, default=100, help='Dimensions of the node embedding')
+    parser.add_argument('--node_dim', type=int, default=82, help='Dimensions of the node embedding')
     parser.add_argument('--time_dim', type=int, default=100, help='Dimensions of the time embedding')
     parser.add_argument('--backprop_every', type=int, default=1, help='Every how many batches to '
                                                                       'backprop')
@@ -50,8 +50,7 @@ def main_func(graph):
     parser.add_argument('--memory_update_at_end', action='store_true',
                         help='Whether to update memory at the end or at the start of the batch')
     parser.add_argument('--message_dim', type=int, default=100, help='Dimensions of the messages')
-    parser.add_argument('--memory_dim', type=int, default=172, help='Dimensions of the memory for '
-                                                                    'each user')
+    parser.add_argument('--memory_dim', type=int, default=82, help='Dimensions of the memory for each user')
     parser.add_argument('--different_new_nodes', action='store_true',
                         help='Whether to use disjoint set of new nodes for train and val')
     parser.add_argument('--uniform', action='store_true',
@@ -85,7 +84,7 @@ def main_func(graph):
     TIME_DIM = args.time_dim
     USE_MEMORY = True
     MESSAGE_DIM = args.message_dim
-    MEMORY_DIM = 82
+    MEMORY_DIM = args.memory_dim
 
     Path("./src/module/agent/tgn/saved_models/").mkdir(parents=True, exist_ok=True)
     Path("./src/module/agent/tgn/saved_checkpoints/").mkdir(parents=True, exist_ok=True)
