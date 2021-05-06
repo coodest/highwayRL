@@ -1,6 +1,6 @@
 class Context:
     # common
-    work_dir = "/mnt/shard/Builds/memrl/"
+    work_dir = "/mnt/shard/Builds/MemRL/"
     log_dir = work_dir + "log/"
     model_dir = work_dir + "model/"
     output_dir = work_dir + "output/"
