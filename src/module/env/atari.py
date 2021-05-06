@@ -10,10 +10,10 @@ class Atari:
     @staticmethod
     def make_env():
         env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
-        env = wrappers.TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
-
-        if P.render_dir is not None:
-            env = wrappers.Monitor(env, P.render_dir, force=True, video_callable=lambda episode_id: episode_id % 1 == 0)  # output every episode
+        # env = wrappers.TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
+        #
+        # if P.render_dir is not None:
+        #     env = wrappers.Monitor(env, P.render_dir, force=True, video_callable=lambda episode_id: episode_id % 1 == 0)  # output every episode
 
         # env = AtariPreprocessing(
         #     env, frame_skip=P.num_action_repeats,
