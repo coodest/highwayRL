@@ -6,7 +6,7 @@ class Context:
     output_dir = work_dir + "output/"
 
     # env
-    num_episodes = 10
+    num_episodes = 100
     env_type = "atari"
     env_name = "Pong"
     max_episode_steps = 108000
