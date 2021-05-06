@@ -9,7 +9,8 @@ from src.module.context import Profile as P
 class Atari:
     @staticmethod
     def make_env():
-        env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
+        # env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
+        env = gym.make("{}-v0".format(P.env_name), full_action_space=True)
         # env = wrappers.TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
         #
         # if P.render_dir is not None:
