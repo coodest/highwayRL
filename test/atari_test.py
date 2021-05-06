@@ -5,7 +5,7 @@ import hashlib
 import cv2
 import numpy as np
 import pickle
-from src.util.tools import Funcs as T
+from src.util.tools import *
 
 
 class IndexedDict:
@@ -61,7 +61,7 @@ def generate():
             # cv2.imwrite(f"ls/{episode}-{step}.jpeg", obs)
 
             # 2. convert frame into state id (index) and state features (hashing)
-            node_hash = T.matrix_hashing(obs) + "".join([str(int(i)) for i in np.zeros(num_action)])
+            node_hash = Funcs.matrix_hashing(obs) + "".join([str(int(i)) for i in np.zeros(num_action)])
             node_id = indexed_dict.get_index(node_hash)
             node_feat = np.array([ord(i) for i in node_hash], dtype=np.int8)
             node_feats.append(node_feat)
@@ -83,7 +83,7 @@ def generate():
 
             # 4. add action nodes from current node
             for a in range(num_action):
-                action_node_hash = T.matrix_hashing(obs) + "".join([str(int(i)) for i in T.one_hot(a, num_action)])
+                action_node_hash = Funcs.matrix_hashing(obs) + "".join([str(int(i)) for i in Funcs.one_hot(a, num_action)])
                 action_node_id = indexed_dict.get_index(action_node_hash)
                 action_node_feat = np.array([ord(i) for i in action_node_hash], dtype=np.int8)
                 node_feats.append(action_node_feat)
@@ -115,4 +115,4 @@ def generate():
     })
 
     print(f"nodes: {len(node_feats)}, edges: {len(edge_feats)}")
-    # T.write_disk_dump("data/atari.pkl", [graph, np.array(node_feats), np.array(edge_feats)])
+    IO.write_disk_dump("data/atari.pkl", [graph, np.array(node_feats), np.array(edge_feats)])

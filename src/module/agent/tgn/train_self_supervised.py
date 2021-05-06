@@ -7,6 +7,7 @@ import torch
 import numpy as np
 import pickle
 from pathlib import Path
+from src.module.context import Profile as P
 
 from src.module.agent.tgn.evaluation.evaluation import eval_edge_prediction
 from src.module.agent.tgn.model.tgn import TGN
@@ -33,7 +34,7 @@ def main_func(graph):
     parser.add_argument('--n_runs', type=int, default=1, help='Number of runs')
     parser.add_argument('--drop_out', type=float, default=0.1, help='Dropout probability')
     parser.add_argument('--gpu', type=int, default=0, help='Idx for the gpu to use')
-    parser.add_argument('--node_dim', type=int, default=82, help='Dimensions of the node embedding')
+    parser.add_argument('--node_dim', type=int, default=100, help='Dimensions of the node embedding')
     parser.add_argument('--time_dim', type=int, default=100, help='Dimensions of the time embedding')
     parser.add_argument('--backprop_every', type=int, default=1, help='Every how many batches to '
                                                                       'backprop')
@@ -86,18 +87,18 @@ def main_func(graph):
     MESSAGE_DIM = args.message_dim
     MEMORY_DIM = args.memory_dim
 
-    Path("./src/module/agent/tgn/saved_models/").mkdir(parents=True, exist_ok=True)
-    Path("./src/module/agent/tgn/saved_checkpoints/").mkdir(parents=True, exist_ok=True)
-    MODEL_SAVE_PATH = f'./src/module/agent/tgn/saved_models/{args.prefix}-{args.data}.pth'
+    Path(f"{P.work_dir}tgn/saved_models/").mkdir(parents=True, exist_ok=True)
+    Path(f"{P.work_dir}tgn/saved_checkpoints/").mkdir(parents=True, exist_ok=True)
+    MODEL_SAVE_PATH = f'{P.work_dir}tgn/saved_models/{args.prefix}-{args.data}.pth'
     get_checkpoint_path = lambda \
-            epoch: f'./src/module/agent/tgn/saved_checkpoints/{args.prefix}-{args.data}-{epoch}.pth'
+            epoch: f'{P.work_dir}tgn/saved_checkpoints/{args.prefix}-{args.data}-{epoch}.pth'
 
     ### set up logger
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    Path("./src/module/agent/tgn/log/").mkdir(parents=True, exist_ok=True)
-    fh = logging.FileHandler('./src/module/agent/tgn/log/{}.log'.format(str(time.time())))
+    Path(P.work_dir + "tgn/log/").mkdir(parents=True, exist_ok=True)
+    fh = logging.FileHandler('{}tgn/log/{}.log'.format(P.work_dir, str(time.time())))
     fh.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
     ch.setLevel(logging.WARN)
@@ -143,8 +144,8 @@ def main_func(graph):
         compute_time_statistics(full_data.sources, full_data.destinations, full_data.timestamps)
 
     for i in range(args.n_runs):
-        results_path = "./src/module/agent/tgn/results/{}_{}.pkl".format(args.prefix, i) if i > 0 else "./src/module/agent/tgn/results/{}.pkl".format(args.prefix)
-        Path("./src/module/agent/tgn/results/").mkdir(parents=True, exist_ok=True)
+        results_path = P.work_dir + "tgn/results/{}_{}.pkl".format(args.prefix, i) if i > 0 else P.work_dir + "tgn/results/{}.pkl".format(args.prefix)
+        Path(P.work_dir + "tgn/results/").mkdir(parents=True, exist_ok=True)
 
         # Initialize Model
         tgn = TGN(neighbor_finder=train_ngh_finder, node_features=node_features,

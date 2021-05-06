@@ -1,5 +1,4 @@
-from src.util.tools import IndexedDict, Counter
-from src.util.tools import Funcs as F
+from src.util.tools import *
 import numpy as np
 
 
@@ -23,7 +22,7 @@ class Graph:
 
     def add_node(self, obs, action, reward):
         # 1. convert frame into state id (index) and state features (hashing)
-        node_hash = F.matrix_hashing(obs) + "".join([str(int(i)) for i in np.zeros(self.num_action)])
+        node_hash = Funcs.matrix_hashing(obs) + "".join([str(int(i)) for i in np.zeros(self.num_action)])
         node_id = self.node_hash_to_id.get_index(node_hash)
         node_feat = np.array([ord(i) for i in node_hash], dtype=np.int8)
         self.node_feats.append(node_feat)
@@ -46,7 +45,7 @@ class Graph:
 
         # 3. add action nodes from current node
         for a in range(self.num_action):
-            action_node_hash = F.matrix_hashing(obs) + "".join([str(int(i)) for i in F.one_hot(a, self.num_action)])
+            action_node_hash = Funcs.matrix_hashing(obs) + "".join([str(int(i)) for i in Funcs.one_hot(a, self.num_action)])
             action_node_id = self.node_hash_to_id.get_index(action_node_hash)
             action_node_feat = np.array([ord(i) for i in action_node_hash], dtype=np.int8)
             self.node_feats.append(action_node_feat)

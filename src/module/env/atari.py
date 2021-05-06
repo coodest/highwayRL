@@ -15,12 +15,14 @@ class Atari:
         if P.render_dir is not None:
             env = wrappers.Monitor(env, P.render_dir, force=True, video_callable=lambda episode_id: episode_id % 1 == 0)  # output every episode
 
+        # env = AtariPreprocessing(
+        #     env, frame_skip=P.num_action_repeats,
+        #     max_random_noops=P.max_random_noops
+        # )
+
         num_action = env.action_space.n
 
-        return AtariPreprocessing(
-            env, frame_skip=P.num_action_repeats,
-            max_random_noops=P.max_random_noops
-        ), num_action
+        return env, num_action
 
 
 class AtariPreprocessing(object):

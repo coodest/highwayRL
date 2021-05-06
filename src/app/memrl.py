@@ -3,15 +3,16 @@ from src.module.agent.actor import Actor
 from src.module.agent.graph import Graph
 from src.module.agent.policy import Policy
 from src.module.context import Profile as P
-from src.util.tools import Funcs as F
+from src.util.tools import *
 
 
 class MemRL:
     @staticmethod
     def start():
         # 0. init
-        F.make_non_exist_dir(P.work_dir)
-        F.make_non_exist_dir(P.log_dir)
+        IO.make_non_exist_dir(P.work_dir)
+        IO.make_non_exist_dir(P.log_dir)
+        Funcs.print_obj(P)
 
         # 1. make env
         env = None
