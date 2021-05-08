@@ -1,4 +1,4 @@
-from src.module.agent.tgn.train_self_supervised import *
+from src.module.agent.transition.prob_tgn import ProbTGN
 from src.util.tools import *
 
 
@@ -13,4 +13,4 @@ class Policy:
     def update_prob_function(self):
         # test
         Logger.log(f"nodes: {len(self.graph.node_feats)}, edges: {len(self.graph.edge_feats)}")
-        main_func(self.graph)
+        ProbTGN.main_func(self.graph)

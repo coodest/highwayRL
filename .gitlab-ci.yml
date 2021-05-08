@@ -3,7 +3,7 @@ MemRL:
     - G1-B
 #  image: meetingdocker/ml:latest
   script:
-#    - ${CONDA_ENV_PY3_DIR}/python3.7 -m src.app.memrl
+    - ${CONDA_ENV_PY3_DIR}/python3.7 -m src.app.memrl
     - mkdir -p ${SHARED_DIR}/Builds/MemRL/run
     - rm -rf ${SHARED_DIR}/Builds/MemRL/run/*
     - cp -r ./* ${SHARED_DIR}/Builds/MemRL/run

@@ -9,6 +9,7 @@ import traceback
 import numpy as np
 import psutil
 import pytz
+from pathlib import Path
 
 
 class IndexedDict:
@@ -173,7 +174,7 @@ class Logger:
     def write_log(msg, path):
         file_name = str(path).split("/")[-1]
         directory = str(path)[0:(len(path) - len(file_name))]
-        IO.make_non_exist_dir(directory)
+        IO.make_dir(directory)
         with open(path, "a+") as log_file:
             log_file.write(msg + "\n")
 
@@ -217,7 +218,7 @@ class IO:
     def write_disk_dump(path, target_object):
         file_name = str(path).split("/")[-1]
         directory = str(path)[0:(len(path) - len(file_name))]
-        IO.make_non_exist_dir(directory)
+        IO.make_dir(directory)
         with open(path, "wb") as object_persistent:
             pickle.dump(target_object, object_persistent)
 
@@ -228,13 +229,21 @@ class IO:
         return restore
 
     @staticmethod
-    def make_non_exist_dir(directory):
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+    def make_dir(directory):
+        Path(directory).mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def copy(src, dst):
+        shutil.copytree(src, dst)
 
     @staticmethod
     def delete_dir(directory):
         shutil.rmtree(directory, True)
+
+    @staticmethod
+    def renew_dir(directory):
+        IO.delete_dir(directory)
+        IO.make_dir(directory)
 
     @staticmethod
     def delete_file(path):

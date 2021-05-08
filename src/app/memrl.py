@@ -1,7 +1,3 @@
-from src.module.env.atari import Atari
-from src.module.agent.actor import Actor
-from src.module.agent.graph import Graph
-from src.module.agent.policy import Policy
 from src.module.context import Profile as P
 from src.util.tools import *
 
@@ -10,9 +6,24 @@ class MemRL:
     @staticmethod
     def start():
         # 0. init
-        IO.make_non_exist_dir(P.work_dir)
-        IO.make_non_exist_dir(P.log_dir)
+        IO.make_dir(P.work_dir)
+        IO.make_dir(P.log_dir)
+        IO.make_dir(P.model_dir)
+        IO.make_dir(P.output_dir)
+        if P.clean:
+            IO.renew_dir(P.log_dir)
+            IO.renew_dir(P.model_dir)
+            IO.renew_dir(P.output_dir)
+        IO.renew_dir(P.code_dir)
+        IO.copy("./", P.code_dir)
+        # show args
         Funcs.print_obj(P)
+        # import
+        from src.module.env.atari import Atari
+        from src.module.agent.actor import Actor
+        from src.module.agent.graph import Graph
+        from src.module.agent.policy import Policy
+        from src.module.agent.transition.prob_tgn import ProbTGN
 
         # 1. make env
         env = None
@@ -24,7 +35,7 @@ class MemRL:
         # 2.1 make episodic memory
         graph = Graph(num_action)
         # 2.2 make transition function
-        prob_func = None
+        prob_func = ProbTGN()
         # 2.3 make policy
         policy = Policy(graph, prob_func)
 
