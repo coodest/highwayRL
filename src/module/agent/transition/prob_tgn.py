@@ -52,22 +52,25 @@ class ProbTGN:
             compute_time_statistics(full_data.sources, full_data.destinations, full_data.timestamps)
 
         # Initialize Model
-        tgn = TGN(neighbor_finder=train_ngh_finder, node_features=node_features,
-                  edge_features=edge_features, device=device,
-                  n_layers=args.n_layer,
-                  n_heads=args.n_head, dropout=args.drop_out, use_memory=args.use_memory,
-                  message_dimension=args.message_dim, memory_dimension=args.memory_dim,
-                  memory_update_at_start=not args.memory_update_at_end,
-                  embedding_module_type=args.embedding_module,
-                  message_function=args.message_function,
-                  aggregator_type=args.aggregator,
-                  memory_updater_type=args.memory_updater,
-                  n_neighbors=args.n_neighbors,
-                  mean_time_shift_src=mean_time_shift_src, std_time_shift_src=std_time_shift_src,
-                  mean_time_shift_dst=mean_time_shift_dst, std_time_shift_dst=std_time_shift_dst,
-                  use_destination_embedding_in_message=args.use_destination_embedding_in_message,
-                  use_source_embedding_in_message=args.use_source_embedding_in_message,
-                  dyrep=args.dyrep)
+        tgn = torch.jit.script(
+            TGN(neighbor_finder=train_ngh_finder, node_features=node_features,
+                edge_features=edge_features, device=device,
+                n_layers=args.n_layer,
+                n_heads=args.n_head, dropout=args.drop_out, use_memory=args.use_memory,
+                message_dimension=args.message_dim, memory_dimension=args.memory_dim,
+                memory_update_at_start=not args.memory_update_at_end,
+                embedding_module_type=args.embedding_module,
+                message_function=args.message_function,
+                aggregator_type=args.aggregator,
+                memory_updater_type=args.memory_updater,
+                n_neighbors=args.n_neighbors,
+                mean_time_shift_src=mean_time_shift_src, std_time_shift_src=std_time_shift_src,
+                mean_time_shift_dst=mean_time_shift_dst, std_time_shift_dst=std_time_shift_dst,
+                use_destination_embedding_in_message=args.use_destination_embedding_in_message,
+                use_source_embedding_in_message=args.use_source_embedding_in_message,
+                dyrep=args.dyrep
+                )
+        )
         criterion = torch.nn.BCELoss()
         optimizer = torch.optim.Adam(tgn.parameters(), lr=args.lr)
         tgn = tgn.to(device)
@@ -99,8 +102,9 @@ class ProbTGN:
 
                     start_idx = batch_idx * args.bs
                     end_idx = min(num_instance, start_idx + args.bs)
-                    sources_batch, destinations_batch = train_data.sources[start_idx:end_idx], \
-                                                        train_data.destinations[start_idx:end_idx]
+                    sources_batch, destinations_batch = \
+                        train_data.sources[start_idx:end_idx], \
+                        train_data.destinations[start_idx:end_idx]
                     edge_idxs_batch = train_data.edge_idxs[start_idx: end_idx]
                     timestamps_batch = train_data.timestamps[start_idx:end_idx]
 
