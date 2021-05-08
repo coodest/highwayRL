@@ -14,7 +14,7 @@ class MemRL:
             IO.renew_dir(P.log_dir)
             IO.renew_dir(P.model_dir)
             IO.renew_dir(P.output_dir)
-        IO.renew_dir(P.code_dir)
+        IO.delete_dir(P.code_dir)
         IO.copy("./", P.code_dir)
         # show args
         Funcs.print_obj(P)
