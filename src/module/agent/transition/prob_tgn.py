@@ -80,8 +80,8 @@ class ProbTGN:
         # Initialize negative samplers. Set seeds for validation and testing so negatives are the same
         # across different runs
         # NB: in the inductive setting, negatives are sampled only amongst other new nodes
-        train_rand_sampler = RandEdgeSampler(full_ngh_finder.sources, train_data.destinations)
-        test_rand_sampler = RandEdgeSampler(full_ngh_finder.sources, train_data.destinations)
+        train_rand_sampler = RandEdgeSampler(full_data.sources, full_data.destinations)
+        test_rand_sampler = RandEdgeSampler(full_data.sources, full_data.destinations)
 
         train_losses = []
         start_time = time.time()
