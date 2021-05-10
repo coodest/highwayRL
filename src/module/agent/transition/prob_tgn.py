@@ -22,11 +22,11 @@ class ProbTGN:
         self.model_save_path = f'{P.model_dir}/tgn/{args.prefix}.pth'
 
         # Set device
-        device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() else 'cpu')
 
         # Initialize Model
         tgn = TGN(neighbor_finder=None, node_features=np.zeros([1, 1]),
-                  edge_features=np.zeros([1, 1]), device=device,
+                  edge_features=np.zeros([1, 1]), device=self.device,
                   n_layers=args.n_layer,
                   n_heads=args.n_head, dropout=args.drop_out, use_memory=args.use_memory,
                   message_dimension=args.message_dim, memory_dimension=args.memory_dim,
@@ -46,7 +46,7 @@ class ProbTGN:
         tgn.n_nodes = args.memory_size
         self.criterion = torch.nn.BCELoss()
         self.optimizer = torch.optim.Adam(tgn.parameters(), lr=args.lr)
-        self.tgn = tgn.to(device)
+        self.tgn = tgn.to(self.device)
 
         if args.use_memory:
             self.tgn.memory.__init_memory__()
