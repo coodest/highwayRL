@@ -110,8 +110,8 @@ class ProbTGN:
                     _, negatives_batch = train_rand_sampler.sample(size)
 
                     with torch.no_grad():
-                        pos_label = torch.ones(size, dtype=torch.float, device=device)
-                        neg_label = torch.zeros(size, dtype=torch.float, device=device)
+                        pos_label = torch.ones(size, dtype=torch.float, device=self.device)
+                        neg_label = torch.zeros(size, dtype=torch.float, device=self.device)
 
                     tgn = self.tgn.train()
 
@@ -124,7 +124,7 @@ class ProbTGN:
                         args.n_neighbors
                     )
 
-                    loss += self.criterion(pos_prob.squeeze(), pos_label) + criterion(neg_prob.squeeze(), neg_label)
+                    loss += self.criterion(pos_prob.squeeze(), pos_label) + self.criterion(neg_prob.squeeze(), neg_label)
 
                 loss /= args.backprop_every
 
