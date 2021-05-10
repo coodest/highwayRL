@@ -1,97 +1,95 @@
 import math
 from src.module.context import Profile as P
-from src.util.tools import *
 
 from src.module.agent.transition.evaluation.evaluation import eval_edge_prediction
 from src.module.agent.transition.model.tgn import TGN
 from src.module.agent.transition.utils.utils import RandEdgeSampler, get_neighbor_finder
-from src.module.agent.transition.utils.data_processing import get_data, compute_time_statistics
+from src.module.agent.transition.utils.data_processing import *
 import torch
+
+from src.util.tools import *
+
+args = P.tgn
 
 
 class ProbTGN:
-    @staticmethod
-    def main_func(graph):
+    def __init__(self):
         # 1. preparation
         torch.manual_seed(0)
         np.random.seed(0)
-        # Argument and global variables
-        args = P.tgn
         # paths
         IO.make_dir(f"{P.model_dir}/tgn")
-        model_save_path = f'{P.model_dir}/tgn/{args.prefix}.pth'
+        self.model_save_path = f'{P.model_dir}/tgn/{args.prefix}.pth'
 
+        # Set device
+        device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() else 'cpu')
+
+        # Initialize Model
+        tgn = TGN(neighbor_finder=None, node_features=None,
+                  edge_features=None, device=device,
+                  n_layers=args.n_layer,
+                  n_heads=args.n_head, dropout=args.drop_out, use_memory=args.use_memory,
+                  message_dimension=args.message_dim, memory_dimension=args.memory_dim,
+                  memory_update_at_start=not args.memory_update_at_end,
+                  embedding_module_type=args.embedding_module,
+                  message_function=args.message_function,
+                  aggregator_type=args.aggregator,
+                  memory_updater_type=args.memory_updater,
+                  n_neighbors=args.n_neighbors,
+                  mean_time_shift_src=None, std_time_shift_src=None,
+                  mean_time_shift_dst=None, std_time_shift_dst=None,
+                  use_destination_embedding_in_message=args.use_destination_embedding_in_message,
+                  use_source_embedding_in_message=args.use_source_embedding_in_message,
+                  dyrep=args.dyrep
+                  )
+        self.tgn.n_node_features = args.memory_dim
+        self.tgn.n_nodes = args.memory_size
+        self.criterion = torch.nn.BCELoss()
+        self.optimizer = torch.optim.Adam(tgn.parameters(), lr=args.lr)
+        self.tgn = tgn.to(device)
+
+        if args.use_memory:
+            self.tgn.memory.__init_memory__()
+
+    def train(self, graph):
         # Extract data for training, validation and testing
-        node_features, edge_features, full_data, train_data, val_data, test_data, new_node_val_data, new_node_test_data = get_data(
-            graph,
-            different_new_nodes_between_val_and_test=args.different_new_nodes,
-            randomize_features=args.randomize_features
-        )
+        node_features, edge_features = [np.array(graph.node_feats), np.array(graph.edge_feats)]
+        train_data = Data(np.array(graph.src), np.array(graph.dst), np.array(graph.ts), np.array(graph.idx), np.array(graph.label))
+        full_data = Data(np.array(graph.src), np.array(graph.dst), np.array(graph.ts), np.array(graph.idx), np.array(graph.label))
         num_instance = len(train_data.sources)
         num_batch = math.ceil(num_instance / args.bs)
         Logger.log('num of training instances: {}'.format(num_instance))
         Logger.log('num of batches per epoch: {}'.format(num_batch))
-
-        # Initialize training neighbor finder to retrieve temporal graph
-        train_ngh_finder = get_neighbor_finder(train_data, args.uniform)
-
-        # Initialize validation and test neighbor finder to retrieve temporal graph
-        full_ngh_finder = get_neighbor_finder(full_data, args.uniform)
-
-        # Initialize negative samplers. Set seeds for validation and testing so negatives are the same
-        # across different runs
-        # NB: in the inductive setting, negatives are sampled only amongst other new nodes
-        train_rand_sampler = RandEdgeSampler(train_data.sources, train_data.destinations)
-
-        # Set device
-        device_string = 'cuda:{}'.format(args.gpu) if torch.cuda.is_available() else 'cpu'
-        device = torch.device(device_string)
-
         # Compute time statistics
         mean_time_shift_src, std_time_shift_src, mean_time_shift_dst, std_time_shift_dst = \
             compute_time_statistics(full_data.sources, full_data.destinations, full_data.timestamps)
 
-        # Initialize Model
-        tgn = torch.jit.script(
-            TGN(neighbor_finder=train_ngh_finder, node_features=node_features,
-                edge_features=edge_features, device=device,
-                n_layers=args.n_layer,
-                n_heads=args.n_head, dropout=args.drop_out, use_memory=args.use_memory,
-                message_dimension=args.message_dim, memory_dimension=args.memory_dim,
-                memory_update_at_start=not args.memory_update_at_end,
-                embedding_module_type=args.embedding_module,
-                message_function=args.message_function,
-                aggregator_type=args.aggregator,
-                memory_updater_type=args.memory_updater,
-                n_neighbors=args.n_neighbors,
-                mean_time_shift_src=mean_time_shift_src, std_time_shift_src=std_time_shift_src,
-                mean_time_shift_dst=mean_time_shift_dst, std_time_shift_dst=std_time_shift_dst,
-                use_destination_embedding_in_message=args.use_destination_embedding_in_message,
-                use_source_embedding_in_message=args.use_source_embedding_in_message,
-                dyrep=args.dyrep
-                )
-        )
-        criterion = torch.nn.BCELoss()
-        optimizer = torch.optim.Adam(tgn.parameters(), lr=args.lr)
-        tgn = tgn.to(device)
+        # Initialize validation and test neighbor finder to retrieve temporal graph
+        full_ngh_finder = get_neighbor_finder(full_data, args.uniform)
+        # update tgn
+        self.tgn.mean_time_shift_src = mean_time_shift_src
+        self.tgn.std_time_shift_src = std_time_shift_src
+        self.tgn.mean_time_shift_dst = mean_time_shift_dst
+        self.tgn.std_time_shift_dst = std_time_shift_dst
+        self.tgn.neighbor_finder = full_ngh_finder
+        self.tgn.node_raw_features = torch.from_numpy(node_features.astype(np.float32)).to(self.tgn.device)
+        self.tgn.edge_raw_features = torch.from_numpy(edge_features.astype(np.float32)).to(self.tgn.device)
+        self.tgn.embedding_module.node_features = self.tgn.node_raw_features
+        self.tgn.embedding_module.edge_features = self.tgn.edge_raw_features
+        
+        # Initialize negative samplers. Set seeds for validation and testing so negatives are the same
+        # across different runs
+        # NB: in the inductive setting, negatives are sampled only amongst other new nodes
+        train_rand_sampler = RandEdgeSampler(full_ngh_finder.sources, train_data.destinations)
+        test_rand_sampler = RandEdgeSampler(full_ngh_finder.sources, train_data.destinations)
 
         train_losses = []
         start_time = time.time()
-
         for epoch in range(args.n_epoch):
-            # Training
-            # Reinitialize memory of the model at the start of each epoch
-            if args.use_memory:
-                tgn.memory.__init_memory__()
-
-            # Train using only training graph
-            tgn.set_neighbor_finder(train_ngh_finder)
             m_loss = []
-
-            Logger.log('start {} epoch'.format(epoch))
             for k in range(0, num_batch, args.backprop_every):
                 loss = 0
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
 
                 # Custom loop to allow to perform backpropagation only every a certain number of batches
                 for j in range(args.backprop_every):
@@ -115,7 +113,7 @@ class ProbTGN:
                         pos_label = torch.ones(size, dtype=torch.float, device=device)
                         neg_label = torch.zeros(size, dtype=torch.float, device=device)
 
-                    tgn = tgn.train()
+                    tgn = self.tgn.train()
 
                     pos_prob, neg_prob = tgn.compute_edge_probabilities(
                         sources_batch,
@@ -126,18 +124,18 @@ class ProbTGN:
                         args.n_neighbors
                     )
 
-                    loss += criterion(pos_prob.squeeze(), pos_label) + criterion(neg_prob.squeeze(), neg_label)
+                    loss += self.criterion(pos_prob.squeeze(), pos_label) + criterion(neg_prob.squeeze(), neg_label)
 
                 loss /= args.backprop_every
 
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
                 m_loss.append(loss.item())
 
                 # Detach memory after 'args.backprop_every' number of batches so we don't backpropagate to
                 # the start of time
                 if args.use_memory:
-                    tgn.memory.detach_memory()
+                    self.tgn.memory.detach_memory()
 
             # # Validation/ Inference
             # tgn.set_neighbor_finder(full_ngh_finder)
@@ -149,11 +147,10 @@ class ProbTGN:
             # )
 
             train_losses.append(np.mean(m_loss))
-
         Logger.log('Training pass time: {:.2f}s'.format(time.time() - start_time))
         Logger.log('Mean loss: {}'.format(np.mean(train_losses)))
 
         # Save results for this run
         Logger.log('Saving TGN model')
-        torch.save(tgn.state_dict(), model_save_path)
+        torch.save(self.tgn.state_dict(), self.model_save_path)
         Logger.log('TGN model saved')

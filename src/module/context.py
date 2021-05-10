@@ -3,10 +3,11 @@ class TGNArgs:
     prefix = "tgn-attn"  # Prefix to name the checkpoints
     n_neighbors = 10  # Number of neighbors to sample
     n_head = 2  # Number of heads used in attention layer
-    n_epoch = 50  # Number of epochs
+    n_epoch = 1  # Number of epochs
     n_layer = 1  # Number of network layers
     lr = 0.0001  # Learning rate
     drop_out = 0.1  # Dropout probability
+    memory_size = 10000  # max mem slots
     gpu = 0  # Idx for the gpu to use
     backprop_every = 1  # Every how many batches to back propagate gradient
     use_memory = True  # Whether to augment the model with a node memory
@@ -27,7 +28,8 @@ class TGNArgs:
 
 class Context:
     # common
-    work_dir = "/mnt/shard/Builds/MemRL/"
+    # work_dir = "/mnt/shard/Builds/MemRL/"
+    work_dir = "D://Heptagram/Work/debug/"  # for debugging
     code_dir = work_dir + "code/"
     log_dir = work_dir + "log/"
     model_dir = work_dir + "model/"

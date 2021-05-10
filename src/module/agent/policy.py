@@ -12,5 +12,4 @@ class Policy:
 
     def update_prob_function(self):
         # test
-        Logger.log(f"nodes: {len(self.graph.node_feats)}, edges: {len(self.graph.edge_feats)}")
-        ProbTGN.main_func(self.graph)
+        self.prob_func.train(self.graph)
