@@ -6,6 +6,7 @@ class MemRL:
     @staticmethod
     def start():
         # 0. init
+        Logger.log("init")
         IO.make_dir(P.work_dir)
         IO.make_dir(P.log_dir)
         IO.make_dir(P.model_dir)
@@ -26,12 +27,14 @@ class MemRL:
         from src.module.agent.transition.prob_tgn import ProbTGN
 
         # 1. make env
+        Logger.log("make env")
         env = None
         num_action = None
         if P.env_type == "atari":
             env, num_action = Atari.make_env()
 
         # 2. make model-based agent
+        Logger.log("make model-based agent")
         # 2.1 make episodic memory
         graph = Graph(num_action)
         # 2.2 make transition function
