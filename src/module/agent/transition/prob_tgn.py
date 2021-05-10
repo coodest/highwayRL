@@ -42,8 +42,8 @@ class ProbTGN:
                   use_source_embedding_in_message=args.use_source_embedding_in_message,
                   dyrep=args.dyrep
                   )
-        self.tgn.n_node_features = args.memory_dim
-        self.tgn.n_nodes = args.memory_size
+        tgn.n_node_features = args.memory_dim
+        tgn.n_nodes = args.memory_size
         self.criterion = torch.nn.BCELoss()
         self.optimizer = torch.optim.Adam(tgn.parameters(), lr=args.lr)
         self.tgn = tgn.to(device)
