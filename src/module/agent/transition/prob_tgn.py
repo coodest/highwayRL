@@ -25,8 +25,8 @@ class ProbTGN:
         device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() else 'cpu')
 
         # Initialize Model
-        tgn = TGN(neighbor_finder=None, node_features=np.zeros([]),
-                  edge_features=np.zeros([]), device=device,
+        tgn = TGN(neighbor_finder=None, node_features=np.zeros([1, 1]),
+                  edge_features=np.zeros([1, 1]), device=device,
                   n_layers=args.n_layer,
                   n_heads=args.n_head, dropout=args.drop_out, use_memory=args.use_memory,
                   message_dimension=args.message_dim, memory_dimension=args.memory_dim,
