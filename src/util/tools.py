@@ -14,14 +14,16 @@ from pathlib import Path
 
 class IndexedDict:
     def __init__(self):
-        self.index = 0
+        self.ind = 0
         self.dict = dict()
 
     def get_index(self, key):
+        add_key = False
         if key not in self.dict:
-            self.dict[key] = self.index
-            self.index += 1
-        return self.dict[key]
+            self.dict[key] = self.ind
+            self.ind += 1
+            add_key = True
+        return self.dict[key], add_key
 
 
 class Counter:

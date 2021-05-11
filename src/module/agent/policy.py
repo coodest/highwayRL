@@ -3,7 +3,7 @@ from src.util.tools import *
 
 
 class Policy:
-    def __init__(self, graph, prob_func):
+    def __init__(self, graph, prob_func: ProbTGN):
         self.graph = graph
         self.prob_func = prob_func
 
@@ -11,5 +11,4 @@ class Policy:
         pass
 
     def update_prob_function(self):
-        # test
-        self.prob_func.train(self.graph)
+        self.prob_func.train(self.graph.get_data())
