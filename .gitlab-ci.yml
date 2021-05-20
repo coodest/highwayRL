@@ -1,6 +1,6 @@
 MemRL:
   tags:
     - G1-B
-  image: meetingdocker/ml:latest
+  #  image: meetingdocker/ml:latest
   script:
     - ${CONDA_ENV_PY3_DIR}/python3.7 -m src.app.memrl
