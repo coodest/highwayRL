@@ -70,8 +70,6 @@ class ProbTGN:
         node_features, edge_features, train_data = data
         num_instance = len(train_data.sources)
         num_batch = math.ceil(num_instance / args.bs)
-        Logger.log('num of training instances: {}'.format(num_instance))
-        Logger.log('num of batches per epoch: {}'.format(num_batch))
         # Compute time statistics
         mean_time_shift_src, std_time_shift_src, mean_time_shift_dst, std_time_shift_dst = compute_time_statistics(train_data.sources, train_data.destinations, train_data.timestamps)
         # initialize validation and test neighbor finder to retrieve temporal graph
@@ -152,20 +150,31 @@ class ProbTGN:
                 if args.use_memory:
                     self.tgn.memory.detach_memory()
 
-            # # Validation/ Inference
-            # tgn.set_neighbor_finder(train_ngh_finder)
-            # val_ap, val_auc = eval_edge_prediction(
-            #     model=tgn,
-            #     negative_edge_sampler=val_rand_sampler,
-            #     data=val_data,
-            #     n_neighbors=args.n_neighbors
-            # )
-
             train_losses.append(np.mean(m_loss))
-        Logger.log('Training pass time: {:.2f}s'.format(time.time() - start_time))
-        Logger.log('Mean loss: {}'.format(np.mean(train_losses)))
+        Logger.log("S{} E{} T{:.2f}s Mean loss{:.6f}".format(
+            num_instance,
+            num_batch,
+            time.time() - start_time,
+            np.mean(train_losses)
+        ))
 
-        # Save results for this run
-        Logger.log('Saving TGN model')
-        torch.save(self.tgn.state_dict(), self.model_save_path)
-        Logger.log('TGN model saved')
+        # # Save results for this run
+        # Logger.log('Saving TGN model')
+        # torch.save(self.tgn.state_dict(), self.model_save_path)
+        # Logger.log('TGN model saved')
+
+    def test(self, data):
+        mem_backup = self.tgn.memory.backup_memory()
+        with torch.no_grad():
+            tgn = self.tgn.eval()
+            # use existing neighbor finder
+            pos_prob, neg_prob = tgn.compute_edge_probabilities(
+                data.sources,
+                data.destinations,
+                data.sources,
+                data.timestamps,
+                data.edge_idxs,
+                args.n_neighbors
+            )
+        self.tgn.memory.restore_memory(mem_backup)
+        return pos_prob

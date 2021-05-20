@@ -17,7 +17,7 @@ class TGNArgs:
     aggregator = "last"  # Type of message
     memory_update_at_end = False  # Whether to update memory at the end or at the start of the batch
     message_dim = 100  # Dimensions of the messages
-    memory_dim = 82  # Dimensions of the memory for each user
+    memory_dim = 100  # Dimensions of the memory for each user
     different_new_nodes = False  # Whether to use disjoint set of new nodes for train and val
     uniform = False  # take uniform sampling from temporal neighbors
     randomize_features = False  # Whether to randomize node features
@@ -28,8 +28,8 @@ class TGNArgs:
 
 class Context:
     # common
-    work_dir = "/mnt/shard/Builds/MemRL/"
-    # work_dir = "D://Heptagram/Work/debug/"  # for debugging
+    # work_dir = "/mnt/shard/Builds/MemRL/"
+    work_dir = "D://Heptagram/Work/debug/"  # for debugging
     code_dir = work_dir + "code/"
     log_dir = work_dir + "log/"
     model_dir = work_dir + "model/"
@@ -37,19 +37,30 @@ class Context:
     clean = False
 
     # env
-    num_episodes = 10
+    num_episodes = 1
     env_type = "atari"
     env_name = "Pong"
     max_episode_steps = 108000
-    max_random_noops = 0
+    max_random_noops = 30
     num_action_repeats = 2
     render_dir = None
 
     # agent
     # tgn
     tgn = TGNArgs
+    # graph memory
+    obs_min_dis = 2
+    cell_size = 5 * obs_min_dis
+    propagations = 20
+    num_actor = 2
+    ucb1_c = 2
+    max_sim_step = 4
 
 
 class Profile(Context):
-    base = Context
-    profile = ""
+    B = Context
+    profile_a = "atari"
+    profile = profile_a
+
+    if profile == "atari":
+        B.tgn.memory_dim = 99

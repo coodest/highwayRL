@@ -3,6 +3,7 @@ import hashlib
 import os
 import pickle
 import logging
+import random
 import shutil
 import time
 import traceback
@@ -17,13 +18,16 @@ class IndexedDict:
         self.ind = 0
         self.dict = dict()
 
-    def get_index(self, key):
+    def get_index(self, key, show_add=False):
         add_key = False
         if key not in self.dict:
             self.dict[key] = self.ind
             self.ind += 1
             add_key = True
-        return self.dict[key], add_key
+        if show_add:
+            return self.dict[key], add_key
+        else:
+            return self.dict[key]
 
 
 class Counter:
@@ -191,6 +195,10 @@ class Funcs:
         return one_hot
 
     @staticmethod
+    def rand_prob():
+        return random.random()
+
+    @staticmethod
     def print_obj(obj):
         s = "["
         for name in dir(obj):
@@ -212,7 +220,7 @@ class Funcs:
         :param obs: the sparse matrix
         :return: the hashed str
         """
-        return hashlib.sha256(obs).hexdigest()
+        return hashlib.sha256(np.array(obs)).hexdigest()
 
 
 class IO:

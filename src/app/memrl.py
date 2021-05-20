@@ -22,7 +22,7 @@ class MemRL:
         # import
         from src.module.env.atari import Atari
         from src.module.agent.actor import Actor
-        from src.module.agent.graph import Graph
+        from src.module.agent.memory.graph import Graph
         from src.module.agent.policy import Policy
         from src.module.agent.transition.prob_tgn import ProbTGN
 
@@ -42,14 +42,10 @@ class MemRL:
         # 2.3 make policy
         policy = Policy(graph, prob_func)
 
-        while P.num_episodes > 0:
-            P.num_episodes -= 1
-
-            # 3. interact with env using env model
-            Actor.interact(env, policy)
-
-            # 4. use interaction data to update env model
-            policy.update_prob_function()
+        # 3. interact with env using env model, and update policy
+        for a in range(P.num_actor):
+            actor = Actor(a)
+            actor.interact(env, policy)
 
 
 if __name__ == "__main__":
