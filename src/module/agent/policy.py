@@ -38,14 +38,23 @@ class Policy:
             total_reward = 0
             visit_list = []
             current_node = root  # node of root obs
+            simulate_steps = P.simulate_steps
             while current_node is not None:
-                total_reward += self.graph.node_reward[current_node]  # only obs node has reward
-                visit_list.append(current_node)
-                current_node, _ = self.get_max_child(current_node)  # action node
-                visit_list.append(current_node)
+                simulate_steps -= 1
+                if simulate_steps <= 0:
+                    total_reward += self.graph.node_value[current_node]  # only obs node has reward
+                    visit_list.append(current_node)
+                    break
+                else:
+                    total_reward += self.graph.node_reward[current_node]  # only obs node has reward
+                    visit_list.append(current_node)
+                action_node, _ = self.get_max_child(current_node)  # action node
+                visit_list.append(action_node)
                 current_node, _ = self.get_max_child(current_node)  # node of next obs where needs to be visit most
                 if current_node in visit_list:  # avoid loop
                     current_node = None
+
+
 
             # back propagation and expand UCB1 profiles
             last_node = root
