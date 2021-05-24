@@ -9,6 +9,7 @@ from src.module.agent.memory.observation_indexer import ObservationIndexer
 class Graph:
     def __init__(self, num_action):
         self.projector = Projector()
+        self.frames = 0
 
         self.node_feat_to_id = ObservationIndexer()
         self.edge_counter = Counter()
@@ -88,10 +89,15 @@ class Graph:
         current_action_node_id = self.get_node_id(last_obs, action=action, not_add=True)
         self.add_edge(current_action_node_id, to_node_id)
 
-        # 4. check for update policy
+        # 4. update frame
+        self.frames += 2
+
+        # 5. check for update policy
+        update = False
         if len(self.idx) >= P.tgn.bs:
-            return True
-        return False
+            update = True
+
+        return update
 
     def get_data(self):
         nodes = np.unique(self.src + self.dst)

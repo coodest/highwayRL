@@ -37,10 +37,10 @@ class Context:
     clean = False
 
     # env
-    num_episodes = 1
+    total_frames = 1000
     env_type = "atari"
     env_name = "Pong"
-    max_episode_steps = 108000
+    max_episode_steps = 5000  #108000
     max_random_noops = 30
     num_action_repeats = 2
     render_dir = None

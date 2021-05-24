@@ -41,12 +41,19 @@ class Counter:
 
 class Logger:
     @staticmethod
-    def log(msg, color=None, style=None, new_line=True, write_file=None, skip_gpu=False):
+    def log(msg, color=None, style=None, new_line=True, title=True, write_file=None):
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
-        while len(logger.handlers) > 0:
-            logger.removeHandler(logger.handlers[0])  # empty exist handler
-        handler = logging.StreamHandler()
+        if len(logger.handlers) == 0:
+            handler = logging.StreamHandler()
+            logger.addHandler(handler)
+        elif not isinstance(logger.handlers[0], logging.StreamHandler) or len(logger.handlers) > 1:
+            while len(logger.handlers) > 0:
+                logger.removeHandler(logger.handlers[0])  # empty exist handler
+            handler = logging.StreamHandler()
+            logger.addHandler(handler)
+
+        handler = logger.handlers[0]
         if not new_line:
             handler.terminator = ""
         formatter = logging.Formatter(
@@ -54,7 +61,6 @@ class Logger:
             fmt="%(message)s"
         )
         handler.setFormatter(formatter)
-        logger.addHandler(handler)
 
         normal = "\033[0m"
         black = "\033[30m"
@@ -106,21 +112,23 @@ class Logger:
         else:
             pass
 
-        title_str = Logger.make_msg_title(skip_gpu)
-        title = cyan + title_str[0][0: 6] + yellow + title_str[0][6:] + blue + title_str[1] + green + title_str[2] + normal + " "
+        if not title:
+            title = ""
+        else:
+            title_str = Logger.make_msg_title()
+            title = cyan + title_str[0][0: 6] + yellow + title_str[0][6:] + blue + title_str[1] + green + title_str[2] + normal + " "
         logger.info(title + msg)
         if write_file is not None:
             Logger.write_log(msg=title + msg, path=write_file)
 
     @staticmethod
-    def make_msg_title(skip_gpu=False):
+    def make_msg_title():
         """
         year+month+day+hour+minute+second+CPU+Memory+GPU+GMem
-        :param skip_gpu:
         :return:
         """
         cpu_utilization, mem_used, gpu_info_list, all_gpu_utilization, all_gpu_mem_used = \
-            Logger.get_hardware_info(skip_gpu)
+            Logger.get_hardware_info()
         date = datetime.datetime.fromtimestamp(
             int(time.time()),
             pytz.timezone("Asia/Shanghai")
@@ -132,7 +140,7 @@ class Logger:
         return title.split("|")
 
     @staticmethod
-    def get_hardware_info(skip_gpu=False):
+    def get_hardware_info():
         # output system info
         try:
             with open("/proc/meminfo") as mem_file:
@@ -145,36 +153,32 @@ class Logger:
 
         try:
             import pynvml
-        except ModuleNotFoundError:
-            skip_gpu = True
+            pynvml.nvmlInit()
 
-        if skip_gpu:
+            all_gpu_utilization = 0
+            all_gpu_mem_used = 0
+            gpu_info_list = []
+            for i in range(pynvml.nvmlDeviceGetCount()):
+                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                gpu_utilization_rate = pynvml.nvmlDeviceGetUtilizationRates(handle)
+                gpu_mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                gpu_mem_used = (gpu_mem_info.used / gpu_mem_info.total) * 100
+                gpu_temp = pynvml.nvmlDeviceGetTemperature(handle, 0)
+                gpu_fan = pynvml.nvmlDeviceGetFanSpeed(handle)
+                gpu_power_max = pynvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000  # milli-watts / 1000
+                gpu_power_usage = pynvml.nvmlDeviceGetPowerUsage(handle) / 1000
+
+                gpu_info_list.append([i, gpu_utilization_rate.gpu, gpu_mem_used, gpu_temp,
+                                      gpu_fan, gpu_power_usage, gpu_power_max])
+                all_gpu_utilization += gpu_utilization_rate.gpu
+                all_gpu_mem_used += gpu_mem_used
+
+            all_gpu_utilization = all_gpu_utilization / pynvml.nvmlDeviceGetCount()
+            all_gpu_mem_used = all_gpu_mem_used / pynvml.nvmlDeviceGetCount()
+
+            return cpu_utilization, mem_used, gpu_info_list, all_gpu_utilization, all_gpu_mem_used
+        except Exception:
             return cpu_utilization, mem_used, [], -1, -1
-
-        pynvml.nvmlInit()
-
-        all_gpu_utilization = 0
-        all_gpu_mem_used = 0
-        gpu_info_list = []
-        for i in range(pynvml.nvmlDeviceGetCount()):
-            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-            gpu_utilization_rate = pynvml.nvmlDeviceGetUtilizationRates(handle)
-            gpu_mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-            gpu_mem_used = (gpu_mem_info.used / gpu_mem_info.total) * 100
-            gpu_temp = pynvml.nvmlDeviceGetTemperature(handle, 0)
-            gpu_fan = pynvml.nvmlDeviceGetFanSpeed(handle)
-            gpu_power_max = pynvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000  # milli-watts / 1000
-            gpu_power_usage = pynvml.nvmlDeviceGetPowerUsage(handle) / 1000
-
-            gpu_info_list.append([i, gpu_utilization_rate.gpu, gpu_mem_used, gpu_temp,
-                                  gpu_fan, gpu_power_usage, gpu_power_max])
-            all_gpu_utilization += gpu_utilization_rate.gpu
-            all_gpu_mem_used += gpu_mem_used
-
-        all_gpu_utilization = all_gpu_utilization / pynvml.nvmlDeviceGetCount()
-        all_gpu_mem_used = all_gpu_mem_used / pynvml.nvmlDeviceGetCount()
-
-        return cpu_utilization, mem_used, gpu_info_list, all_gpu_utilization, all_gpu_mem_used
 
     @staticmethod
     def write_log(msg, path):

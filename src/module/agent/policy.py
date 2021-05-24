@@ -54,8 +54,6 @@ class Policy:
                 if current_node in visit_list:  # avoid loop
                     current_node = None
 
-
-
             # back propagation and expand UCB1 profiles
             last_node = root
             for node in visit_list:  # list in reverse order
