@@ -28,8 +28,8 @@ class TGNArgs:
 
 class Context:
     # common
-    # work_dir = "/mnt/shard/Builds/MemRL/"
-    work_dir = "D://Heptagram/Work/debug/"  # for debugging
+    work_dir = "/home/zidu/build/memrl/"
+    # work_dir = "D://Heptagram/Build/memrl/"  # for debugging
     code_dir = work_dir + "code/"
     log_dir = work_dir + "log/"
     model_dir = work_dir + "model/"
