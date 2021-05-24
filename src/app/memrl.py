@@ -6,17 +6,16 @@ class MemRL:
     @staticmethod
     def start():
         # 0. init
+        Logger.path = P.log_dir + Logger.get_date() + ".log"
         Logger.log("init")
         IO.make_dir(P.work_dir)
         IO.make_dir(P.log_dir)
         IO.make_dir(P.model_dir)
-        IO.make_dir(P.output_dir)
+        IO.make_dir(P.result_dir)
         if P.clean:
             IO.renew_dir(P.log_dir)
             IO.renew_dir(P.model_dir)
-            IO.renew_dir(P.output_dir)
-        IO.delete_dir(P.code_dir)
-        IO.copy("./", P.code_dir)
+            IO.renew_dir(P.result_dir)
         # show args
         Funcs.print_obj(P)
         # import

@@ -40,6 +40,8 @@ class Counter:
 
 
 class Logger:
+    path = None
+
     @staticmethod
     def log(msg, color=None, style=None, new_line=True, title=True, write_file=None):
         logger = logging.getLogger()
@@ -120,6 +122,8 @@ class Logger:
         logger.info(title + msg)
         if write_file is not None:
             Logger.write_log(msg=title + msg, path=write_file)
+        else:
+            Logger.write_log(msg=title + msg, path=Logger.path)
 
     @staticmethod
     def make_msg_title():
@@ -129,15 +133,19 @@ class Logger:
         """
         cpu_utilization, mem_used, gpu_info_list, all_gpu_utilization, all_gpu_mem_used = \
             Logger.get_hardware_info()
-        date = datetime.datetime.fromtimestamp(
-            int(time.time()),
-            pytz.timezone("Asia/Shanghai")
-        ).strftime("%y%m%d%H%M%S")
+        date = Logger.get_date()
         title = "{}|{:>2}{:>2}|{:>2}{:>2}".format(
             date, int(cpu_utilization), int(mem_used), int(all_gpu_utilization), int(all_gpu_mem_used)
         )
 
         return title.split("|")
+
+    @staticmethod
+    def get_date():
+        return datetime.datetime.fromtimestamp(
+            int(time.time()),
+            pytz.timezone("Asia/Shanghai")
+        ).strftime("%y%m%d%H%M%S")
 
     @staticmethod
     def get_hardware_info():

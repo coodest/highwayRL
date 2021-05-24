@@ -28,19 +28,17 @@ class TGNArgs:
 
 class Context:
     # common
-    work_dir = "/home/zidu/build/memrl/"
-    # work_dir = "D://Heptagram/Build/memrl/"  # for debugging
-    code_dir = work_dir + "code/"
+    work_dir = "output/"
     log_dir = work_dir + "log/"
     model_dir = work_dir + "model/"
-    output_dir = work_dir + "output/"
+    result_dir = work_dir + "result/"
     clean = False
 
     # env
-    total_frames = 1000
+    total_frames = 10000
     env_type = "atari"
     env_name = "Pong"
-    max_episode_steps = 5000  #108000
+    max_episode_steps = 108000
     max_random_noops = 30
     num_action_repeats = 2
     render_dir = None
