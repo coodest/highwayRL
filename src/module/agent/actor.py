@@ -23,7 +23,7 @@ class Actor:
             epi_step = 0
             start_time = time.time()
             while True:
-                action = None  # policy.get_action(last_obs)
+                action = policy.get_action(last_obs)
                 if action is None:
                     action = env.action_space.sample()
                 if Funcs.rand_prob() - 0.5 > (self.id / (P.num_actor - 1)):  # epsilon-greedy
