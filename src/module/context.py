@@ -50,7 +50,7 @@ class Context:
     obs_min_dis = 2
     cell_size = 1 * obs_min_dis
     propagations = 20
-    simulate_steps = 10
+    simulate_steps = 30
     num_actor = 2
     ucb1_c = 2
     max_sim_step = 4

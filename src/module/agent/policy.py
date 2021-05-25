@@ -50,13 +50,13 @@ class Policy:
                     visit_list.append(current_node)
                 action_node, _ = self.get_max_child(current_node)  # action node
                 visit_list.append(action_node)
-                current_node, _ = self.get_max_child(current_node)  # node of next obs where needs to be visit most
+                current_node, _ = self.get_max_child(action_node)  # node of next obs where needs to be visit most
                 if current_node in visit_list:  # avoid loop
                     current_node = None
 
             # back propagation and expand UCB1 profiles
             last_node = root
-            for node in visit_list:  # list in reverse order
+            for node in visit_list:
                 if last_node is not root:
                     if last_node in self.MCTS_n:
                         if self.MCTS_n[last_node] == 1:  # if UCB1 profiles just expand to last node
@@ -113,8 +113,9 @@ class Policy:
         return self.graph.node_value[root]  # return the reward form the env
 
     def update_prob_function(self):
+        # data = self.graph.get_data()
+        # self.prob_func.train(data)
         pass
-        # self.prob_func.train(self.graph.get_data())
 
     def get_transition_prob(self, src, dsts):
         test_data = Data(np.array([src] * len(dsts)), np.array(dsts), np.array([0] * len(dsts)), np.array([0] * len(dsts)), np.array([0] * len(dsts)))

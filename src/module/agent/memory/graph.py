@@ -30,7 +30,7 @@ class Graph:
         return self.projector.project(obs)
 
     def get_node_id(self, obs, reward=0, action=None, not_add=False):
-        if action:
+        if action is not None:
             node_feat = np.concatenate([
                 self.project(obs),
                 100 * P.obs_min_dis * Funcs.one_hot(action, self.num_action)
@@ -59,6 +59,11 @@ class Graph:
         edge_id = self.edge_counter.get_index()
         action_edge_feat = np.zeros(self.num_action)
         self.edge_feats.append(action_edge_feat)
+
+        if from_node_id not in self.his_edges:
+            self.his_edges[from_node_id] = [to_node_id]
+        elif to_node_id not in self.his_edges[from_node_id]:
+            self.his_edges[from_node_id].append(to_node_id)
 
         self.src.append(from_node_id)
         self.dst.append(to_node_id)
@@ -106,15 +111,7 @@ class Graph:
         edge_embedding = np.array(self.edge_feats)
         train_data = Data(np.array(self.src), np.array(self.dst), np.array(self.ts), np.array(self.idx), np.array(self.label))
 
-        # put edge to history as permanent graph memory
-        for s, d in zip(self.src, self.dst):
-            if s not in self.his_edges:
-                self.his_edges[s] = [d]
-            elif d not in self.his_edges[s]:
-                self.his_edges[s].append(d)
-
         # empty current increment
-        Logger.log(f"nodes: {len(node_embedding)}, edges: {len(edge_embedding)}")
         self.src, self.dst, self.ts, self.idx, self.label = [], [], [], [], []
 
         return node_embedding, edge_embedding, train_data
