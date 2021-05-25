@@ -16,7 +16,7 @@ class RandomProjector(Projector):
         super().__init__()
         self.random_matrix = None
         if P.env_type == "atari":
-            self.random_matrix = torch.nn.Linear(in_features=84 * 84, out_features=P.tgn.memory_dim)
+            self.random_matrix = torch.nn.Linear(in_features=84 * 84, out_features=P.tgn.memory_dim).to(self.device)
 
     def project(self, obs):
         input = None
