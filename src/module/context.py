@@ -35,7 +35,7 @@ class Context:
     clean = False
 
     # env
-    total_frames = 10000
+    total_frames = 1e6
     env_type = "atari"
     env_name = "Pong"
     max_episode_steps = 108000
@@ -48,7 +48,7 @@ class Context:
     tgn = TGNArgs
     # graph memory
     obs_min_dis = 2
-    cell_size = 5 * obs_min_dis
+    cell_size = 1 * obs_min_dis
     propagations = 20
     simulate_steps = 10
     num_actor = 2
@@ -62,4 +62,4 @@ class Profile(Context):
     profile = profile_a
 
     if profile == "atari":
-        B.tgn.memory_dim = 99
+        B.tgn.memory_dim = 16

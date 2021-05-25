@@ -1,3 +1,5 @@
+import time
+
 from src.module.context import Profile as P
 from src.util.tools import *
 from src.module.agent.policy import Policy
@@ -19,8 +21,9 @@ class Actor:
         while True:
             total_reward = 0
             epi_step = 0
+            start_time = time.time()
             while True:
-                action = policy.get_action(last_obs)
+                action = None  # policy.get_action(last_obs)
                 if action is None:
                     action = env.action_space.sample()
                 if Funcs.rand_prob() - 0.5 > (self.id / (P.num_actor - 1)):  # epsilon-greedy
@@ -44,7 +47,7 @@ class Actor:
                     return
 
                 if done:
-                    Logger.log(f"id: {self.id}, step: {epi_step}, Total reward: {total_reward}")
+                    Logger.log(f"id{self.id} {epi_step: 4}~{epi_step / (time.time() - start_time):<3.3}fps r{total_reward} n{len(policy.graph.node_feats)}")
                     last_obs = env.reset()
                     num_episode += 1
                     break

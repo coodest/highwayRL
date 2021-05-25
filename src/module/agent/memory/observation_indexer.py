@@ -23,23 +23,25 @@ class ObservationIndexer:
 
         # 2. find cluster(s)
         if cell_hash not in self.cell_to_cluster:
-            self.cell_to_cluster[cell_hash] = []  # init a new cell
+            self.cell_to_cluster[cell_hash] = dict()  # init a new cell
         clusters = self.cell_to_cluster[cell_hash]
 
         # 3. find the closest cluster or create one
         min_dis = float("inf")
         min_ind = None
         add_node = False
-        for index in range(len(clusters)):
+        for index in clusters:
             dis = distance.euclidean(key, clusters[index].coordinates)
             if dis < min_dis:  # smallest index strategy
                 min_dis = dis
                 min_ind = index
+        if len(clusters) > 10:
+            Logger.log(f"to many clusters: {len(clusters)}")
         if min_dis > P.obs_min_dis:  # include len(clusters) == 0
             # not found suitable cluster, create one
             add_node = True
             cluster_id = self.id_counter.get_index()
-            clusters.append(Cluster(key, cluster_id))
+            clusters[len(clusters)] = Cluster(key, cluster_id)
         else:
             # update suitable cluster
             cluster_id = clusters[min_ind].cluster_id

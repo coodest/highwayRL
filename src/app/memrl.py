@@ -46,6 +46,8 @@ class MemRL:
             actor = Actor(a)
             actor.interact(env, policy)
 
+        Logger.log("finished")
+
 
 if __name__ == "__main__":
     MemRL.start()

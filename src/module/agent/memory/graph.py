@@ -1,14 +1,12 @@
 from src.util.tools import *
-from src.module.context import Profile as P
-import numpy as np
 from src.module.agent.transition.utils.data_processing import Data
-from src.module.agent.memory.projector import Projector
+from src.module.agent.memory.projector import *
 from src.module.agent.memory.observation_indexer import ObservationIndexer
 
 
 class Graph:
     def __init__(self, num_action):
-        self.projector = Projector()
+        self.projector = RandomProjector()
         self.frames = 0
 
         self.node_feat_to_id = ObservationIndexer()
@@ -90,7 +88,7 @@ class Graph:
         self.add_edge(current_action_node_id, to_node_id)
 
         # 4. update frame
-        self.frames += 2
+        self.frames += P.num_action_repeats
 
         # 5. check for update policy
         update = False
