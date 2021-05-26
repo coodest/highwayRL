@@ -45,8 +45,6 @@ class ObservationIndexer:
         else:
             # update suitable cluster
             cluster_id = clusters[min_ind].cluster_id
-            temp_coord = clusters[min_ind].coordinates * clusters[min_ind].num_nodes
             clusters[min_ind].num_nodes += 1
-            clusters[min_ind].coordinates = (temp_coord + key) / clusters[min_ind].num_nodes
 
         return cluster_id, add_node

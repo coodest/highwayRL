@@ -27,10 +27,9 @@ class Policy:
 
         if action >= 18:
             Logger.log(f"root {root}")
-            Logger.log(f"is action node{self.graph.node_type[root]}")
-            Logger.log(f"out link {self.graph.his_edges[root]}")
-            Logger.log(f"is target child action node{self.graph.node_type[child_id]}")
-            Logger.log(f"is child 0 action node{self.graph.his_edges[root][0]}")
+            Logger.log(f"is action node {self.graph.node_type[root] == 1}")
+            for i in self.graph.his_edges[root]:
+                Logger.log(f"is i action node {self.graph.node_type[i] == 1}")
             breakpoint()
 
         return action
