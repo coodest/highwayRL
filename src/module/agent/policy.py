@@ -15,6 +15,9 @@ class Policy:
     def get_action(self, obs):
         # 1. find current/root node
         root = self.graph.get_node_id(obs)
+        if self.graph.node_type[root] == 1:  # root is action node
+            Logger.log("action node cannot get action")
+            return None
         if root not in self.graph.his_edges:  # can not give action for previously never interacted obs
             return None
 

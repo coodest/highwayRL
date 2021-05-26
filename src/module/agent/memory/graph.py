@@ -18,6 +18,7 @@ class Graph:
         self.node_visit = []  # for LRU
         self.node_value = []
         self.edge_feats = []
+        self.node_type = []
 
         self.src = []
         self.dst = []
@@ -35,11 +36,13 @@ class Graph:
                 self.project(obs),
                 100 * P.obs_min_dis * Funcs.one_hot(action, self.num_action)
             ], axis=0)
+            node_type = 1
         else:
             node_feat = np.concatenate([
                 self.project(obs),
                 np.zeros(self.num_action)
             ], axis=0)
+            node_type = 0
         node_id, add_node = self.node_feat_to_id.get_index(node_feat)
 
         if add_node:  # if it is a new node
@@ -47,6 +50,7 @@ class Graph:
             self.node_reward.append(reward)  # if from node is new, it will be the first node with 0 reward
             self.node_visit.append(1)  # init visit state for later tree search
             self.node_value.append(0)
+            self.node_type.append(node_type)
         else:
             self.node_visit[node_id] += 1
             self.node_reward[node_id] = (self.node_reward[node_id] * (self.node_visit[node_id] - 1) + reward) / self.node_visit[node_id]  # update reward

@@ -1,6 +1,5 @@
 import torch
 from src.module.context import Profile as P
-import numpy as np
 
 
 class Projector:
