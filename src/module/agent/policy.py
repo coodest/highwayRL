@@ -31,6 +31,7 @@ class Policy:
             Logger.log(f"out link {self.graph.his_edges[root]}")
             Logger.log(f"is target child action node{self.graph.node_type[child_id]}")
             Logger.log(f"is child 0 action node{self.graph.his_edges[root][0]}")
+            breakpoint()
 
         return action
 
