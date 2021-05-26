@@ -15,9 +15,6 @@ class Policy:
     def get_action(self, obs):
         # 1. find current/root node
         root = self.graph.get_node_id(obs)
-        if self.graph.node_type[root] == 1:  # root is action node
-            Logger.log("action node cannot get action")
-            return None
         if root not in self.graph.his_edges:  # can not give action for previously never interacted obs
             return None
 
@@ -27,6 +24,14 @@ class Policy:
         # 3. for training actor: select the child with max UCB1 and return corresponding action;
         # for testing actor: select the child with max value and return corresponding action
         child_id, action = self.get_max_child(root, value_type="value")
+
+        if action >= 18:
+            Logger.log(f"root {root}")
+            Logger.log(f"is action node{self.graph.node_type[root]}")
+            Logger.log(f"out link {self.graph.his_edges[root]}")
+            Logger.log(f"is target child action node{self.graph.node_type[child_id]}")
+            Logger.log(f"is child 0 action node{self.graph.his_edges[root][0]}")
+
         return action
 
     def update_children(self, root):
