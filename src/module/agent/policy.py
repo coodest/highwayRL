@@ -21,16 +21,11 @@ class Policy:
         # 2. use UCB1 formula to propagate value
         self.update_children(root)
 
-        # 3. for training actor: select the child with max UCB1 and return corresponding action;
-        # for testing actor: select the child with max value and return corresponding action
+        # 3. for training actor: select the child with max UCB1 and
+        # return corresponding action;
+        # for testing actor: select the child with max value and
+        # return corresponding action
         child_id, action = self.get_max_child(root, value_type="value")
-
-        if action >= 18:
-            Logger.log(f"root {root}")
-            Logger.log(f"is action node {self.graph.node_type[root] == 1}")
-            for i in self.graph.his_edges[root]:
-                Logger.log(f"is i action node {self.graph.node_type[i] == 1}")
-            breakpoint()
 
         return action
 
@@ -89,7 +84,7 @@ class Policy:
             # trans_prob = trans_prob.squeeze(-1).cpu().detach().numpy().tolist()
             for a in range(len(self.graph.his_edges[root])):
                 if value_type == "ucb1":
-                    # value = trans_prob[a] * self.get_ucb1(root, self.graph.his_edges[root][a])
+                    # value = trans_prob[a] * self.get_ucb1(root, self.graph.his_edges[root][a])  # todo
                     value = self.get_ucb1(root, self.graph.his_edges[root][a])
                 else:
                     # value = trans_prob[a] * self.get_avg_value(self.graph.his_edges[root][a])
@@ -123,7 +118,13 @@ class Policy:
     def update_prob_function(self):
         # data = self.graph.get_data()
         # self.prob_func.train(data)
-        pass
+        pass  # todo
+
+    def update(self):
+        while True:
+            self.update_prob_function()
+            if self.graph.frames > P.total_frames:
+                return
 
     def get_transition_prob(self, src, dsts):
         test_data = Data(np.array([src] * len(dsts)), np.array(dsts), np.array([0] * len(dsts)), np.array([0] * len(dsts)), np.array([0] * len(dsts)))

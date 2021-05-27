@@ -13,7 +13,7 @@ class Actor:
         """
         return self.id == P.num_actor - 1
 
-    def interact(self, env, policy: Policy):
+    def interact(self, env):
         num_episode = 0
         last_obs = env.reset()
         while True:
@@ -35,7 +35,7 @@ class Actor:
 
                 # 4. graph memory ops
                 if not self.is_testing_actor():
-                    update = policy.graph.add(last_obs, obs, action, reward)
+                    update = policy.graph.add(last_obs, obs, action, reward, env.action_space.n)
                     if update:
                         policy.update_prob_function()
                 last_obs = obs

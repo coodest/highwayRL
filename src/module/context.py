@@ -35,13 +35,14 @@ class Context:
     clean = False
 
     # env
-    total_frames = 1e6
+    total_frames = 1e7
     env_type = "atari"
     env_name = "Pong"
     max_episode_steps = 108000
     max_random_noops = 30
     num_action_repeats = 2
     render_dir = None
+    num_action = None
 
     # agent
     # tgn
@@ -51,7 +52,7 @@ class Context:
     cell_size = 1 * obs_min_dis
     propagations = 20
     simulate_steps = 30
-    num_actor = 2
+    num_actor = 4
     ucb1_c = 2
     max_sim_step = 4
 
@@ -63,3 +64,4 @@ class Profile(Context):
 
     if profile == "atari":
         B.tgn.memory_dim = 16
+        num_action = 18

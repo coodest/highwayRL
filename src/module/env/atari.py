@@ -20,9 +20,7 @@ class Atari:
             max_random_noops=P.max_random_noops
         )
 
-        num_action = env.action_space.n
-
-        return env, num_action
+        return env
 
 
 class AtariPreprocessing(object):

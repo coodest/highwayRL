@@ -5,13 +5,12 @@ from src.module.agent.memory.observation_indexer import ObservationIndexer
 
 
 class Graph:
-    def __init__(self, num_action):
+    def __init__(self):
         self.projector = RandomProjector()
         self.frames = 0
 
         self.node_feat_to_id = ObservationIndexer()
         self.edge_counter = Counter()
-        self.num_action = num_action
 
         self.node_feats = []
         self.node_reward = []
@@ -34,13 +33,13 @@ class Graph:
         if action is not None:
             node_feat = np.concatenate([
                 self.project(obs),
-                100 * P.obs_min_dis * Funcs.one_hot(action, self.num_action)
+                100 * P.obs_min_dis * Funcs.one_hot(action, P.num_action)
             ], axis=0)
             node_type = 1
         else:
             node_feat = np.concatenate([
                 self.project(obs),
-                np.zeros(self.num_action)
+                np.zeros(P.num_action)
             ], axis=0)
             node_type = 0
         node_id, add_node = self.node_feat_to_id.get_index(node_feat)
@@ -61,7 +60,7 @@ class Graph:
 
     def add_edge(self, from_node_id, to_node_id):
         edge_id = self.edge_counter.get_index()
-        action_edge_feat = np.zeros(self.num_action)
+        action_edge_feat = np.zeros(P.num_action)
         self.edge_feats.append(action_edge_feat)
 
         if from_node_id not in self.his_edges:
@@ -81,14 +80,14 @@ class Graph:
         """
         # 1. store feature of src node and query/return its id
         from_node_id = self.get_node_id(last_obs)
-        for a in range(self.num_action):  # add action nodes from src node
+        for a in range(P.num_action):  # add action nodes from src node
             action_node_id = self.get_node_id(last_obs, action=a)
             self.add_edge(from_node_id, action_node_id)
 
         # 2. store feature of dst node and query/return its id
         to_node_id = self.get_node_id(obs, reward=reward)
         # add action nodes from dst node
-        for a in range(self.num_action):
+        for a in range(P.num_action):
             action_node_id = self.get_node_id(obs, action=a)
             self.add_edge(to_node_id, action_node_id)
 

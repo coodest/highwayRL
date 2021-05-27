@@ -122,7 +122,7 @@ class Logger:
         logger.info(title + msg)
         if write_file is not None:
             Logger.write_log(msg=title + msg, path=write_file)
-        else:
+        elif Logger.path is not None:
             Logger.write_log(msg=title + msg, path=Logger.path)
 
     @staticmethod
