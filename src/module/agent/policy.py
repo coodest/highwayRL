@@ -3,7 +3,7 @@ from src.module.agent.memory.graph import Graph
 from src.module.context import Profile as P
 from src.module.agent.transition.utils.data_processing import Data
 from src.util.tools import *
-from src.util.grpc.communication import *
+
 import math
 
 
@@ -128,8 +128,6 @@ class Policy:
         pass  # todo
 
     def update(self):
-        inference_server = Server(P.server_address)
-        inference_server.start()
         while True:
             self.update_prob_function()
             if self.graph.frames > P.total_frames:

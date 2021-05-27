@@ -37,8 +37,11 @@ class MemRL:
     def learner_run():
         # 1. import
         from src.module.agent.policy import Policy
+        from src.util.grpc.communication import Server
 
         # 2. make model-based agent
+        learner = Server(P.server_address)
+        learner.start()
         policy = Policy()
 
         # 3. start update loop (learner loop)
