@@ -2,10 +2,10 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import src.util.grpc.communication_pb2 as communication__pb2
+from src.util.grpc import policy_pb2 as src_dot_util_dot_grpc_dot_policy__pb2
 
 
-class CommunicationStub(object):
+class PolicyStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -14,42 +14,42 @@ class CommunicationStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.comm = channel.unary_unary(
-                '/memrl.Communication/comm',
-                request_serializer=communication__pb2.CommRequest.SerializeToString,
-                response_deserializer=communication__pb2.CommReply.FromString,
+        self.get_action = channel.unary_unary(
+                '/memrl.Policy/get_action',
+                request_serializer=src_dot_util_dot_grpc_dot_policy__pb2.ARequest.SerializeToString,
+                response_deserializer=src_dot_util_dot_grpc_dot_policy__pb2.AReply.FromString,
                 )
 
 
-class CommunicationServicer(object):
+class PolicyServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def comm(self, request, context):
+    def get_action(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_CommunicationServicer_to_server(servicer, server):
+def add_PolicyServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'comm': grpc.unary_unary_rpc_method_handler(
-                    servicer.comm,
-                    request_deserializer=communication__pb2.CommRequest.FromString,
-                    response_serializer=communication__pb2.CommReply.SerializeToString,
+            'get_action': grpc.unary_unary_rpc_method_handler(
+                    servicer.get_action,
+                    request_deserializer=src_dot_util_dot_grpc_dot_policy__pb2.ARequest.FromString,
+                    response_serializer=src_dot_util_dot_grpc_dot_policy__pb2.AReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'memrl.Communication', rpc_method_handlers)
+            'memrl.Policy', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class Communication(object):
+class Policy(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def comm(request,
+    def get_action(request,
             target,
             options=(),
             channel_credentials=None,
@@ -59,8 +59,8 @@ class Communication(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/memrl.Communication/comm',
-            communication__pb2.CommRequest.SerializeToString,
-            communication__pb2.CommReply.FromString,
+        return grpc.experimental.unary_unary(request, target, '/memrl.Policy/get_action',
+            src_dot_util_dot_grpc_dot_policy__pb2.ARequest.SerializeToString,
+            src_dot_util_dot_grpc_dot_policy__pb2.AReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

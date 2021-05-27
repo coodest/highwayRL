@@ -13,18 +13,18 @@
 // limitations under the License.
 //
 //  install gRPC:
-//  conda pip install grpcio, grpcio-tools
-//  usage: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. communication.proto
+//  pip install grpcio, grpcio-tools
+//  usage: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. src/util/grpc/policy.proto
 
 syntax = "proto3";
 
 package memrl;
 
-service Communication {
-  rpc comm (CommRequest) returns (CommReply) {}
+service Policy {
+  rpc get_action (ARequest) returns (AReply) {}
 }
 
-message CommRequest {
+message ARequest {
   repeated int32 last_obs = 1;
   int32 pre_action = 2;
   repeated int32 obs = 3;
@@ -32,6 +32,6 @@ message CommRequest {
   bool add = 5;
 }
 
-message CommReply {
+message AReply {
   int32 action = 1;
 }
