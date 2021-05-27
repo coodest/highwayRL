@@ -74,7 +74,7 @@ class Graph:
         self.idx.append(edge_id)
         self.label.append(0)  # all edges are label 0
 
-    def add(self, last_obs, obs, action, reward):
+    def add(self, last_obs, action, obs, reward):
         """
         add transition to current increment
         """

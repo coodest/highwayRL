@@ -21,8 +21,6 @@ class RandomProjector(Projector):
         input = None
         if P.env_type == "atari":
             input = torch.tensor(obs, dtype=torch.float, requires_grad=False).to(self.device)
-            input = input.squeeze(-1)
-            input = torch.flatten(input)
             input = input.unsqueeze(0)
         output = self.random_matrix(input)
         output = output.squeeze(0)

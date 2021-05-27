@@ -1,11 +1,15 @@
 from src.module.context import Profile as P
 from src.util.tools import *
-from src.module.agent.policy import Policy
+from src.util.grpc.communication import *
 
 
 class Actor:
-    def __init__(self, id):
+    def __init__(self, id, env):
         self.id = id  # actor identifier
+        self.num_episode = 0
+        self.policy_client = Client(P.server_address)
+        self.env = env
+        self.fps = 0
 
     def is_testing_actor(self):
         """
@@ -13,46 +17,51 @@ class Actor:
         """
         return self.id == P.num_actor - 1
 
-    def interact(self, env):
-        num_episode = 0
-        last_obs = env.reset()
-        while True:
+    def get_action(self, last_obs, pre_action, obs, reward, is_first=False):
+        # query action from policy
+        if is_first:
+            action = self.policy_client.comm(last_obs, pre_action, obs, reward, add=False)
+        else:
+            action = self.policy_client.comm(last_obs, pre_action, obs, reward, add=not self.is_testing_actor())
+
+        if Funcs.rand_prob() - 0.5 > (self.id / (P.num_actor - 1)):
+            # epsilon-greedy
+            action = self.env.action_space.sample()
+        elif action is None:
+            # if policy can not return action
+            action = self.env.action_space.sample()
+
+        return action
+
+    def interact(self):
+        while True:  # episode loop
+            # 0. init episode
+            last_obs = self.env.reset()
+            obs = last_obs
             total_reward = 0
-            epi_step = 0
+            epi_step = 1
+            pre_action = 0
             start_time = time.time()
-            while True:
-                # 1. make action
-                action = policy.get_action(last_obs)
-                if action is None:
-                    action = env.action_space.sample()
-
-                # 2. epsilon-greedy
-                if Funcs.rand_prob() - 0.5 > (self.id / (P.num_actor - 1)):  # epsilon-greedy
-                    action = env.action_space.sample()
-
-                # 3. interact
-                obs, reward, done, info = env.step(action)
-
-                # 4. graph memory ops
-                if not self.is_testing_actor():
-                    update = policy.graph.add(last_obs, obs, action, reward, env.action_space.n)
-                    if update:
-                        policy.update_prob_function()
+            reward = 0
+            while True:  # step loop
+                # 1. get action
+                action = self.get_action(last_obs, pre_action, obs, reward, is_first=epi_step == 1)
                 last_obs = obs
 
-                # 5. post step
+                # 2. interact
+                obs, reward, done, info = self.env.step(action)
+
+                # 3. post ops
+                pre_action = action
                 total_reward += reward
                 epi_step += 1
+
+                # 4. render
                 if P.render_dir is not None:
-                    env.render(mode="human")
+                    self.env.render(mode="human")
 
-                # 6. stop check
-                if policy.graph.frames > P.total_frames:
-                    return
-
-                # 7. done ops
+                # 5. done ops
                 if done:
-                    Logger.log(f"id{self.id} {epi_step: 4}~{epi_step / (time.time() - start_time):<3.3}fps r{total_reward} n{len(policy.graph.node_feats)}")
-                    last_obs = env.reset()
-                    num_episode += 1
+                    self.fps = epi_step / (time.time() - start_time)
                     break
+            self.num_episode += 1

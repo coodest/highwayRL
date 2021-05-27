@@ -1,6 +1,6 @@
 import gym
 from gym.spaces.box import Box
-from gym import wrappers
+from gym.wrappers import TimeLimit, Monitor
 import numpy as np
 import cv2
 from src.module.context import Profile as P
@@ -10,10 +10,10 @@ class Atari:
     @staticmethod
     def make_env():
         env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
-        env = wrappers.TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
+        env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
 
         if P.render_dir is not None:
-            env = wrappers.Monitor(env, P.render_dir, force=True, video_callable=lambda episode_id: episode_id % 1 == 0)  # output every episode
+            env = Monitor(env, P.render_dir, force=True, video_callable=lambda episode_id: episode_id % 1 == 0)  # output every episode
 
         env = AtariPreprocessing(
             env, frame_skip=P.num_action_repeats,
@@ -234,4 +234,5 @@ class AtariPreprocessing(object):
                                        interpolation=cv2.INTER_LINEAR)
 
         int_image = np.asarray(transformed_image, dtype=np.uint8)
-        return np.expand_dims(int_image, axis=2)
+        # return np.expand_dims(int_image, axis=2)
+        return np.ndarray.flatten(int_image)

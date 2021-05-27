@@ -55,6 +55,7 @@ class Context:
     num_actor = 4
     ucb1_c = 2
     max_sim_step = 4
+    server_address = "[::]:8809"
 
 
 class Profile(Context):

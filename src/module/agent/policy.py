@@ -3,25 +3,32 @@ from src.module.agent.memory.graph import Graph
 from src.module.context import Profile as P
 from src.module.agent.transition.utils.data_processing import Data
 from src.util.tools import *
+from src.util.grpc.communication import *
 import math
 
 
 class Policy:
-    def __init__(self, graph: Graph, prob_func: ProbTGN):
-        self.graph = graph
-        self.prob_func = prob_func
+    def __init__(self):
+        # make episodic memory
+        self.graph = Graph()
+        # make transition function
+        self.prob_func = ProbTGN()
         self.MCTS_n = None
 
-    def get_action(self, obs):
-        # 1. find current/root node
+    def get_action(self, last_obs, pre_action, obs, reward, add=False):
+        # 1. add transition to graph memory
+        if add:
+            self.graph.add(last_obs, pre_action, obs, reward)
+
+        # 2. find current/root node
         root = self.graph.get_node_id(obs)
         if root not in self.graph.his_edges:  # can not give action for previously never interacted obs
             return None
 
-        # 2. use UCB1 formula to propagate value
+        # 3. use UCB1 formula to propagate value
         self.update_children(root)
 
-        # 3. for training actor: select the child with max UCB1 and
+        # 4. for training actor: select the child with max UCB1 and
         # return corresponding action;
         # for testing actor: select the child with max value and
         # return corresponding action
@@ -121,6 +128,8 @@ class Policy:
         pass  # todo
 
     def update(self):
+        inference_server = Server(P.server_address)
+        inference_server.start()
         while True:
             self.update_prob_function()
             if self.graph.frames > P.total_frames:
