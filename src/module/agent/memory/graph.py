@@ -1,5 +1,4 @@
 from src.util.tools import *
-from src.module.agent.transition.utils.data_processing import Data
 from src.module.agent.memory.projector import *
 from src.module.agent.memory.observation_indexer import ObservationIndexer
 
@@ -109,12 +108,9 @@ class Graph:
         nodes = np.unique(self.src + self.dst)
         assert np.max(nodes) < len(self.node_feats)
 
-        # get training data
-        node_embedding = np.array(self.node_feats)
-        edge_embedding = np.array(self.edge_feats)
-        train_data = Data(np.array(self.src), np.array(self.dst), np.array(self.ts), np.array(self.idx), np.array(self.label))
+        src, dst, ts, idx, label, node_feats, edge_feats = self.src, self.dst, self.ts, self.idx, self.label, self.node_feats, self.edge_feats
 
         # empty current increment
         self.src, self.dst, self.ts, self.idx, self.label = [], [], [], [], []
 
-        return node_embedding, edge_embedding, train_data
+        return src, dst, ts, idx, label, node_feats, edge_feats

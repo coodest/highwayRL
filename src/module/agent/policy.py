@@ -1,19 +1,45 @@
+from src.module.context import Profile as P
+from src.util.tools import *
 from src.module.agent.transition.prob_tgn import ProbTGN
 from src.module.agent.memory.graph import Graph
-from src.module.context import Profile as P
-from src.module.agent.transition.utils.data_processing import Data
-from src.util.tools import *
 
 import math
 
 
 class Policy:
-    def __init__(self):
+    def __init__(self, inference_queue, actor_queues, finish):
         # make episodic memory
         self.graph = Graph()
         # make transition function
         self.prob_func = ProbTGN()
         self.MCTS_n = None
+        self.inference_queue = inference_queue
+        self.actor_queues = actor_queues
+        self.finish = finish
+
+    def inference(self):
+        last_record = time.time()
+        last_frames = self.graph.frames
+        while True:
+            for _ in range(P.inference_batch_size):
+                info = self.inference_queue.get()
+                actor_id = info[0]
+                action = self.get_action(*info[1:])
+                self.actor_queues[actor_id].put(action)
+            
+            # Logger.log("inference fps: {}".format(
+            #     (self.graph.frames - last_frames) / (time.time() - last_record)
+            # ))
+            
+            if self.graph.frames > P.total_frames:
+                with self.finish.get_lock():
+                    self.finish.value = True
+                break
+            else:
+                pass
+                # Logger.log("skip train")
+                # data = self.graph.get_data()
+                # self.prob_func.train(data)
 
     def get_action(self, last_obs, pre_action, obs, reward, add=False):
         # 1. add transition to graph memory
@@ -82,6 +108,7 @@ class Policy:
         for node in self.MCTS_n:
             self.graph.node_value[node] /= self.MCTS_n[node]
 
+    # @staticmethod
     def get_max_child(self, root, value_type="ucb1"):
         max_value = - float("inf")
         child_index = None
@@ -107,6 +134,7 @@ class Policy:
                         child_id = self.graph.his_edges[root][a]
         return child_id, child_index
 
+    # @staticmethod
     def get_ucb1(self, root, child):
         if child not in self.MCTS_n:  # n == 0
             return float("inf")
@@ -119,20 +147,10 @@ class Policy:
         ln_N = math.log(N)
         return v + P.ucb1_c * ((ln_N / n) ** 0.5)
 
+    # @staticmethod
     def get_avg_value(self, root):
         return self.graph.node_value[root]  # return the reward form the env
 
-    def update_prob_function(self):
-        # data = self.graph.get_data()
-        # self.prob_func.train(data)
-        pass  # todo
-
-    def update(self):
-        while True:
-            self.update_prob_function()
-            if self.graph.frames > P.total_frames:
-                return
-
     def get_transition_prob(self, src, dsts):
-        test_data = Data(np.array([src] * len(dsts)), np.array(dsts), np.array([0] * len(dsts)), np.array([0] * len(dsts)), np.array([0] * len(dsts)))
-        return self.prob_func.test(test_data)
+        info = [src, dsts]
+        return self.prob_func.test(info)

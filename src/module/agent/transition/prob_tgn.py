@@ -65,9 +65,13 @@ class ProbTGN:
         if args.use_memory:
             self.tgn.memory.__init_memory__()
 
-    def train(self, data):
+    def train(self, info):
         # extract data for training, validation and testing
-        node_features, edge_features, train_data = data
+        src, dst, ts, idx, label, node_feats, edge_feats = info
+        node_features = np.array(node_feats)
+        edge_features = np.array(edge_feats)
+        train_data = Data(np.array(src), np.array(dst), np.array(ts), np.array(idx), np.array(label))
+        
         num_instance = len(train_data.sources)
         num_batch = math.ceil(num_instance / args.bs)
         # Compute time statistics
@@ -163,18 +167,22 @@ class ProbTGN:
         # torch.save(self.tgn.state_dict(), self.model_save_path)
         # Logger.log('TGN model saved')
 
-    def test(self, data):
+    def test(self, info):
+        src, dsts = info
+        test_data = Data(np.array([src] * len(dsts)), np.array(dsts), np.array([0] * len(dsts)), np.array([0] * len(dsts)), np.array([0] * len(dsts)))
+
         mem_backup = self.tgn.memory.backup_memory()
         with torch.no_grad():
             tgn = self.tgn.eval()
             # use existing neighbor finder
             pos_prob, neg_prob = tgn.compute_edge_probabilities(
-                data.sources,
-                data.destinations,
-                data.sources,
-                data.timestamps,
-                data.edge_idxs,
+                test_data.sources,
+                test_data.destinations,
+                test_data.sources,
+                test_data.timestamps,
+                test_data.edge_idxs,
                 args.n_neighbors
             )
         self.tgn.memory.restore_memory(mem_backup)
         return pos_prob
+

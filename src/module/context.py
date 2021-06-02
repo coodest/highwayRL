@@ -37,7 +37,7 @@ class Context:
     # env
     total_frames = 1e7
     env_type = "atari"
-    env_name = "Pong"
+    env_name = "Riverraid"
     max_episode_steps = 108000
     max_random_noops = 30
     num_action_repeats = 2
@@ -45,9 +45,12 @@ class Context:
     num_action = None
 
     # agent
+    log_every_episode = 1
     # tgn
     tgn = TGNArgs
+    update_interval = 1  # in seconds
     # graph memory
+    inference_batch_size = 10
     obs_min_dis = 2
     cell_size = 1 * obs_min_dis
     propagations = 20

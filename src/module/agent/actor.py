@@ -1,15 +1,16 @@
 from src.module.context import Profile as P
 from src.util.tools import *
-from src.util.grpc.communication import *
+from multiprocessing import Pool, Process, Value, Queue, Lock
 
 
 class Actor:
-    def __init__(self, id, env):
+    def __init__(self, id, env, inference_queue, actor_queue: Queue):
         self.id = id  # actor identifier
         self.num_episode = 0
-        self.policy_client = Client(P.server_address)
         self.env = env
         self.fps = 0
+        self.inference_queue = inference_queue
+        self.actor_queue =actor_queue
 
     def is_testing_actor(self):
         """
@@ -20,9 +21,10 @@ class Actor:
     def get_action(self, last_obs, pre_action, obs, reward, is_first=False):
         # query action from policy
         if is_first:
-            action = self.policy_client.comm(last_obs, pre_action, obs, reward, add=False)
+            self.inference_queue.put([self.id, last_obs, pre_action, obs, reward, False])
         else:
-            action = self.policy_client.comm(last_obs, pre_action, obs, reward, add=not self.is_testing_actor())
+            self.inference_queue.put([self.id, last_obs, pre_action, obs, reward, not self.is_testing_actor()])
+        action = self.actor_queue.get(timeout=10)
 
         if Funcs.rand_prob() - 0.5 > (self.id / (P.num_actor - 1)):
             # epsilon-greedy
@@ -63,5 +65,7 @@ class Actor:
                 # 5. done ops
                 if done:
                     self.fps = epi_step / (time.time() - start_time)
+                    if self.is_testing_actor() and self.num_episode % P.log_every_episode == 0:
+                        Logger.log(f"R: {total_reward}, fps: {self.fps}")
                     break
             self.num_episode += 1
