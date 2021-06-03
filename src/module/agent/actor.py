@@ -1,6 +1,7 @@
 from src.module.context import Profile as P
 from src.util.tools import *
 from multiprocessing import Pool, Process, Value, Queue, Lock
+from collections import deque
 
 
 class Actor:
@@ -8,9 +9,10 @@ class Actor:
         self.id = id  # actor identifier
         self.num_episode = 0
         self.env = env
-        self.fps = 0
+        self.fps = deque(maxlen=10)
         self.inference_queue = inference_queue
         self.actor_queue =actor_queue
+        self.episodic_reward = deque(maxlen=10)
 
     def is_testing_actor(self):
         """
@@ -64,8 +66,7 @@ class Actor:
 
                 # 5. done ops
                 if done:
-                    self.fps = epi_step / (time.time() - start_time)
-                    if self.is_testing_actor() and self.num_episode % P.log_every_episode == 0:
-                        Logger.log(f"R: {total_reward}, fps: {self.fps}")
+                    self.fps.append( epi_step / (time.time() - start_time) )
+                    self.episodic_reward.append(total_reward)
                     break
             self.num_episode += 1

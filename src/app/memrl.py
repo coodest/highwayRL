@@ -1,8 +1,6 @@
 from src.module.context import Profile as P
 from src.util.tools import *
-from multiprocessing import Pool, Process, Value, Queue, Lock
-from src.module.agent.transition.prob_tgn import ProbTGN
-from src.module.agent.memory.graph import Graph
+from multiprocessing import Process, Value, Queue
 
 
 class MemRL:
@@ -69,7 +67,6 @@ class MemRL:
     def create_env():
         if P.env_type == "atari":
             from src.module.env.atari import Atari
-
             return Atari.make_env()
 
 

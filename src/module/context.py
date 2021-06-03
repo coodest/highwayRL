@@ -45,27 +45,22 @@ class Context:
     num_action = None
 
     # agent
-    log_every_episode = 1
+    num_actor = 4  # <= os.cpu_count()
     # tgn
     tgn = TGNArgs
-    update_interval = 1  # in seconds
     # graph memory
-    inference_batch_size = 10
-    obs_min_dis = 2
+    obs_min_dis = 0.5
     cell_size = 1 * obs_min_dis
     propagations = 20
     simulate_steps = 30
-    num_actor = 4
     ucb1_c = 2
-    max_sim_step = 4
-    server_address = "[::]:8809"
 
 
 class Profile(Context):
-    B = Context
+    C = Context
     profile_a = "atari"
     profile = profile_a
 
     if profile == "atari":
-        B.tgn.memory_dim = 16
-        num_action = 18
+        C.tgn.memory_dim = 16
+        C.num_action = 18

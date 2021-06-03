@@ -4,7 +4,8 @@ from src.module.context import Profile as P
 
 class Projector:
     def __init__(self):
-        self.device = torch.device('cuda:{}'.format(0) if torch.cuda.is_available() else 'cpu')
+        # self.device = torch.device('cuda:{}'.format(0) if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device("cpu")
 
     def project(self, obs):
         pass
