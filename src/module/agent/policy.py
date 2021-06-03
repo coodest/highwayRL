@@ -26,7 +26,7 @@ class Policy:
             for _ in range(P.num_actor):
                 info = self.inference_queue.get()
                 actor_ids.append(info[0])
-                infos.append(info[1:])
+                infos.append(info)
             with Pool(os.cpu_count()) as pool:
                 actions = pool.map(Policy.get_action, infos)
             for actor_id in actor_ids:
@@ -56,7 +56,8 @@ class Policy:
 
     @staticmethod
     def get_action(info):
-        last_obs, pre_action, obs, reward, add = info
+        actor_id, last_obs, pre_action, obs, reward, add = info
+        return actor_id
         # 1. add transition to graph memory
         if add:
             Policy.graph.add(last_obs, pre_action, obs, reward)
