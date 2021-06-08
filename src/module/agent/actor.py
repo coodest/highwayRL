@@ -27,7 +27,6 @@ class Actor:
         else:
             self.inference_queue.put([self.id, last_obs, pre_action, obs, reward, not self.is_testing_actor()])
         action = self.actor_queue.get(timeout=10)
-        Logger.log(f"{self.} {}")
 
         if Funcs.rand_prob() - 0.5 > (self.id / (P.num_actor - 1)):
             # epsilon-greedy

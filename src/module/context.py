@@ -45,7 +45,7 @@ class Context:
     num_action = None
 
     # agent
-    num_actor = 4  # <= os.cpu_count()
+    num_actor = 2  # <= os.cpu_count()
     # tgn
     tgn = TGNArgs
     # graph memory

@@ -1,19 +1,23 @@
 from src.util.tools import *
+from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
+
+class Test:
+    m = Manager()
+    a = m.dict()
+
+    def t(self):
+        with Pool(4) as pool:
+            pool.map(Test.aa, [1,2,3,4])
 
 
-def a(x):
-    if x:
-        print("yes")
-    else:
-        print("123")
+    @staticmethod
+    def aa(id):
+        Test.a[id] = 10
 
+        for i in Test.a.keys():
+            print(Test.a[i])
 
-def b():
-    return True
-
-
-c = 3
 
 if __name__ == "__main__":
-    a(x=c == 3)
-
+    test = Test()
+    test.t()

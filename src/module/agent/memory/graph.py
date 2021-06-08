@@ -1,116 +1,119 @@
 from src.util.tools import *
-from src.module.agent.memory.projector import *
+from src.module.context import Profile as P
+from src.module.agent.memory.projector import RandomProjector
 from src.module.agent.memory.observation_indexer import ObservationIndexer
+from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
 
 
 class Graph:
-    def __init__(self):
-        self.projector = RandomProjector()
-        self.frames = 0
+    manager = Manager()
 
-        self.node_feat_to_id = ObservationIndexer()
-        self.edge_counter = Counter()
+    node_feats = manager.list()
+    node_reward = manager.list()
+    node_visit = manager.list()  # for LRU
+    node_value = manager.list()
+    edge_feats = manager.list()
+    node_type = manager.list()
 
-        self.node_feats = []
-        self.node_reward = []
-        self.node_visit = []  # for LRU
-        self.node_value = []
-        self.edge_feats = []
-        self.node_type = []
+    frames = Value('d', 0)
 
-        self.src = []
-        self.dst = []
-        self.ts = []
-        self.idx = []
-        self.label = []
-        self.his_edges = dict()
+    src = manager.list()
+    dst = manager.list()
+    ts = manager.list()
+    idx = manager.list()
+    label = manager.list()
+    his_edges = manager.dict() 
 
-    def project(self, obs):
-        return self.projector.project(obs)
+    node_feat_to_id = ObservationIndexer
 
-    def get_node_id(self, obs, reward=0, action=None, not_add=False):
+    @staticmethod
+    def get_node_id(obs, reward=0, action=None, not_add=False):
         if action is not None:
             node_feat = np.concatenate([
-                self.project(obs),
+                RandomProjector.project(obs),
                 100 * P.obs_min_dis * Funcs.one_hot(action, P.num_action)
             ], axis=0)
             node_type = 1
         else:
             node_feat = np.concatenate([
-                self.project(obs),
+                RandomProjector.project(obs),
                 np.zeros(P.num_action)
             ], axis=0)
             node_type = 0
-        node_id, add_node = self.node_feat_to_id.get_index(node_feat)
-
-        if add_node:  # if it is a new node
-            self.node_feats.append(node_feat)
-            self.node_reward.append(reward)  # if from node is new, it will be the first node with 0 reward
-            self.node_visit.append(1)  # init visit state for later tree search
-            self.node_value.append(0)
-            self.node_type.append(node_type)
-        else:
-            self.node_visit[node_id] += 1
-            self.node_reward[node_id] = (self.node_reward[node_id] * (self.node_visit[node_id] - 1) + reward) / self.node_visit[node_id]  # update reward
+        node_id = Graph.node_feat_to_id.get_index(node_feat)
 
         if not_add:
-            assert add_node is False
+            assert node_id < len(Graph.node_feats)
+
+        if node_id == len(Graph.node_feats):  # if it is a new node
+            Graph.node_feats.append(node_feat)
+            Graph.node_reward.append(reward)  # if from node is new, it will be the first node with 0 reward
+            Graph.node_visit.append(1)  # init visit state for later tree search
+            Graph.node_value.append(0)
+            Graph.node_type.append(node_type)
+        else:
+            Graph.node_visit[node_id] += 1
+            Graph.node_reward[node_id] = (Graph.node_reward[node_id] * (Graph.node_visit[node_id] - 1) + reward) / Graph.node_visit[node_id]  # update reward
+
         return node_id
 
-    def add_edge(self, from_node_id, to_node_id):
-        edge_id = self.edge_counter.get_index()
+    @staticmethod
+    def add_edge(from_node_id, to_node_id):
+        edge_id = len(Graph.src)
         action_edge_feat = np.zeros(P.num_action)
-        self.edge_feats.append(action_edge_feat)
+        Graph.edge_feats.append(action_edge_feat)
 
-        if from_node_id not in self.his_edges:
-            self.his_edges[from_node_id] = [to_node_id]
-        elif to_node_id not in self.his_edges[from_node_id]:
-            self.his_edges[from_node_id].append(to_node_id)
+        if from_node_id not in Graph.his_edges.keys():
+            Graph.his_edges[from_node_id] = [to_node_id]
+        elif to_node_id not in Graph.his_edges[from_node_id]:
+            Graph.his_edges[from_node_id].append(to_node_id)
 
-        self.src.append(from_node_id)
-        self.dst.append(to_node_id)
-        self.ts.append(edge_id)
-        self.idx.append(edge_id)
-        self.label.append(0)  # all edges are label 0
+        Graph.src.append(from_node_id)
+        Graph.dst.append(to_node_id)
+        Graph.ts.append(edge_id)
+        Graph.idx.append(edge_id)
+        Graph.label.append(0)  # all edges are label 0
 
-    def add(self, last_obs, action, obs, reward):
+    @staticmethod
+    def add(last_obs, action, obs, reward):
         """
         add transition to current increment
         """
         # 1. store feature of src node and query/return its id
-        from_node_id = self.get_node_id(last_obs)
+        from_node_id = Graph.get_node_id(last_obs)
         for a in range(P.num_action):  # add action nodes from src node
-            action_node_id = self.get_node_id(last_obs, action=a)
-            self.add_edge(from_node_id, action_node_id)
+            action_node_id = Graph.get_node_id(last_obs, action=a)
+            Graph.add_edge(from_node_id, action_node_id)
 
         # 2. store feature of dst node and query/return its id
-        to_node_id = self.get_node_id(obs, reward=reward)
+        to_node_id = Graph.get_node_id(obs, reward=reward)
         # add action nodes from dst node
         for a in range(P.num_action):
-            action_node_id = self.get_node_id(obs, action=a)
-            self.add_edge(to_node_id, action_node_id)
+            action_node_id = Graph.get_node_id(obs, action=a)
+            Graph.add_edge(to_node_id, action_node_id)
 
         # 3. add edge of the transition from src to dst
-        current_action_node_id = self.get_node_id(last_obs, action=action, not_add=True)
-        self.add_edge(current_action_node_id, to_node_id)
+        current_action_node_id = Graph.get_node_id(last_obs, action=action, not_add=True)
+        Graph.add_edge(current_action_node_id, to_node_id)
 
         # 4. update frame
-        self.frames += P.num_action_repeats
+        Graph.frames.value += P.num_action_repeats
 
         # 5. check for update policy
         update = False
-        if len(self.idx) >= P.tgn.bs:
+        if len(Graph.idx) >= P.tgn.bs:
             update = True
 
         return update
 
-    def get_data(self):
-        nodes = np.unique(self.src + self.dst)
-        assert np.max(nodes) < len(self.node_feats)
+    @staticmethod
+    def get_data():
+        nodes = np.unique(Graph.src + Graph.dst)
+        assert np.max(nodes) < len(Graph.node_feats)
 
-        src, dst, ts, idx, label, node_feats, edge_feats = self.src, self.dst, self.ts, self.idx, self.label, self.node_feats, self.edge_feats
+        src, dst, ts, idx, label, node_feats, edge_feats = Graph.src, Graph.dst, Graph.ts, Graph.idx, Graph.label, Graph.node_feats, Graph.edge_feats
 
         # empty current increment
-        self.src, self.dst, self.ts, self.idx, self.label = [], [], [], [], []
+        Graph.src, Graph.dst, Graph.ts, Graph.idx, Graph.label = Graph.manager.list(), Graph.manager.list(), Graph.manager.list(), Graph.manager.list(), Graph.manager.list()
 
         return src, dst, ts, idx, label, node_feats, edge_feats

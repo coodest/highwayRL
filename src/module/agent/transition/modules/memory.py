@@ -1,4 +1,4 @@
-import torch
+from src.util.torch_util import *
 from torch import nn
 
 from collections import defaultdict
@@ -6,9 +6,15 @@ from copy import deepcopy
 
 
 class Memory(nn.Module):
-
-    def __init__(self, n_nodes, memory_dimension, input_dimension, message_dimension=None,
-                 device="cpu", combination_method='sum'):
+    def __init__(
+        self,
+        n_nodes,
+        memory_dimension,
+        input_dimension,
+        message_dimension=None,
+        device="cpu",
+        combination_method="sum",
+    ):
         super(Memory, self).__init__()
         self.n_nodes = n_nodes
         self.memory_dimension = memory_dimension
@@ -25,16 +31,15 @@ class Memory(nn.Module):
 
     def __init_memory__(self):
         """
-    Initializes the memory to all zeros. It should be called at the start of each epoch.
-    """
+        Initializes the memory to all zeros. It should be called at the start of each epoch.
+        """
         # Treat memory as parameter so that it is saved and loaded together with the model
         self.memory = nn.Parameter(
             torch.zeros((self.n_nodes, self.memory_dimension)).to(self.device),
-            requires_grad=False
+            requires_grad=False,
         )
         self.last_update = nn.Parameter(
-            torch.zeros(self.n_nodes).to(self.device),
-            requires_grad=False
+            torch.zeros(self.n_nodes).to(self.device), requires_grad=False
         )
 
         self.messages = defaultdict(list)
@@ -42,12 +47,18 @@ class Memory(nn.Module):
     def increase_memory(self, n_nodes):
         diff = n_nodes - self.n_nodes
         self.memory = nn.Parameter(
-            torch.cat((self.memory, torch.zeros((diff, self.memory_dimension)).to(self.device)), 0),
-            requires_grad=False
+            torch.cat(
+                (
+                    self.memory,
+                    torch.zeros((diff, self.memory_dimension)).to(self.device),
+                ),
+                0,
+            ),
+            requires_grad=False,
         )
         self.last_update = nn.Parameter(
             torch.cat((self.last_update, torch.zeros(diff).to(self.device)), 0),
-            requires_grad=False
+            requires_grad=False,
         )
 
     def store_raw_messages(self, nodes, node_id_to_messages):
@@ -71,7 +82,10 @@ class Memory(nn.Module):
         return self.memory.data.clone(), self.last_update.data.clone(), messages_clone
 
     def restore_memory(self, memory_backup):
-        self.memory.data, self.last_update.data = memory_backup[0].clone(), memory_backup[1].clone()
+        self.memory.data, self.last_update.data = (
+            memory_backup[0].clone(),
+            memory_backup[1].clone(),
+        )
 
         self.messages = defaultdict(list)
         for k, v in memory_backup[2].items():

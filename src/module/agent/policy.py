@@ -2,16 +2,19 @@ from src.module.context import Profile as P
 from src.util.tools import *
 from src.module.agent.transition.prob_tgn import ProbTGN
 from src.module.agent.memory.graph import Graph
+from src.module.agent.memory.projector import RandomProjector
 from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
 
 import math
 
 
 class Policy:
-    graph = Graph()
+    graph_lock = Lock()
     prob_func = ProbTGN()
+
     manager = Manager()
-    MCTS_n = manager.list()
+    MCTS_n = manager.dict()
+    mcts_lock = Lock()
 
     def __init__(self, inference_queue, actor_queues, finish):
         self.inference_queue = inference_queue
@@ -21,32 +24,31 @@ class Policy:
     def inference(self):
         last_record = time.time()
         while True:
-            actor_ids = list()
             infos = list()
             for _ in range(P.num_actor):
                 info = self.inference_queue.get()
-                actor_ids.append(info[0])
                 infos.append(info)
+            Projected_infos = RandomProjector.batch_project(infos)
             with Pool(os.cpu_count()) as pool:
-                actions = pool.map(Policy.get_action, infos)
-            for actor_id in actor_ids:
-                self.actor_queues[actor_id].put(actions[actor_id])
+                results = pool.map(Policy.get_action, Projected_infos)
+            for actor_id, action in results:
+                self.actor_queues[actor_id].put(action)
             
-            # if time.time() - last_record > 10:
-            #     Logger.log("frames: {} {} {}".format(
-            #         self.graph.frames, len(self.graph.node_feats),
-            #         len(self.graph.edge_feats)
-            #     ))
-            #     last_record = time.time()
+            if time.time() - last_record > 2:
+                Logger.log("frames: {} {} {}".format(
+                    Graph.frames.value, len(Graph.node_feats),
+                    len(Graph.edge_feats)
+                ))
+                last_record = time.time()
             
-            if self.graph.frames > P.total_frames:
+            if Graph.frames.value > P.total_frames:
                 with self.finish.get_lock():
                     self.finish.value = True
                 break
             else:
                 pass
                 # Logger.log("skip train")
-                # data = self.graph.get_data()
+                # data = Graph.get_data()
                 # self.prob_func.train(data)
 
     @staticmethod
@@ -57,26 +59,30 @@ class Policy:
     @staticmethod
     def get_action(info):
         actor_id, last_obs, pre_action, obs, reward, add = info
-        return actor_id
-        # 1. add transition to graph memory
-        if add:
-            Policy.graph.add(last_obs, pre_action, obs, reward)
+        try:
+            # 1. add transition to graph memory
+            if add:
+                with Policy.graph_lock:
+                    Graph.add(last_obs, pre_action, obs, reward)
 
-        # 2. find current/root node
-        root = Policy.graph.get_node_id(obs)
-        if root not in Policy.graph.his_edges:  # can not give action for previously never interacted obs
-            return None
+            # 2. find current/root node
+            with Policy.graph_lock:
+                root = Graph.get_node_id(obs)
+            if root not in Graph.his_edges:  # can not give action for previously never interacted obs
+                return actor_id, None
 
-        # 3. use UCB1 formula to propagate value
-        Policy.update_children(root)
+            # 3. use UCB1 formula to propagate value
+            Policy.update_children(root)
 
-        # 4. for training actor: select the child with max UCB1 and
-        # return corresponding action;
-        # for testing actor: select the child with max value and
-        # return corresponding action
-        child_id, action = Policy.get_max_child(root, value_type="value")
-
-        return action
+            # 4. for training actor: select the child with max UCB1 and
+            # return corresponding action;
+            # for testing actor: select the child with max value and
+            # return corresponding action
+            child_id, action = Policy.get_max_child(root, value_type="value")
+            return actor_id, action
+        except Exception:
+            Funcs.trace_exception()
+            return actor_id, None
 
     @staticmethod
     def update_children(root):
@@ -94,11 +100,11 @@ class Policy:
             while current_node is not None:
                 simulate_steps -= 1
                 if simulate_steps <= 0:
-                    total_reward += Policy.graph.node_value[current_node]  # only obs node has reward
+                    total_reward += Graph.node_value[current_node]  # only obs node has reward
                     visit_list.append(current_node)
                     break
                 else:
-                    total_reward += Policy.graph.node_reward[current_node]  # only obs node has reward
+                    total_reward += Graph.node_reward[current_node]  # only obs node has reward
                     visit_list.append(current_node)
                 action_node, _ = Policy.get_max_child(current_node)  # action node
                 visit_list.append(action_node)
@@ -113,41 +119,44 @@ class Policy:
                     if last_node in Policy.MCTS_n:
                         if Policy.MCTS_n[last_node] == 1:  # if UCB1 profiles just expand to last node
                             break
-                Policy.graph.node_value[node] += total_reward
-                if node not in Policy.MCTS_n:
-                    Policy.MCTS_n[node] = 1
-                else:
-                    Policy.MCTS_n[node] += 1
+                with Policy.graph_lock:
+                    Graph.node_value[node] += total_reward
+                with Policy.mcts_lock:
+                    if node not in Policy.MCTS_n:
+                        Policy.MCTS_n[node] = 1
+                    else:
+                        Policy.MCTS_n[node] += 1
                 last_node = node
 
         # update node value
-        for node in Policy.MCTS_n:
-            Policy.graph.node_value[node] /= Policy.MCTS_n[node]
+        for node in Policy.MCTS_n.keys():
+            with Policy.graph_lock:
+                Graph.node_value[node] /= Policy.MCTS_n[node]
 
     @staticmethod
     def get_max_child(root, value_type="ucb1"):
         max_value = - float("inf")
         child_index = None
         child_id = None
-        if root in Policy.graph.his_edges:
-            # trans_prob = Policy.get_transition_prob(root, Policy.graph.his_edges[root])
+        if root in Graph.his_edges:
+            # trans_prob = Policy.get_transition_prob(root, Graph.his_edges[root])
             # trans_prob = trans_prob.squeeze(-1).cpu().detach().numpy().tolist()
-            for a in range(len(Policy.graph.his_edges[root])):
+            for a in range(len(Graph.his_edges[root])):
                 if value_type == "ucb1":
-                    # value = trans_prob[a] * Policy.get_ucb1(root, Policy.graph.his_edges[root][a])  # todo
-                    value = Policy.get_ucb1(root, Policy.graph.his_edges[root][a])
+                    # value = trans_prob[a] * Policy.get_ucb1(root, Graph.his_edges[root][a])  # todo
+                    value = Policy.get_ucb1(root, Graph.his_edges[root][a])
                 else:
-                    # value = trans_prob[a] * self.get_avg_value(self.graph.his_edges[root][a])
-                    value = Policy.get_avg_value(Policy.graph.his_edges[root][a])
+                    # value = trans_prob[a] * self.get_avg_value(Graph.his_edges[root][a])
+                    value = Policy.get_avg_value(Graph.his_edges[root][a])
                 if value > max_value:
                     max_value = value
                     child_index = a
-                    child_id = Policy.graph.his_edges[root][a]
+                    child_id = Graph.his_edges[root][a]
                 elif value == max_value:  # random selection among save-value nodes
                     if Funcs.rand_prob() > 0.5:
                         max_value = value
                         child_index = a
-                        child_id = Policy.graph.his_edges[root][a]
+                        child_id = Graph.his_edges[root][a]
         return child_id, child_index
 
     @staticmethod
@@ -155,7 +164,7 @@ class Policy:
         if child not in Policy.MCTS_n:  # n == 0
             return float("inf")
         n = Policy.MCTS_n[child]
-        v = Policy.graph.node_value[child] / n
+        v = Graph.node_value[child] / n
         if root not in Policy.MCTS_n:  # N == 0, such as loop structure in the state graph
             N = 1  # make sure ucb1 >= 0
         else:
@@ -165,6 +174,6 @@ class Policy:
 
     @staticmethod
     def get_avg_value(root):
-        return Policy.graph.node_value[root]  # return the reward form the env
+        return Graph.node_value[root]  # return the reward form the env
 
     

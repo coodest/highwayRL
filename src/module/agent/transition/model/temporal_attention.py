@@ -1,4 +1,4 @@
-import torch
+from src.util.torch_util import *
 from torch import nn
 
 from src.module.agent.transition.utils.utils import MergeLayer
@@ -10,7 +10,16 @@ class TemporalAttentionLayer(torch.nn.Module):
      its neighbors and the edge timestamps.
     """
 
-    def __init__(self, n_node_features, n_neighbors_features, n_edge_features, time_dim, output_dimension, n_head=2, dropout=0.1):
+    def __init__(
+        self,
+        n_node_features,
+        n_neighbors_features,
+        n_edge_features,
+        time_dim,
+        output_dimension,
+        n_head=2,
+        dropout=0.1,
+    ):
         super(TemporalAttentionLayer, self).__init__()
 
         self.n_head = n_head
@@ -21,17 +30,27 @@ class TemporalAttentionLayer(torch.nn.Module):
         self.query_dim = n_node_features + time_dim
         self.key_dim = n_neighbors_features + time_dim + n_edge_features
 
-        self.merger = MergeLayer(self.query_dim, n_node_features, n_node_features, output_dimension)
+        self.merger = MergeLayer(
+            self.query_dim, n_node_features, n_node_features, output_dimension
+        )
 
         self.multi_head_target = nn.MultiheadAttention(
             embed_dim=self.query_dim,
             kdim=self.key_dim,
             vdim=self.key_dim,
             num_heads=n_head,
-            dropout=dropout
+            dropout=dropout,
         )
 
-    def forward(self, src_node_features, src_time_features, neighbors_features, neighbors_time_features, edge_features, neighbors_padding_mask):
+    def forward(
+        self,
+        src_node_features,
+        src_time_features,
+        neighbors_features,
+        neighbors_time_features,
+        edge_features,
+        neighbors_padding_mask,
+    ):
         """
         "Temporal attention model
         :param src_node_features: float Tensor of shape [batch_size, n_node_features]
@@ -49,7 +68,9 @@ class TemporalAttentionLayer(torch.nn.Module):
         src_node_features_unrolled = torch.unsqueeze(src_node_features, dim=1)
 
         query = torch.cat([src_node_features_unrolled, src_time_features], dim=2)
-        key = torch.cat([neighbors_features, edge_features, neighbors_time_features], dim=2)
+        key = torch.cat(
+            [neighbors_features, edge_features, neighbors_time_features], dim=2
+        )
 
         # print(neighbors_features.shape, edge_features.shape, neighbors_time_features.shape)
         # Reshape tensors so to expected shape by multi head attention
@@ -67,8 +88,7 @@ class TemporalAttentionLayer(torch.nn.Module):
         # print(query.shape, key.shape)
 
         attn_output, attn_output_weights = self.multi_head_target(
-            query=query, key=key, value=key,
-            key_padding_mask=neighbors_padding_mask
+            query=query, key=key, value=key, key_padding_mask=neighbors_padding_mask
         )
 
         # mask = torch.unsqueeze(neighbors_padding_mask, dim=2)  # mask [B, N, 1]
@@ -83,7 +103,9 @@ class TemporalAttentionLayer(torch.nn.Module):
         # then added or concatenated to the original source node features and then fed into an MLP.
         # This means that an all zero vector is not used.
         attn_output = attn_output.masked_fill(invalid_neighborhood_mask, 0)
-        attn_output_weights = attn_output_weights.masked_fill(invalid_neighborhood_mask, 0)
+        attn_output_weights = attn_output_weights.masked_fill(
+            invalid_neighborhood_mask, 0
+        )
 
         # Skip connection with temporal attention over neighborhood and the features of the node itself
         attn_output = self.merger(attn_output, src_node_features)
