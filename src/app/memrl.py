@@ -22,51 +22,63 @@ class MemRL:
 
         # 3. prepare learner and actor
         finish = Value("b", False)
-        inference_queue = Queue()
-        actor_queues = list()
+        actor_learner_queues = list()
         for _ in range(P.num_actor):
-            actor_queues.append(Queue())
+            actor_learner_queues.append(Queue())
+        learner_actor_queues = list()
+        for _ in range(P.num_actor):
+            learner_actor_queues.append(Queue())
 
         Process(
-            target=MemRL.policy_run,
-            args=(inference_queue, actor_queues, finish),
+            target=MemRL.learner_run,
+            args=(actor_learner_queues, learner_actor_queues, finish),
         ).start()
         for id in range(P.num_actor):
             Process(
                 target=MemRL.actor_run,
-                args=(id, inference_queue, actor_queues[id], finish),
+                args=(id, actor_learner_queues[id], learner_actor_queues[id], finish),
             ).start()
 
     @staticmethod
-    def policy_run(inference_queue, actor_queues, finish):
+    def learner_run(actor_learner_queues, learner_actor_queues, finish):
         # 1. make model-based agent
         from src.module.agent.policy import Policy
-        policy = Policy(inference_queue, actor_queues, finish)
 
         # 2. start inference loop
-        policy.inference()  # one inference iteration 
-        Logger.log("policy exit.")
+        try:
+            Policy.inference(
+                actor_learner_queues, learner_actor_queues, finish
+            )  # one inference iteration
+        except Exception:
+            Funcs.trace_exception()
+            finish.value = True
+
+        Logger.log("learner exit.")
 
     @staticmethod
-    def actor_run(id, inference_queue, actor_queue, finish):
+    def actor_run(id, actor_learner_queues, learner_actor_queues, finish):
         # 1. make env and actor
         from src.module.agent.actor import Actor
+
         env = MemRL.create_env()
-        actor = Actor(id, env, inference_queue, actor_queue)
+        actor = Actor(id, env, actor_learner_queues, learner_actor_queues)
 
         # 2. start interaction loop (actor loop)
         while True:
             try:
-                actor.interact()  
+                actor.interact()
             except Exception:
                 if finish.value:
                     Logger.log(f"actor{id} exit.")
                     return
+                else:
+                    Funcs.trace_exception()
 
     @staticmethod
     def create_env():
         if P.env_type == "atari":
             from src.module.env.atari import Atari
+
             return Atari.make_env()
 
 

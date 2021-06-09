@@ -3,7 +3,8 @@ from src.module.context import Profile as P
 
 
 class Projector:
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
 
     @staticmethod
     def project(obs):
@@ -35,9 +36,11 @@ class RandomProjector(Projector):
 
     @staticmethod
     def batch_project(infos):
-        # info is [actor_id, last_obs, pre_action, obs, reward, add] 
-        batch_last_obs = [x[1] for x in infos]
-        batch_obs = [x[3] for x in infos]
+        # info is [last_obs, pre_action, obs, reward, add] 
+        last_obs_ind = 0
+        obs_ind = 2
+        batch_last_obs = [x[last_obs_ind] for x in infos]
+        batch_obs = [x[obs_ind] for x in infos]
         batch = np.concatenate([batch_last_obs, batch_obs], axis=0)
         
         input = None
@@ -47,15 +50,10 @@ class RandomProjector(Projector):
         output = output.cpu().detach().numpy().tolist()
 
         for id in range(len(infos)):
-            infos[id][1] = output[id]
-            infos[id][3] = output[len(infos) + id]
-
-        print(infos[0])
-        exit(0)
+            infos[id][last_obs_ind] = output[id]
+            infos[id][obs_ind] = output[len(infos) + id]
 
         return infos
-
-        
 
 
 class CNNProjector(Projector):

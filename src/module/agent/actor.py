@@ -5,13 +5,13 @@ from collections import deque
 
 
 class Actor:
-    def __init__(self, id, env, inference_queue, actor_queue: Queue):
+    def __init__(self, id, env, actor_learner_queue: Queue, learner_actor_queues: Queue):
         self.id = id  # actor identifier
         self.num_episode = 0
         self.env = env
         self.fps = deque(maxlen=10)
-        self.inference_queue = inference_queue
-        self.actor_queue =actor_queue
+        self.actor_learner_queue = actor_learner_queue
+        self.learner_actor_queues = learner_actor_queues
         self.episodic_reward = deque(maxlen=10)
 
     def is_testing_actor(self):
@@ -23,10 +23,10 @@ class Actor:
     def get_action(self, last_obs, pre_action, obs, reward, is_first=False):
         # query action from policy
         if is_first:
-            self.inference_queue.put([self.id, last_obs, pre_action, obs, reward, False])
+            self.actor_learner_queue.put([last_obs, pre_action, obs, reward, False])
         else:
-            self.inference_queue.put([self.id, last_obs, pre_action, obs, reward, not self.is_testing_actor()])
-        action = self.actor_queue.get(timeout=10)
+            self.actor_learner_queue.put([last_obs, pre_action, obs, reward, not self.is_testing_actor()])
+        action = self.learner_actor_queues.get(timeout=10)
 
         if Funcs.rand_prob() - 0.5 > (self.id / (P.num_actor - 1)):
             # epsilon-greedy
@@ -66,7 +66,8 @@ class Actor:
 
                 # 5. done ops
                 if done:
-                    self.fps.append( epi_step / (time.time() - start_time) )
+                    self.fps.append( epi_step * P.num_action_repeats / (time.time() - start_time) )
                     self.episodic_reward.append(total_reward)
+                    Logger.log(f"|actor| R: {self.episodic_reward[-1]}")
                     break
             self.num_episode += 1

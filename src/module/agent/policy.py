@@ -16,73 +16,78 @@ class Policy:
     MCTS_n = manager.dict()
     mcts_lock = Lock()
 
-    def __init__(self, inference_queue, actor_queues, finish):
-        self.inference_queue = inference_queue
-        self.actor_queues = actor_queues
-        self.finish = finish
+    actor_learner_queues = None
+    learner_actor_queues = None
+    finish = None
 
-    def inference(self):
-        last_record = time.time()
+    @staticmethod
+    def inference(actor_learner_queues, learner_actor_queues, finish):
+        Policy.actor_learner_queues = actor_learner_queues
+        Policy.learner_actor_queues = learner_actor_queues
+        Policy.finish = finish
+
+        for id in range(P.num_actor):
+            Process(
+                target=Policy.get_action,
+                args=[id],
+            ).start()
+
         while True:
-            infos = list()
-            for _ in range(P.num_actor):
-                info = self.inference_queue.get()
-                infos.append(info)
-            Projected_infos = RandomProjector.batch_project(infos)
-            with Pool(os.cpu_count()) as pool:
-                results = pool.map(Policy.get_action, Projected_infos)
-            for actor_id, action in results:
-                self.actor_queues[actor_id].put(action)
-            
-            if time.time() - last_record > 2:
-                Logger.log("frames: {} {} {}".format(
-                    Graph.frames.value, len(Graph.node_feats),
-                    len(Graph.edge_feats)
-                ))
-                last_record = time.time()
-            
-            if Graph.frames.value > P.total_frames:
-                with self.finish.get_lock():
-                    self.finish.value = True
+            time.sleep(1)
+            # data = Graph.get_data()
+            # self.prob_func.train(data)
+            if Policy.finish.value:
                 break
-            else:
-                pass
-                # Logger.log("skip train")
-                # data = Graph.get_data()
-                # self.prob_func.train(data)
-
+                
     @staticmethod
     def get_transition_prob(src, dsts):
         info = [src, dsts]
         return Policy.prob_func.test(info)
 
     @staticmethod
-    def get_action(info):
-        actor_id, last_obs, pre_action, obs, reward, add = info
-        try:
-            # 1. add transition to graph memory
-            if add:
-                with Policy.graph_lock:
+    def get_action(index):
+        last_time = time.time()
+        last_frames = Graph.frames.value
+        while True:
+            if index == 0 and time.time() - last_time > 5:
+                Logger.log(f"|learner| fps: {(Graph.frames.value - last_frames) / (time.time() - last_time)} nodes: {len(Graph.node_feats)}")
+                last_time = time.time()
+                last_frames = Graph.frames.value
+
+            if Graph.frames.value > P.total_frames:
+                if Policy.finish.value == False:
+                    with Policy.finish.get_lock():
+                        Policy.finish.value = True
+                break
+            
+            try:
+                info = Policy.actor_learner_queues[index].get()
+                info = RandomProjector.batch_project([info])[0]
+                last_obs, pre_action, obs, reward, add = info
+                
+                # 1. add transition to graph memory
+                if add:
                     Graph.add(last_obs, pre_action, obs, reward)
-
-            # 2. find current/root node
-            with Policy.graph_lock:
+                
+                # 2. find current/root node
                 root = Graph.get_node_id(obs)
-            if root not in Graph.his_edges:  # can not give action for previously never interacted obs
-                return actor_id, None
+                if root not in Graph.his_edges.keys():  # can not give action for previously never interacted obs
+                    Policy.learner_actor_queues[index].put(None)
+                    continue
 
-            # 3. use UCB1 formula to propagate value
-            Policy.update_children(root)
-
-            # 4. for training actor: select the child with max UCB1 and
-            # return corresponding action;
-            # for testing actor: select the child with max value and
-            # return corresponding action
-            child_id, action = Policy.get_max_child(root, value_type="value")
-            return actor_id, action
-        except Exception:
-            Funcs.trace_exception()
-            return actor_id, None
+                # 3. use UCB1 formula to propagate value
+                Policy.update_children(root)
+                
+                # 4. for training actor: select the child with max UCB1 and
+                # return corresponding action;
+                # for testing actor: select the child with max value and
+                # return corresponding action
+                child_id, action = Policy.get_max_child(root, value_type="value")
+                
+                Policy.learner_actor_queues[index].put(action)
+            except Exception:
+                Funcs.trace_exception()
+                Policy.learner_actor_queues[index].put(None)
 
     @staticmethod
     def update_children(root):
@@ -119,7 +124,7 @@ class Policy:
                     if last_node in Policy.MCTS_n:
                         if Policy.MCTS_n[last_node] == 1:  # if UCB1 profiles just expand to last node
                             break
-                with Policy.graph_lock:
+                with Graph.lock:
                     Graph.node_value[node] += total_reward
                 with Policy.mcts_lock:
                     if node not in Policy.MCTS_n:
@@ -130,7 +135,7 @@ class Policy:
 
         # update node value
         for node in Policy.MCTS_n.keys():
-            with Policy.graph_lock:
+            with Graph.lock:
                 Graph.node_value[node] /= Policy.MCTS_n[node]
 
     @staticmethod
@@ -138,7 +143,7 @@ class Policy:
         max_value = - float("inf")
         child_index = None
         child_id = None
-        if root in Graph.his_edges:
+        if root in Graph.his_edges.keys():
             # trans_prob = Policy.get_transition_prob(root, Graph.his_edges[root])
             # trans_prob = trans_prob.squeeze(-1).cpu().detach().numpy().tolist()
             for a in range(len(Graph.his_edges[root])):

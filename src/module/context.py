@@ -37,20 +37,19 @@ class Context:
     # env
     total_frames = 1e7
     env_type = "atari"
-    env_name = "Riverraid"
+    env_name = "Pong"
     max_episode_steps = 108000
     max_random_noops = 30
-    num_action_repeats = 2
+    num_action_repeats = 4
     render_dir = None
     num_action = None
 
     # agent
-    num_actor = 2  # <= os.cpu_count()
+    num_actor = 4
     # tgn
     tgn = TGNArgs
     # graph memory
     obs_min_dis = 0.5
-    cell_size = 1 * obs_min_dis
     propagations = 20
     simulate_steps = 30
     ucb1_c = 2
