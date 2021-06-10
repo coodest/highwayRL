@@ -1,78 +1,57 @@
 from src.util.tools import *
 from src.module.context import Profile as P
-from src.module.agent.memory.feature_indexer import FeatureIndexer
 from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
 
 
 class Graph:
     manager = Manager()
-    lock = Lock()
-    node_feats = manager.list()
-    node_reward = manager.list()
-    node_visit = manager.list()  # for LRU
-    node_value = manager.list()
-    edge_feats = manager.list()
-    node_type = manager.list()
+
+    node_feats = manager.dict()
+    node_feats_lock = Lock()
+
+    node_reward = manager.dict()
+    node_reward_lock = Lock()
+
+    node_value = manager.dict()
+    node_value_lock = Lock()
 
     frames = Value('d', 0)
 
-    src = manager.list()
-    dst = manager.list()
-    ts = manager.list()
-    idx = manager.list()
-    label = manager.list()
     his_edges = manager.dict()
+    his_edges_lock = Lock()
+
+    cell_to_id = manager.dict()
+    cell_to_id_lock = Lock()
 
     @staticmethod
-    def get_node_id(obs, reward=0, action=None, not_add=False):
-        if action is not None:
-            node_feat = np.concatenate([
-                obs,
-                100 * P.obs_min_dis * Funcs.one_hot(action, P.num_action)
-            ], axis=0)
-            node_type = 1
-        else:
-            node_feat = np.concatenate([
-                obs,
-                np.zeros(P.num_action)
-            ], axis=0)
-            node_type = 0
-        with Graph.lock:
-            node_id = FeatureIndexer.get_index(node_feat)
+    def get_node_id(obs, reward=0):
+        cell_num = [int(i / P.obs_min_dis) for i in obs]
+        cell_hash = Funcs.matrix_hashing(cell_num)
 
-            if not_add:
-                assert node_id < len(Graph.node_feats)
+        with Graph.cell_to_id_lock:
+            if cell_hash not in Graph.cell_to_id.keys():
+                Graph.cell_to_id[cell_hash] = len(Graph.cell_to_id.keys())
+        node_id = Graph.cell_to_id[cell_hash]
+
+        with Graph.node_feats_lock:
+            if node_id not in Graph.node_feats.keys():
+                Graph.node_feats[node_id] = obs
+
+        with Graph.node_reward_lock:
+            if node_id not in Graph.node_reward.keys():
+                Graph.node_reward[node_id] = reward 
         
-            if node_id == len(Graph.node_feats):  # if it is a new node
-                Graph.node_feats.append(node_feat)
-                Graph.node_reward.append(reward)  # if from node is new, it will be the first node with 0 reward
-                Graph.node_visit.append(1)  # init visit state for later tree search
-                Graph.node_value.append(0)
-                Graph.node_type.append(node_type)
-            else:
-                Graph.node_visit[node_id] += 1
-                Graph.node_reward[node_id] = (Graph.node_reward[node_id] * (Graph.node_visit[node_id] - 1) + reward) / Graph.node_visit[node_id]  # update reward
+        with Graph.node_value_lock:
+            if node_id not in Graph.node_value.keys():
+                Graph.node_value[node_id] = reward
+
+        with Graph.his_edges_lock:
+            if node_id not in Graph.his_edges.keys():
+                Graph.his_edges[node_id] = Graph.manager.dict()
+                for a in range(P.num_action):
+                    Graph.his_edges[node_id][a] = Graph.manager.list()
 
         return node_id
-
-    @staticmethod
-    def add_edge(from_node_id, to_node_id):
-        edge_id = len(Graph.src)
-        action_edge_feat = np.zeros(P.num_action)
-        with Graph.lock:
-            Graph.edge_feats.append(action_edge_feat)
-
-            if from_node_id not in Graph.his_edges.keys():
-                Graph.his_edges[from_node_id] = [to_node_id]
-            elif to_node_id not in Graph.his_edges[from_node_id]:
-                Graph.his_edges[from_node_id].append(to_node_id)
-
-
-            Graph.src.append(from_node_id)
-            Graph.dst.append(to_node_id)
-            Graph.ts.append(edge_id)
-            Graph.idx.append(edge_id)
-            Graph.label.append(0)  # all edges are label 0
 
     @staticmethod
     def add(last_obs, action, obs, reward):
@@ -81,34 +60,13 @@ class Graph:
         """
         # 1. store feature of src node and query/return its id
         from_node_id = Graph.get_node_id(last_obs)
-        for a in range(P.num_action):  # add action nodes from src node
-            action_node_id = Graph.get_node_id(last_obs, action=a)
-            Graph.add_edge(from_node_id, action_node_id)
-
-        # 2. store feature of dst node and query/return its id
         to_node_id = Graph.get_node_id(obs, reward=reward)
-        # add action nodes from dst node
-        for a in range(P.num_action):
-            action_node_id = Graph.get_node_id(obs, action=a)
-            Graph.add_edge(to_node_id, action_node_id)
 
-        # 3. add edge of the transition from src to dst
-        current_action_node_id = Graph.get_node_id(last_obs, action=action, not_add=True)
-        Graph.add_edge(current_action_node_id, to_node_id)
+        assert len(Graph.his_edges[from_node_id]) == P.num_action
 
-        # 4. update frame
-        with Graph.lock:
+        with Graph.his_edges_lock:
+            if to_node_id not in Graph.his_edges[from_node_id][action]:
+                Graph.his_edges[from_node_id][action].append(to_node_id)
+
+        with Graph.frames.get_lock():
             Graph.frames.value += P.num_action_repeats
-
-    @staticmethod
-    def get_data():
-        nodes = np.unique(Graph.src + Graph.dst)
-        assert np.max(nodes) < len(Graph.node_feats)
-
-        src, dst, ts, idx, label, node_feats, edge_feats = Graph.src, Graph.dst, Graph.ts, Graph.idx, Graph.label, Graph.node_feats, Graph.edge_feats
-
-        # empty current increment
-        with Graph.lock:
-            Graph.src, Graph.dst, Graph.ts, Graph.idx, Graph.label = Graph.manager.list(), Graph.manager.list(), Graph.manager.list(), Graph.manager.list(), Graph.manager.list()
-
-        return src, dst, ts, idx, label, node_feats, edge_feats

@@ -45,13 +45,13 @@ class Context:
     num_action = None
 
     # agent
-    num_actor = 4
+    num_actor = 8
     # tgn
     tgn = TGNArgs
     # graph memory
     obs_min_dis = 0.5
     propagations = 20
-    simulate_steps = 30
+    simulate_steps = 10
     ucb1_c = 2
 
 
