@@ -43,7 +43,7 @@ class Logger:
     path = None
 
     @staticmethod
-    def log(msg, color=None, style=None, new_line=True, title=True, write_file=None):
+    def log(msg, color=None, style=None, new_line=True):
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
         if len(logger.handlers) == 0:
@@ -114,16 +114,11 @@ class Logger:
         else:
             pass
 
-        if not title:
-            title = ""
-        else:
-            title_str = Logger.make_msg_title()
-            title = cyan + title_str[0][0: 6] + yellow + title_str[0][6:] + blue + title_str[1] + green + title_str[2] + normal + " "
+        title_str = Logger.make_msg_title()
+        title = cyan + title_str[0][0: 6] + yellow + title_str[0][6:] + blue + title_str[1] + green + title_str[2] + normal + " "
         logger.info(title + msg)
-        if write_file is not None:
-            Logger.write_log(msg=title + msg, path=write_file)
-        elif Logger.path is not None:
-            Logger.write_log(msg=title + msg, path=Logger.path)
+        if Logger.path is not None:
+            Logger.write_log(msg=''.join(title_str) + " " +  msg, path=Logger.path)
 
     @staticmethod
     def make_msg_title():
@@ -221,9 +216,9 @@ class Funcs:
         Logger.log(s)
 
     @staticmethod
-    def trace_exception(write_file=None):
+    def trace_exception():
         exception_str = traceback.format_exc()
-        Logger.log("Error msg: " + str(exception_str), write_file=write_file)
+        Logger.log("Error msg: " + str(exception_str))
 
     @staticmethod
     def matrix_hashing(obs):

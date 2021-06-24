@@ -49,16 +49,25 @@ class MemRL:
         from src.module.agent.policy import Policy
 
         # 2. start inference loop
+        policy = Policy(actor_learner_queues, learner_actor_queues)
         try:
-            Policy.inference(
-                actor_learner_queues, learner_actor_queues, finish
-            )  # one inference iteration
+            optimal_graph = policy.train()  # tain the policy
         except Exception:
             Funcs.trace_exception()
-            finish.value = True
 
-        Logger.log("learner exit.")
+        Logger.log("training finished")
+        finish.value = True
 
+        try:
+            # TODO: Q-table parameterization
+            Logger.log(optimal_graph)
+            Logger.log("dnn model saved")
+            pass  # convert policy into dnn
+        except Exception:
+            Funcs.trace_exception()
+        
+        Logger.log("learner exit")
+        
     @staticmethod
     def actor_run(id, actor_learner_queues, learner_actor_queues, finish):
         # 1. make env and actor
@@ -73,16 +82,13 @@ class MemRL:
                 actor.interact()
             except Exception:
                 if finish.value:
-                    Logger.log(f"actor{id} exit.")
+                    Logger.log(f"actor{id} exit")
                     return
-                else:
-                    Funcs.trace_exception()
 
     @staticmethod
     def create_env():
         if P.env_type == "atari":
             from src.module.env.atari import Atari
-
             return Atari.make_env()
 
 

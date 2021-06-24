@@ -1,32 +1,5 @@
 import sys
-
-
-class TGNArgs:
-    bs = 200  # Batch_size
-    prefix = "tgn-attn"  # Prefix to name the checkpoints
-    n_neighbors = 10  # Number of neighbors to sample
-    n_head = 2  # Number of heads used in attention layer
-    n_epoch = 1  # Number of epochs
-    n_layer = 1  # Number of network layers
-    lr = 0.0001  # Learning rate
-    drop_out = 0.1  # Dropout probability
-    memory_size = 10000  # max mem slots
-    gpu = 0  # Idx for the gpu to use
-    backprop_every = 1  # Every how many batches to back propagate gradient
-    use_memory = True  # Whether to augment the model with a node memory
-    embedding_module = "graph_attention"  # Type of embedding module: ["graph_attention", "graph_sum", "identity", "time"]
-    message_function = "identity"  # Type of message function: ["mlp", "identity"]
-    memory_updater = "gru"  # Type of memory updater: ["gru", "rnn"]
-    aggregator = "last"  # Type of message
-    memory_update_at_end = False  # Whether to update memory at the end or at the start of the batch
-    message_dim = 100  # Dimensions of the messages
-    memory_dim = 100  # Dimensions of the memory for each user
-    different_new_nodes = False  # Whether to use disjoint set of new nodes for train and val
-    uniform = False  # take uniform sampling from temporal neighbors
-    randomize_features = False  # Whether to randomize node features
-    use_destination_embedding_in_message = False  # Whether to use the embedding of the destination node as part of the message
-    use_source_embedding_in_message = False  # Whether to use the embedding of the source node as part of the message
-    dyrep = False  # Whether to run the dyrep model
+from typing import Collection, NamedTuple
 
 
 class Context:
@@ -35,10 +8,11 @@ class Context:
     log_dir = work_dir + "log/"
     model_dir = work_dir + "model/"
     result_dir = work_dir + "result/"
-    clean = False
+    clean = True
+    log_every = 20
 
     # env
-    total_frames = 1e7
+    total_frames = 1e6
     env_type = "atari"
     env_name = "Pong"
     max_episode_steps = 108000
@@ -49,21 +23,17 @@ class Context:
 
     # agent
     num_actor = 8
-    # tgn
-    tgn = TGNArgs
-    # graph memory
     obs_min_dis = 0.5
-    propagations = 20
-    simulate_steps = 10
-    ucb1_c = 2
+    projected_dim = 16
 
 
 class Profile(Context):
     C = Context
-    profiles = dict()
-    profiles[1] = 'atari'
-    profile = sys.argv[1]
 
-    if profile == profiles[1]:
-        C.tgn.memory_dim = 16
+    profiles = dict()
+    profiles[1] = "atari"
+
+    current_profile = sys.argv[1]
+
+    if current_profile == profiles[1]:
         C.num_action = 18

@@ -12,7 +12,11 @@ class OptimalGraph:
 
     @staticmethod
     def get_action(obs):
-        return OptimalGraph.oa[obs][0]
+        if obs in OptimalGraph.oa.keys():
+            action = OptimalGraph.oa[obs][0]
+        else:
+            action = None
+        return action
 
     @staticmethod
     def expand_graph(trajectory):

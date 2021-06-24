@@ -21,9 +21,12 @@ class Actor:
         """
         return self.id == P.num_actor - 1
 
-    def get_action(self, last_obs, pre_action, obs, reward):
+    def get_action(self, last_obs, pre_action, obs, reward, done, first_frame):
         # query action from policy
-        self.actor_learner_queue.put([last_obs, pre_action, obs, reward, self.is_testing_actor()])
+        if first_frame:
+            self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, False])
+        else:
+            self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, not self.is_testing_actor()])
         action = self.learner_actor_queues.get(timeout=10)
 
         if Funcs.rand_prob() - 0.5 > (self.id / (P.num_actor - 1)):
@@ -43,11 +46,12 @@ class Actor:
             total_reward = 0
             epi_step = 1
             pre_action = 0
+            done = False
             start_time = time.time()
             reward = 0
             while True:  # step loop
                 # 1. get action
-                action = self.get_action(last_obs, pre_action, obs, reward)
+                action = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
                 last_obs = obs
 
                 # 2. interact
@@ -64,10 +68,12 @@ class Actor:
 
                 # 5. done ops
                 if done:
+                    unused_action = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
                     self.fps.append(
                         epi_step * P.num_action_repeats / (time.time() - start_time)
                     )
                     self.episodic_reward.append(total_reward)
-                    Logger.log(f"|actor| R: {self.episodic_reward[-1]}")
+                    if self.is_testing_actor():
+                        Logger.log(f"evl_actor R: {self.episodic_reward[-1]} Fps: {self.fps[-1]}")
                     break
             self.num_episode += 1
