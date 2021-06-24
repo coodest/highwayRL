@@ -1,5 +1,6 @@
 from src.module.context import Profile as P
-from src.util.tools import *
+from src.util.tools import Funcs, Logger
+import time
 from multiprocessing import Pool, Process, Value, Queue, Lock
 from collections import deque
 
@@ -20,12 +21,9 @@ class Actor:
         """
         return self.id == P.num_actor - 1
 
-    def get_action(self, last_obs, pre_action, obs, reward, is_first=False):
+    def get_action(self, last_obs, pre_action, obs, reward):
         # query action from policy
-        if is_first:
-            self.actor_learner_queue.put([last_obs, pre_action, obs, reward, False])
-        else:
-            self.actor_learner_queue.put([last_obs, pre_action, obs, reward, not self.is_testing_actor()])
+        self.actor_learner_queue.put([last_obs, pre_action, obs, reward, self.is_testing_actor()])
         action = self.learner_actor_queues.get(timeout=10)
 
         if Funcs.rand_prob() - 0.5 > (self.id / (P.num_actor - 1)):
@@ -49,7 +47,7 @@ class Actor:
             reward = 0
             while True:  # step loop
                 # 1. get action
-                action = self.get_action(last_obs, pre_action, obs, reward, is_first=epi_step == 1)
+                action = self.get_action(last_obs, pre_action, obs, reward)
                 last_obs = obs
 
                 # 2. interact
@@ -66,7 +64,9 @@ class Actor:
 
                 # 5. done ops
                 if done:
-                    self.fps.append( epi_step * P.num_action_repeats / (time.time() - start_time) )
+                    self.fps.append(
+                        epi_step * P.num_action_repeats / (time.time() - start_time)
+                    )
                     self.episodic_reward.append(total_reward)
                     Logger.log(f"|actor| R: {self.episodic_reward[-1]}")
                     break

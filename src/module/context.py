@@ -1,3 +1,5 @@
+import sys
+
 class TGNArgs:
     bs = 200  # Batch_size
     prefix = "tgn-attn"  # Prefix to name the checkpoints
@@ -57,9 +59,10 @@ class Context:
 
 class Profile(Context):
     C = Context
-    profile_a = "atari"
-    profile = profile_a
+    profiles = dict()
+    profiles[1] = 'atari'
+    profile = sys.argv[1]
 
-    if profile == "atari":
+    if profile == profiles[1]:
         C.tgn.memory_dim = 16
         C.num_action = 18

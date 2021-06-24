@@ -1,5 +1,5 @@
 from src.module.context import Profile as P
-from src.util.tools import *
+from src.util.tools import Logger, Funcs, IO
 from multiprocessing import Process, Value, Queue
 
 
@@ -20,7 +20,7 @@ class MemRL:
         # 2. show args
         Funcs.print_obj(P)
 
-        # 3. prepare learner and actor
+        # 3. prepare queues for learner and actor
         finish = Value("b", False)
         actor_learner_queues = list()
         for _ in range(P.num_actor):
@@ -29,15 +29,19 @@ class MemRL:
         for _ in range(P.num_actor):
             learner_actor_queues.append(Queue())
 
-        Process(
-            target=MemRL.learner_run,
-            args=(actor_learner_queues, learner_actor_queues, finish),
-        ).start()
+        # 4. launch
+        Process(target=MemRL.learner_run, args=(
+            actor_learner_queues,
+            learner_actor_queues,
+            finish
+        )).start()
         for id in range(P.num_actor):
-            Process(
-                target=MemRL.actor_run,
-                args=(id, actor_learner_queues[id], learner_actor_queues[id], finish),
-            ).start()
+            Process(target=MemRL.actor_run, args=(
+                id,
+                actor_learner_queues[id],
+                learner_actor_queues[id],
+                finish
+            )).start()
 
     @staticmethod
     def learner_run(actor_learner_queues, learner_actor_queues, finish):
@@ -58,7 +62,7 @@ class MemRL:
     @staticmethod
     def actor_run(id, actor_learner_queues, learner_actor_queues, finish):
         # 1. make env and actor
-        from src.module.agent.actor import Actor
+        from src.module.env.actor import Actor
 
         env = MemRL.create_env()
         actor = Actor(id, env, actor_learner_queues, learner_actor_queues)
