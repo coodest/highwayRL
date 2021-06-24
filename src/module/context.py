@@ -1,5 +1,6 @@
 import sys
 
+
 class TGNArgs:
     bs = 200  # Batch_size
     prefix = "tgn-attn"  # Prefix to name the checkpoints

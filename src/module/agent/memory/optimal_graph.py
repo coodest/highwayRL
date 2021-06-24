@@ -6,6 +6,7 @@ from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
 class OptimalGraph:
     manager = Manager()
 
+    # dict of observation to action with value [action, reward]
     oa = manager.dict()
     oa_lock = Lock()
 
@@ -14,5 +15,5 @@ class OptimalGraph:
         return OptimalGraph.oa[obs][0]
 
     @staticmethod
-    def expand_graph():
+    def expand_graph(trajectory):
         pass
