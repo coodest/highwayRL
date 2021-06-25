@@ -16,16 +16,16 @@ class Context:
     env_type = "atari"
     env_name = "Pong"
     max_episode_steps = 108000
-    max_random_noops = 30
+    max_random_noops = 0
     num_action_repeats = 4
     render_dir = None
     num_action = None
 
     # agent
     num_actor = 8
-    obs_min_dis = 1e-1
-    projected_dim = 16
-    sync_every = 20  # in second
+    obs_min_dis = 1e-4
+    projected_dim = 4
+    sync_every = 60  # in second
 
 
 class Profile(Context):

@@ -54,8 +54,12 @@ class Policy:
                         if Policy.is_head(id):
                             optimal_graph.save()
                         return
-                    # logging info
+                    # sync graph
                     now = time.time()
+                    if now - last_sync > P.sync_every:
+                        optimal_graph.sync()
+                        last_sync = now
+                    # logging info
                     if Policy.is_head(id):
                         cur_frame = frames.value
                         if now - last_report > P.log_every:
@@ -66,10 +70,7 @@ class Policy:
                             ))
                             last_report = now
                             last_frame = cur_frame
-                    # sync graph
-                    if now - last_sync > P.sync_every:
-                        optimal_graph.sync()
-                        last_sync = now
+                    
 
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
