@@ -27,7 +27,7 @@ class Policy:
         for p in processes:
             p.join()
 
-        return IO.read_disk_dump(P.result_dir + 'optimal.pkl')
+        return IO.read_disk_dump(P.model_dir + 'optimal.pkl')
 
 
     @staticmethod
@@ -51,8 +51,6 @@ class Policy:
                 try:
                     # check to stop
                     if frames.value > P.total_frames:
-                        if Policy.is_head(id):
-                            optimal_graph.save()
                         return
                     # sync graph
                     now = time.time()

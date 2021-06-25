@@ -55,6 +55,4 @@ class OptimalGraph:
                 IO.stick_read_disk_dump(P.result_dir + f'{i}.finish')
 
             IO.renew_dir(P.result_dir)
-
-    def save(self):
-        IO.write_disk_dump(P.result_dir + 'optimal.pkl', self.oa)
+            IO.write_disk_dump(P.model_dir + 'optimal.pkl', self.oa)
