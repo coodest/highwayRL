@@ -1,7 +1,7 @@
 import gym
 from gym.spaces.box import Box
 from gym.wrappers import TimeLimit, Monitor
-import numpy as np
+from src.util.imports.num import np
 import cv2
 from src.module.context import Profile as P
 

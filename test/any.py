@@ -1,23 +1,24 @@
-from src.module.agent.memory.projector import RandomProjector
-import numpy as np
+from src.util.imports.num import np
+from src.module.agent.memory.optimal_graph import OptimalGraph
+from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
+
+manager = Manager()
+center_oa = dict()
 
 
-a = np.random.random(size=[3])
-print(a)
-b = 0
-c = np.random.random(size=[3])
-print(c)
-print(RandomProjector.random_matrix.weight)
-print(RandomProjector.random_matrix.bias)
-d = RandomProjector.batch_project([[a, b, c]])[0]
+def expand_graph(trajectory, total_reward):
+    for last_obs, pre_action in trajectory:
+        if last_obs not in center_oa:
+            center_oa[last_obs] = [pre_action, total_reward]
+        elif center_oa[last_obs][1] < total_reward:
+            center_oa[last_obs] = [pre_action, total_reward]
 
-print(d[0])
-print(d[2])
-# breakpoint()
 
-x1 = 0.60597828 * -0.1249 + 0.73336936 * 0.7314 + 0.13894716 * 1.0424
-x1 += 0.2493
+t = []
+for i in range(int(8000000)):
+    t.append([i, i + 1])
+r = 100
 
-x2 = 0.60597828 * -0.4702 + 0.73336936 * 0.8090 + 0.13894716 * 0.2913
-x2 += 0.5344
-print(x2)
+expand_graph(t, r)
+
+print(len(center_oa.keys()))

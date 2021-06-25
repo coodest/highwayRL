@@ -1,5 +1,7 @@
-from src.util.torch_util import *
+from src.util.imports.torch import torch
+from src.util.imports.num import np
 from src.module.context import Profile as P
+from src.util.tools import Logger
 
 
 class Projector:
@@ -21,26 +23,15 @@ class RandomProjector(Projector):
         torch.nn.init.xavier_uniform_(random_matrix.weight)
 
     @staticmethod
-    def batch_project(infos):
-        # info is [last_obs, pre_action, obs, ...] 
-        last_obs_ind = 0
-        obs_ind = 2
-        batch_last_obs = [x[last_obs_ind] for x in infos]
-        batch_obs = [x[obs_ind] for x in infos]
-        batch = np.concatenate([batch_last_obs, batch_obs], axis=0)
-        
+    def batch_project(obs_list):     
+        batch = np.vstack(obs_list)  
         input = None
         if P.env_type == "atari":
             # [2, 84 * 84]
             input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(Projector.device)
         output = RandomProjector.random_matrix(input)
-        output = output.cpu().detach().numpy().tolist()
 
-        for id in range(len(infos)):
-            infos[id][last_obs_ind] = output[id]
-            infos[id][obs_ind] = output[len(infos) + id]
-
-        return infos
+        return output.cpu().detach().numpy().tolist()
 
 
 # class CNNProjector(Projector):

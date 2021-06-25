@@ -48,23 +48,22 @@ class MemRL:
         # 1. make model-based agent
         from src.module.agent.policy import Policy
 
-        # 2. start inference loop
+        # 2. train
         policy = Policy(actor_learner_queues, learner_actor_queues)
         try:
-            optimal_graph = policy.train()  # tain the policy
+            optimal_data = policy.train()  # tain the policy
         except Exception:
             Funcs.trace_exception()
-
         Logger.log("training finished")
         finish.value = True
 
+        # 3. parameterization
         try:
             # TODO: Q-table parameterization
-            Logger.log(optimal_graph)
-            Logger.log("dnn model saved")
-            pass  # convert policy into dnn
+            Logger.log(len(optimal_data))  # convert policy into dnn
         except Exception:
             Funcs.trace_exception()
+        Logger.log("dnn model saved")
         
         Logger.log("learner exit")
         
@@ -84,6 +83,8 @@ class MemRL:
                 if finish.value:
                     Logger.log(f"actor{id} exit")
                     return
+                else:
+                    Funcs.trace_exception()
 
     @staticmethod
     def create_env():

@@ -1,67 +1,98 @@
 from src.module.context import Profile as P
-from src.util.tools import Logger, Funcs
+from src.util.tools import Logger, Funcs, IO
 import time
-import random
-from src.module.agent.memory.optimal_graph import OptimalGraph
-from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
+from multiprocessing import Process, Value
 
 
 class Policy:
-    manager = Manager()
-
-    actor_learner_queues = None
-    learner_actor_queues = None
-    frames = Value('d', 0)
-
     def __init__(self, actor_learner_queues, learner_actor_queues):
-        Policy.actor_learner_queues = actor_learner_queues
-        Policy.learner_actor_queues = learner_actor_queues
+        self.frames = Value("d", 0)
+        self.actor_learner_queues = actor_learner_queues
+        self.learner_actor_queues = learner_actor_queues
 
     def train(self):
         processes = []
         for id in range(P.num_actor):
-            p = Process(target=Policy.response_action, args=[id])
+            p = Process(
+                target=Policy.response_action,
+                args=[
+                    id,
+                    self.actor_learner_queues[id],
+                    self.learner_actor_queues[id],
+                    self.frames
+                ],
+            )
             p.start()
             processes.append(p)
         for p in processes:
             p.join()
-        
-        return OptimalGraph
+
+        return IO.read_disk_dump(P.result_dir + 'optimal.pkl')
+
 
     @staticmethod
-    def response_action(index):
+    def is_head(index):
+        return index == P.num_actor - 1
+
+    @staticmethod
+    def response_action(id, actor_learner_queue, learner_actor_queue, frames):
         from src.module.agent.memory.projector import RandomProjector
+        from src.module.agent.memory.indexer import Indexer
+        from src.module.agent.memory.optimal_graph import OptimalGraph
+
         last_report = time.time()
-        last_frame = Policy.frames.value
+        last_frame = frames.value
+        last_sync = time.time()
+        optimal_graph = OptimalGraph(id, Policy.is_head(id))
         while True:
             trajectory = []
+            total_reward = 0
             while True:
                 try:
-                    if Policy.frames.value > P.total_frames:
+                    # check to stop
+                    if frames.value > P.total_frames:
+                        if Policy.is_head(id):
+                            optimal_graph.save()
                         return
-                    if index == 0:  # process 0 report infomation
-                        now = time.time()
-                        cur_frame = Policy.frames.value
+                    # logging info
+                    now = time.time()
+                    if Policy.is_head(id):
+                        cur_frame = frames.value
                         if now - last_report > P.log_every:
-                            Logger.log(f'learner fps: {(cur_frame - last_frame) / (now - last_report)}')
+                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} OG: {}".format(
+                                cur_frame / 1e6,
+                                (cur_frame - last_frame) / (now - last_report),
+                                len(optimal_graph.oa.keys())
+                            ))
                             last_report = now
                             last_frame = cur_frame
-                        
-                    info = Policy.actor_learner_queues[index].get()
-                    info = RandomProjector.batch_project([info])[0]
+                    # sync graph
+                    if now - last_sync > P.sync_every:
+                        optimal_graph.sync()
+                        last_sync = now
+
+                    info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
+                    last_obs, obs = RandomProjector.batch_project([last_obs, obs])
+                    last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
 
                     if add:
-                        trajectory.append([last_obs, pre_action, obs, reward])
+                        trajectory.append([last_obs, pre_action])
+                        total_reward += reward
                     if done:
-                        with Policy.frames.get_lock():
-                            Policy.frames.value += len(trajectory) * P.num_action_repeats
-                        OptimalGraph.expand_graph(trajectory)
-                        Policy.learner_actor_queues[index].put(None)  # last action is not been used
+                        if add:
+                            with frames.get_lock():
+                                frames.value += (
+                                    len(trajectory) * P.num_action_repeats
+                                )
+                            optimal_graph.store_increments(trajectory, total_reward)
+                        learner_actor_queue.put(
+                            None
+                        )  # last action is not been used
                         break
                     else:
-                        action = OptimalGraph.get_action(obs)
-                        Policy.learner_actor_queues[index].put(action)
+                        action = optimal_graph.get_action(obs)
+                        learner_actor_queue.put(action)
                 except Exception:
                     Funcs.trace_exception()
                     return

@@ -12,7 +12,7 @@ class Context:
     log_every = 20
 
     # env
-    total_frames = 1e6
+    total_frames = 1e9
     env_type = "atari"
     env_name = "Pong"
     max_episode_steps = 108000
@@ -23,8 +23,9 @@ class Context:
 
     # agent
     num_actor = 8
-    obs_min_dis = 0.5
+    obs_min_dis = 1e-1
     projected_dim = 16
+    sync_every = 20  # in second
 
 
 class Profile(Context):

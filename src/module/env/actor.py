@@ -1,8 +1,9 @@
 from src.module.context import Profile as P
-from src.util.tools import Funcs, Logger
+from src.util.tools import Logger
 import time
-from multiprocessing import Pool, Process, Value, Queue, Lock
+from multiprocessing import Queue
 from collections import deque
+from src.util.imports.random import random
 
 
 class Actor:
@@ -29,7 +30,7 @@ class Actor:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, not self.is_testing_actor()])
         action = self.learner_actor_queues.get(timeout=10)
 
-        if Funcs.rand_prob() - 0.5 > (self.id / (P.num_actor - 1)):
+        if random.random() - 0.5 > (self.id / (P.num_actor - 1)):
             # epsilon-greedy
             action = self.env.action_space.sample()
         elif action is None:
@@ -74,6 +75,6 @@ class Actor:
                     )
                     self.episodic_reward.append(total_reward)
                     if self.is_testing_actor():
-                        Logger.log(f"evl_actor R: {self.episodic_reward[-1]} Fps: {self.fps[-1]}")
+                        Logger.log(f"evl_actor R: {self.episodic_reward[-1]:6.2f} Fps: {self.fps[-1]:6.1f}")
                     break
             self.num_episode += 1

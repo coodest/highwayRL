@@ -3,11 +3,10 @@ import hashlib
 import os
 import pickle
 import logging
-import random
 import shutil
 import time
 import traceback
-import numpy as np
+from src.util.imports.num import np
 import psutil
 import pytz
 from pathlib import Path
@@ -118,7 +117,7 @@ class Logger:
         title = cyan + title_str[0][0: 6] + yellow + title_str[0][6:] + blue + title_str[1] + green + title_str[2] + normal + " "
         logger.info(title + msg)
         if Logger.path is not None:
-            Logger.write_log(msg=''.join(title_str) + " " +  msg, path=Logger.path)
+            Logger.write_log(msg=''.join(title_str) + " " + msg, path=Logger.path)
 
     @staticmethod
     def make_msg_title():
@@ -202,10 +201,6 @@ class Funcs:
         return one_hot
 
     @staticmethod
-    def rand_prob():
-        return random.random()
-
-    @staticmethod
     def print_obj(obj):
         s = "["
         for name in dir(obj):
@@ -244,6 +239,14 @@ class IO:
         with open(path, "rb") as object_persistent:
             restore = pickle.load(object_persistent)
         return restore
+
+    @staticmethod
+    def stick_read_disk_dump(path):
+        while True:
+            try:
+                return IO.read_disk_dump(path)
+            except Exception:
+                time.sleep(1)
 
     @staticmethod
     def make_dir(directory):
