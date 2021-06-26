@@ -8,15 +8,18 @@ from src.module.context import Profile as P
 
 class Atari:
     @staticmethod
-    def make_env():
+    def make_env(render=False):
         env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
+        env.seed(2021)
+
         env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
 
-        if P.render_dir is not None:
-            env = Monitor(env, P.render_dir, force=True, video_callable=lambda episode_id: episode_id % 1 == 0)  # output every episode
+        if render:
+            env = Monitor(env, P.video_dir, force=True, video_callable=lambda episode_id: episode_id % P.render_every == 0)  # output every episode
 
         env = AtariPreprocessing(
-            env, frame_skip=P.num_action_repeats,
+            env,
+            frame_skip=P.num_action_repeats,
             max_random_noops=P.max_random_noops
         )
 
@@ -42,8 +45,14 @@ class AtariPreprocessing(object):
     and R2D2 papers.
     """
 
-    def __init__(self, environment, frame_skip=4, terminal_on_life_loss=False,
-                 screen_size=84, max_random_noops=0):
+    def __init__(
+        self,
+        environment,
+        frame_skip=4,
+        terminal_on_life_loss=False,
+        screen_size=84,
+        max_random_noops=0,
+    ):
         """Constructor for an Atari 2600 preprocessor.
 
         Args:
@@ -60,11 +69,15 @@ class AtariPreprocessing(object):
           ValueError: if frame_skip or screen_size are not strictly positive.
         """
         if frame_skip <= 0:
-            raise ValueError('Frame skip should be strictly positive, got {}'.
-                             format(frame_skip))
+            raise ValueError(
+                "Frame skip should be strictly positive, got {}".format(frame_skip)
+            )
         if screen_size <= 0:
-            raise ValueError('Target screen size should be strictly positive, got {}'.
-                             format(screen_size))
+            raise ValueError(
+                "Target screen size should be strictly positive, got {}".format(
+                    screen_size
+                )
+            )
 
         self.environment = environment
         self.terminal_on_life_loss = terminal_on_life_loss
@@ -78,7 +91,7 @@ class AtariPreprocessing(object):
         # frames.
         self.screen_buffer = [
             np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8),
-            np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8)
+            np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8),
         ]
 
         self.game_over = False
@@ -88,8 +101,12 @@ class AtariPreprocessing(object):
     def observation_space(self):
         # Return the observation space adjusted to match the shape of the processed
         # observations.
-        return Box(low=0, high=255, shape=(self.screen_size, self.screen_size, 1),
-                   dtype=np.uint8)
+        return Box(
+            low=0,
+            high=255,
+            shape=(self.screen_size, self.screen_size, 1),
+            dtype=np.uint8,
+        )
 
     @property
     def action_space(self):
@@ -171,7 +188,7 @@ class AtariPreprocessing(object):
             episode is over.
           info: Gym API's info data structure.
         """
-        accumulated_reward = 0.
+        accumulated_reward = 0.0
         is_terminal = False
         info = None
         game_over = None
@@ -226,12 +243,15 @@ class AtariPreprocessing(object):
         """
         # Pool if there are enough screens to do so.
         if self.frame_skip > 1:
-            np.maximum(self.screen_buffer[0], self.screen_buffer[1],
-                       out=self.screen_buffer[0])
+            np.maximum(
+                self.screen_buffer[0], self.screen_buffer[1], out=self.screen_buffer[0]
+            )
 
-        transformed_image = cv2.resize(self.screen_buffer[0],
-                                       (self.screen_size, self.screen_size),
-                                       interpolation=cv2.INTER_LINEAR)
+        transformed_image = cv2.resize(
+            self.screen_buffer[0],
+            (self.screen_size, self.screen_size),
+            interpolation=cv2.INTER_LINEAR,
+        )
 
         int_image = np.asarray(transformed_image, dtype=np.uint8)
         # return np.expand_dims(int_image, axis=2)

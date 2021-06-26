@@ -8,14 +8,16 @@ class MemRL:
     def start():
         # 1. init
         Logger.path = P.log_dir + Logger.get_date() + ".log"
-        IO.make_dir(P.work_dir)
+        IO.make_dir(P.out_dir)
         IO.make_dir(P.log_dir)
         IO.make_dir(P.model_dir)
         IO.make_dir(P.result_dir)
+        IO.make_dir(P.video_dir)
         if P.clean:
             IO.renew_dir(P.log_dir)
             IO.renew_dir(P.model_dir)
             IO.renew_dir(P.result_dir)
+            IO.renew_dir(P.video_dir)
 
         # 2. show args
         Funcs.print_obj(P)
@@ -72,8 +74,7 @@ class MemRL:
         # 1. make env and actor
         from src.module.env.actor import Actor
 
-        env = MemRL.create_env()
-        actor = Actor(id, env, actor_learner_queues, learner_actor_queues)
+        actor = Actor(id, MemRL.create_env, actor_learner_queues, learner_actor_queues)
 
         # 2. start interaction loop (actor loop)
         while True:
@@ -87,10 +88,10 @@ class MemRL:
                     Funcs.trace_exception()
 
     @staticmethod
-    def create_env():
+    def create_env(render=False):
         if P.env_type == "atari":
             from src.module.env.atari import Atari
-            return Atari.make_env()
+            return Atari.make_env(render)
 
 
 if __name__ == "__main__":
