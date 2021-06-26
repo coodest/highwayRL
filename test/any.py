@@ -1,24 +1,46 @@
 from src.util.imports.num import np
 from src.module.agent.memory.optimal_graph import OptimalGraph
+from src.module.agent.memory.indexer import Indexer
 from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
-
-manager = Manager()
-center_oa = dict()
-
-
-def expand_graph(trajectory, total_reward):
-    for last_obs, pre_action in trajectory:
-        if last_obs not in center_oa:
-            center_oa[last_obs] = [pre_action, total_reward]
-        elif center_oa[last_obs][1] < total_reward:
-            center_oa[last_obs] = [pre_action, total_reward]
+from src.module.env.atari import Atari
+from src.util.tools import *
 
 
-t = []
-for i in range(int(8000000)):
-    t.append([i, i + 1])
-r = 100
 
-expand_graph(t, r)
+from src.module.agent.memory.projector import RandomProjector
 
-print(len(center_oa.keys()))
+
+r = RandomProjector(0)
+a = np.random.random([1, 7084])
+
+b = r.batch_project([a])
+
+print(b)
+
+
+
+
+
+
+
+
+
+
+
+
+# a = dict()
+# sample = set()
+# for _ in range(50):
+#     env = Atari.make_env(False)
+#     obs = env.reset()
+#     for i in range(10):
+#         obs, reward, done, info = env.step(i)
+#     h = Indexer.get_ind(obs)
+#     # h = Funcs.matrix_hashing(obs)
+#     if h not in a:
+#         a[h] = 1
+#     else:
+#         a[h] += 1
+
+# print(a)
+# print(len(a))

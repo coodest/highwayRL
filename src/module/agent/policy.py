@@ -44,6 +44,7 @@ class Policy:
         last_frame = frames.value
         last_sync = time.time()
         optimal_graph = OptimalGraph(id, Policy.is_head(id))
+        random_projector = RandomProjector(id)
         while True:
             trajectory = []
             total_reward = 0
@@ -72,7 +73,7 @@ class Policy:
 
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
-                    last_obs, obs = RandomProjector.batch_project([last_obs, obs])
+                    last_obs, obs = random_projector.batch_project([last_obs, obs])
                     last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
 
                     if add:

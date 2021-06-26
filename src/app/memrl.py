@@ -84,7 +84,7 @@ class MemRL:
                 if finish.value:
                     Logger.log(f"actor{id} exit")
                     return
-                else:
+                elif P.debug:
                     Funcs.trace_exception()
 
     @staticmethod

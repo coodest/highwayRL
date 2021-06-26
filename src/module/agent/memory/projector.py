@@ -4,32 +4,44 @@ from src.module.context import Profile as P
 from src.util.tools import Logger
 
 
-class Projector:
-    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+class RandomMatrix(torch.nn.Module):
+    def __init__(self, inf, outf):
+        super().__init__()
+        self.layer = torch.nn.Linear(in_features=inf, out_features=outf)
+        torch.nn.init.xavier_uniform_(self.layer.weight)
 
-    @staticmethod
-    def project(obs):
+    def forward(self, input):
+        return self.layer(input)
+
+
+class Projector:
+    def __init__(self, id) -> None:
+        ind = P.prio_gpu
+        if P.num_gpu > 1:
+            ind = id % P.num_gpu
+        self.device = torch.device(f"cuda:{ind}" if torch.cuda.is_available() else "cpu")
+
+    def project(self, obs):
         pass
 
-    @staticmethod
-    def batch_project(infos):
+    def batch_project(self, infos):
         pass
 
 
 class RandomProjector(Projector):
-    random_matrix = None
-    if P.env_type == "atari":
-        random_matrix = torch.nn.Linear(in_features=84 * 84, out_features=P.projected_dim).to(Projector.device)
-        torch.nn.init.xavier_uniform_(random_matrix.weight)
+    def __init__(self, id) -> None:
+        super().__init__(id)
+        self.random_matrix = None
+        if P.env_type == "atari":
+            self.random_matrix = RandomMatrix(84 * 84, P.projected_dim).to(self.device)
 
-    @staticmethod
-    def batch_project(obs_list):     
+    def batch_project(self, obs_list):     
         batch = np.vstack(obs_list)  
         input = None
         if P.env_type == "atari":
             # [2, 84 * 84]
-            input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(Projector.device)
-        output = RandomProjector.random_matrix(input)
+            input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
+        output = self.random_matrix(input)
 
         return output.cpu().detach().numpy().tolist()
 

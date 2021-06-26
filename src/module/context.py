@@ -11,20 +11,23 @@ class Context:
     video_dir = out_dir + "video/"
     clean = True
     log_every = 20
+    debug = False
+    num_gpu = 2
+    prio_gpu = 1
 
     # env
     total_frames = 1e7
     env_type = "atari"
-    env_name = "StarGunner"
+    env_name = "StarGunner"  # StarGunner, Pong
     max_episode_steps = 108000
-    max_random_noops = 0
+    max_random_noops = 30
     num_action_repeats = 4
-    render = True  # whether test actor to render the env
+    render = False  # whether test actor to render the env
     render_every = 5
     num_action = None
 
     # agent
-    num_actor = 8
+    num_actor = 16
     obs_min_dis = 1e-4
     projected_dim = 4
     sync_every = 20  # in second
