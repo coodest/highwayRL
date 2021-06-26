@@ -27,8 +27,8 @@ class Context:
 
     # agent
     num_actor = 16
-    obs_min_dis = 1e-4
-    projected_dim = 4
+    obs_min_dis = 1e-3
+    projected_dim = 8
     sync_every = 20  # in second
     e_greedy = [0.5, 1]
 
