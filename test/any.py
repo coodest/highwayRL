@@ -17,7 +17,7 @@ from src.module.agent.memory.projector import RandomProjector
 
 
 
-
+print([1,2,3,4,9,4].index(0))
 
 
 #-------------------------------------------------------------------
@@ -55,15 +55,16 @@ from src.module.agent.memory.projector import RandomProjector
 
 
 #-------------------------------------------------------------------
-a = Queue()
-a.put(1)
-a.put(2)
-a.put(3)
+# a = Queue()
+# a.put(1)
+# a.put(2)
+# a.put(3)
+# print(a.qsize())
 
 
-print(a.get())
-print(a.get())
-print(a.get())
+# print(a.get())
+# print(a.get())
+# print(a.get())
 
 
 

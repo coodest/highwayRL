@@ -10,7 +10,6 @@ class Context:
     video_dir = out_dir + "video/"
     clean = True
     log_every = 20
-    debug = False
     num_gpu = 2
     prio_gpu = 1
 
@@ -27,7 +26,7 @@ class Context:
 
     # agent
     num_actor = 16
-    actor_read_timeout = 10
+    actor_read_timeout = 20
     obs_min_dis = 1e-3
     projected_dim = 8
     sync_every = 60  # in second

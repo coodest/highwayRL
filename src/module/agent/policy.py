@@ -88,8 +88,8 @@ class Policy:
                                 )
                             optimal_graph.store_increments(trajectory, total_reward)
                         learner_actor_queue.put(
-                            0
-                        )  # last action is not been used
+                            'unused_action'
+                        )
                         break
                     else:
                         action = optimal_graph.get_action(obs)
