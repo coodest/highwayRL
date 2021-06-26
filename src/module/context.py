@@ -1,5 +1,4 @@
 import sys
-from typing import Collection, NamedTuple
 
 
 class Context:

@@ -40,8 +40,9 @@ class RandomProjector(Projector):
         input = None
         if P.env_type == "atari":
             # [2, 84 * 84]
-            input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
-        output = self.random_matrix(input)
+            input = torch.tensor(batch, dtype=torch.float).to(self.device)
+        with torch.no_grad():  # no grad calculation
+            output = self.random_matrix(input)
 
         return output.cpu().detach().numpy().tolist()
 
