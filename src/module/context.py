@@ -15,11 +15,11 @@ class Context:
     prio_gpu = 1
 
     # env
-    total_frames = 1e7
+    total_frames = 0.5e7
     env_type = "atari"
     env_name = "StarGunner"  # StarGunner, Pong
     max_episode_steps = 108000
-    max_random_noops = 30
+    max_random_noops = 0
     num_action_repeats = 4
     render = False  # whether test actor to render the env
     render_every = 5
@@ -27,9 +27,10 @@ class Context:
 
     # agent
     num_actor = 16
+    actor_read_timeout = 10
     obs_min_dis = 1e-3
     projected_dim = 8
-    sync_every = 20  # in second
+    sync_every = 60  # in second
     e_greedy = [0.5, 1]
 
 

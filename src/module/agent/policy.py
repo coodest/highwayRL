@@ -62,10 +62,11 @@ class Policy:
                     if Policy.is_head(id):
                         cur_frame = frames.value
                         if now - last_report > P.log_every:
-                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} OG: {}".format(
+                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G: {} V: {}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
-                                len(optimal_graph.oa.keys())
+                                len(optimal_graph.oa.keys()),
+                                optimal_graph.optimal_value
                             ))
                             last_report = now
                             last_frame = cur_frame
@@ -87,7 +88,7 @@ class Policy:
                                 )
                             optimal_graph.store_increments(trajectory, total_reward)
                         learner_actor_queue.put(
-                            None
+                            0
                         )  # last action is not been used
                         break
                     else:

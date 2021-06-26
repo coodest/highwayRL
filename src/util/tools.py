@@ -128,7 +128,7 @@ class Logger:
         cpu_utilization, mem_used, gpu_info_list, all_gpu_utilization, all_gpu_mem_used = \
             Logger.get_hardware_info()
         date = Logger.get_date()
-        title = "{}|{:>2}{:>2}|{:>2}{:>2}".format(
+        title = "{}|{:>3}{:>2}|{:>3}{:>2}".format(
             date, int(cpu_utilization), int(mem_used), int(all_gpu_utilization), int(all_gpu_mem_used)
         )
 

@@ -11,6 +11,7 @@ class OptimalGraph:
         self.oa = dict()
         self.increments = dict()
         self.last_sync = time.time()
+        self.optimal_value = None
 
     def get_action(self, obs):
         if obs in self.oa:
@@ -55,3 +56,4 @@ class OptimalGraph:
 
             IO.renew_dir(P.result_dir)
             IO.write_disk_dump(P.model_dir + 'optimal.pkl', self.oa)
+        self.optimal_value = max([i[1] for i in self.oa.values()])

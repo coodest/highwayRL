@@ -1,5 +1,5 @@
 from src.module.context import Profile as P
-from src.util.tools import Logger
+from src.util.tools import Logger, Funcs
 import time
 from multiprocessing import Queue
 from collections import deque
@@ -34,17 +34,22 @@ class Actor:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, False])
         else:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, not self.is_testing_actor()])
-        action = self.learner_actor_queues.get(timeout=10)
+        action = self.learner_actor_queues.get(timeout=P.actor_read_timeout)
         if action is not None:
-            self.hit += 1
+            self.hit.append(1)
+        else:
+            self.hit.append(0)
 
-        if random.random() < self.p:
+        if random.random() > self.p:
             # epsilon-greedy
             action = self.env.action_space.sample()
         elif action is None:
             # if policy can not return action
             action = self.env.action_space.sample()
 
+        if self.is_testing_actor():
+            assert not random.random() > self.p
+            
         return action
 
     def interact(self):
@@ -58,7 +63,7 @@ class Actor:
             done = False
             start_time = time.time()
             reward = 0
-            self.hit = 0
+            self.hit = list()
             while True:  # step loop
                 # 1. get action
                 action = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
@@ -74,16 +79,19 @@ class Actor:
 
                 # 4. done ops
                 if done:
-                    unused_action = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
+                    _ = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
                     self.fps.append(
                         epi_step * P.num_action_repeats / (time.time() - start_time)
                     )
                     self.episodic_reward.append(total_reward)
                     if self.is_testing_actor():
-                        Logger.log("evl_actor R: {:6.2f} Fps: {:6.1f} H: {:4.1f}%".format(
+                        Logger.log("evl_actor R: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{}".format(
                             self.episodic_reward[-1],
                             self.fps[-1],
-                            100 * (self.hit / epi_step)
+                            100 * (sum(self.hit) / epi_step),
+                            self.hit[:10],
+                            # self.hit.index(0),
+                            epi_step
                         ))
                     break
             self.num_episode += 1
