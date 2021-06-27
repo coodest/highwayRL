@@ -41,10 +41,20 @@ class OptimalGraph:
             else:
                 info = [pre_action, total_reward]
 
+            add = False
             if last_obs not in self.main:
-                self.increments[last_obs] = info
+                add = True
             elif self.main[last_obs][1] < total_reward:
-                self.increments[last_obs] = info
+                add = True
+
+            if add:
+                if P.sync_mode == P.sync_modes[0]:
+                    if last_obs not in self.increments:
+                        self.increments[last_obs] = info
+                    elif self.increments[last_obs][1] < total_reward:
+                        self.increments[last_obs] = info
+                if P.sync_mode == P.sync_modes[1]:
+                    self.increments[last_obs] = info
 
     def sync(self):
         if not self.is_head:

@@ -30,6 +30,8 @@ class Context:
     obs_min_dis = 1e-3
     projected_dim = 8
     sync_every = 60  # in second
+    sync_modes = ['highest', 'confident']  # highest to max R, confident to max hit rate 
+    sync_mode = sync_modes[0]
     e_greedy = [0.5, 1]
     add_obs = True  # false: last_obs-prev_action pairs, True: last_obs-prev_action-obs triple
 
