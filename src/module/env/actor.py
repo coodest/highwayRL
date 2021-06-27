@@ -1,10 +1,9 @@
 from src.module.context import Profile as P
-from src.util.tools import Logger, Funcs
+from src.util.tools import Logger
 import time
 from multiprocessing import Queue
 from collections import deque
 from src.util.imports.random import random
-from gym.wrappers import Monitor
 
 
 class Actor:

@@ -7,14 +7,14 @@ from src.module.context import Profile as P
 class Memory(dict):
     def __init__(self) -> None:
         super().__init__()
-        # self.max_value = None
-        # self.max_value_init_obs = None
+        self.max_value = None
+        self.max_value_init_obs = None
 
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
-        # if self.max_value is None:
-        #     self.max_value = value[1]
-        #     self.max_value_init_obs = key
+        if self.max_value is None:
+            self.max_value = value[1]
+            self.max_value_init_obs = key
         # elif value[1] > self.max_value:
         #     self.max_value = value[1]
         #     self.max_value_init_obs = key

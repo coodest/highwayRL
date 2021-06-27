@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-python -m src.app.memrl atari
+python -X pycache_prefix=./cache -m src.app.memrl atari

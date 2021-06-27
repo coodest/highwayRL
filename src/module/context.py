@@ -5,7 +5,6 @@ class Context:
     # common
     work_dir = './'
     out_dir = work_dir + "output/"
-    cache_dir = work_dir + "cache/"
     log_dir = out_dir + "log/"
     model_dir = out_dir + "model/"
     result_dir = out_dir + "result/"
@@ -16,7 +15,7 @@ class Context:
     prio_gpu = 1
 
     # env
-    total_frames = 0.2e7
+    total_frames = 1e7
     env_type = "atari"
     env_name = "StarGunner"  # StarGunner, Pong
     max_episode_steps = 108000
@@ -36,8 +35,6 @@ class Context:
 
 class Profile(Context):
     C = Context
-
-    sys.pycache_prefix = C.cache_dir
 
     profiles = dict()
     profiles[1] = "atari"
