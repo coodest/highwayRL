@@ -40,7 +40,7 @@ class Actor:
                 if self.finish.value:
                     raise Exception()
 
-        if action == 'unused_action':
+        if type(action) is str:  # hashing 
             return action
 
         if action is not None:
@@ -89,8 +89,7 @@ class Actor:
 
                 # 4. done ops
                 if done:
-                    unused_action = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
-                    assert unused_action == 'unused_action'
+                    init_obs = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
                     self.fps.append(
                         epi_step * P.num_action_repeats / (time.time() - start_time)
                     )
@@ -101,12 +100,13 @@ class Actor:
                     else:
                         lost_step = len(self.hit)
                     if self.is_testing_actor():
-                        Logger.log("evl_actor R: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{}".format(
+                        Logger.log("evl_actor R: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
                             self.episodic_reward[-1],
                             self.fps[-1],
                             hit_rate,
                             lost_step,
-                            epi_step
+                            epi_step,
+                            str(init_obs)[-4:]
                         ))
                     break
             self.num_episode += 1

@@ -19,27 +19,37 @@ from src.module.agent.memory.projector import RandomProjector
 
 # print([1, 2, 3, 4, 9, 4].index(0))
 
-a = Memory()
 
-a['a'] = [0, 100]
-a['b'] = [0, 200]
+a = 'ss'
+if type(a) is str:
+    print(1)
+else:
+    print(0)
 
 
-if 'c' not in a:
-    a['c'] = [1, 300]
+# -------------------------------------------------------------------
 
-print('for')
-for key in a:
-    print(key)
+# a = Memory()
 
-print(f"a[\'a\'] {a['a']}")
+# a['a'] = [0, 100]
+# a['b'] = [0, 200]
 
-print(len(a))
 
-print(a.max_value)
-print(a.max_value_init_obs)
-print(dict(a))
-print(a)
+# if 'c' not in a:
+#     a['c'] = [1, 300]
+
+# print('for')
+# for key in a:
+#     print(key)
+
+# print(f"a[\'a\'] {a['a']}")
+
+# print(len(a))
+
+# print(a.max_value)
+# print(a.max_value_init_obs)
+# print(dict(a))
+# print(a)
 
 
 

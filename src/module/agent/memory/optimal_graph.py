@@ -1,7 +1,6 @@
 import time
-from src.util.tools import Funcs, IO
+from src.util.tools import IO
 from src.module.context import Profile as P
-
 
 
 class Memory(dict):
@@ -9,46 +8,46 @@ class Memory(dict):
         super().__init__()
         self.max_value = None
         self.max_value_init_obs = None
-
-    def __setitem__(self, key, value):
-        super().__setitem__(key, value)
-        if self.max_value is None:
-            self.max_value = value[1]
-            self.max_value_init_obs = key
-        # elif value[1] > self.max_value:
-        #     self.max_value = value[1]
-        #     self.max_value_init_obs = key
-
     
+    def update_max(self, value, init_obs):
+        if self.max_value is None:
+            self.max_value = value
+            self.max_value_init_obs = init_obs
+        elif value > self.max_value:
+            self.max_value = value
+            self.max_value_init_obs = init_obs
+
 
 class OptimalGraph:
     def __init__(self, id, is_head) -> None:
         self.id = id
         self.is_head = is_head
         # dict of observation to action with value [action, reward]
-        self.oa = Memory()
+        self.main = Memory()
         self.increments = Memory()
         self.last_sync = time.time()
 
     def get_action(self, obs):
-        if obs in self.oa:
-            return self.oa[obs][0]
+        if obs in self.main:
+            return self.main[obs][0]
         else:
             return None
 
     def store_increments(self, trajectory, total_reward):
         for last_obs, pre_action in trajectory:
-            if last_obs not in self.oa:
+            if last_obs not in self.main:
                 self.increments[last_obs] = [pre_action, total_reward]
-            elif self.oa[last_obs][1] < total_reward:
+                self.increments.update_max(total_reward, last_obs)
+            elif self.main[last_obs][1] < total_reward:
                 self.increments[last_obs] = [pre_action, total_reward]
+                self.increments.update_max(total_reward, last_obs)
 
     def sync(self):
         if not self.is_head:
             # write increments (not head)
             IO.write_disk_dump(P.result_dir + f'{self.id}.pkl', self.increments)
             self.increments = Memory()
-            self.oa = IO.stick_read_disk_dump(P.result_dir + 'target.pkl')
+            self.main = IO.stick_read_disk_dump(P.result_dir + 'target.pkl')
             IO.write_disk_dump(P.result_dir + f'{self.id}.finish', ["finish"])
         else:
             # read increments (head)
@@ -57,13 +56,15 @@ class OptimalGraph:
                     continue  # head has no increments stored
                 inc = IO.stick_read_disk_dump(P.result_dir + f'{i}.pkl')
                 for last_obs in inc:
-                    if last_obs not in self.oa:
-                        self.oa[last_obs] = inc[last_obs]
-                    elif self.oa[last_obs][1] < inc[last_obs][1]:
-                        self.oa[last_obs] = inc[last_obs]
+                    if last_obs not in self.main:
+                        self.main[last_obs] = inc[last_obs]
+                        self.main.update_max(inc[last_obs][1], last_obs)
+                    elif self.main[last_obs][1] < inc[last_obs][1]:
+                        self.main[last_obs] = inc[last_obs]
+                        self.main.update_max(inc[last_obs][1], last_obs)
 
             # write target (head)
-            IO.write_disk_dump(P.result_dir + 'target.pkl', self.oa)
+            IO.write_disk_dump(P.result_dir + 'target.pkl', self.main)
 
             # remove increments (head)
             for i in range(P.num_actor):
@@ -72,4 +73,4 @@ class OptimalGraph:
                 IO.stick_read_disk_dump(P.result_dir + f'{i}.finish')
 
             IO.renew_dir(P.result_dir)
-            IO.write_disk_dump(P.model_dir + 'optimal.pkl', self.oa)
+            IO.write_disk_dump(P.model_dir + 'optimal.pkl', self.main)
