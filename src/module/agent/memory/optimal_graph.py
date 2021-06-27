@@ -51,9 +51,17 @@ class OptimalGraph:
             # write increments (not head)
             IO.write_disk_dump(P.result_dir + f'{self.id}.pkl', self.increments)
             self.increments = Memory()
-            self.main = IO.stick_read_disk_dump(P.result_dir + 'target.pkl')
+            IO.write_disk_dump(P.result_dir + f'{self.id}.ready', ["ready"])
+            IO.stick_read_disk_dump(P.result_dir + 'target.ok')
+            self.main = IO.read_disk_dump(P.result_dir + 'target.pkl')
             IO.write_disk_dump(P.result_dir + f'{self.id}.finish', ["finish"])
         else:
+            # make sure writes are complete
+            for i in range(P.num_actor):
+                if self.id == i:
+                    continue
+                IO.stick_read_disk_dump(P.result_dir + f'{i}.ready')
+            
             # read increments (head)
             for i in range(P.num_actor):
                 if self.id == i:
@@ -66,9 +74,10 @@ class OptimalGraph:
                     elif self.main[last_obs][1] < inc[last_obs][1]:
                         self.main[last_obs] = inc[last_obs]
                         self.main.update_max(inc[last_obs][1], last_obs)
-
+            
             # write target (head)
             IO.write_disk_dump(P.result_dir + 'target.pkl', self.main)
+            IO.write_disk_dump(P.result_dir + 'target.ok', ['ok'])
 
             # remove increments (head)
             for i in range(P.num_actor):
