@@ -62,11 +62,12 @@ class Policy:
                     if Policy.is_head(id):
                         cur_frame = frames.value
                         if now - last_report > P.log_every:
-                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G: {} V: {}".format(
+                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G: {} V: /".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
                                 len(optimal_graph.oa.keys()),
-                                optimal_graph.optimal_value
+                                # optimal_graph.oa.max_value,
+                                # str(optimal_graph.oa.max_value_init_obs)[-4:]
                             ))
                             last_report = now
                             last_frame = cur_frame

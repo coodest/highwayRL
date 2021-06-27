@@ -8,10 +8,11 @@ from gym.wrappers import Monitor
 
 
 class Actor:
-    def __init__(self, id, env_func, actor_learner_queue: Queue, learner_actor_queues: Queue):
+    def __init__(self, id, env_func, actor_learner_queue: Queue, learner_actor_queues: Queue, finish):
         self.id = id  # actor identifier
         self.num_episode = 0
         self.env = env_func(render=self.is_testing_actor() and P.render)
+        self.finish = finish
         self.fps = deque(maxlen=10)
         self.actor_learner_queue = actor_learner_queue
         self.learner_actor_queues = learner_actor_queues
@@ -31,8 +32,15 @@ class Actor:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, False])
         else:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, not self.is_testing_actor()])
-        action = self.learner_actor_queues.get(timeout=P.actor_read_timeout)
         
+        while True:
+            try:
+                action = self.learner_actor_queues.get(timeout=0.1)
+                break
+            except Exception:
+                if self.finish.value:
+                    raise Exception()
+
         if action == 'unused_action':
             return action
 

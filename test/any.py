@@ -1,3 +1,4 @@
+from ctypes import sizeof
 from src.util.imports.num import np
 from src.module.agent.memory.optimal_graph import OptimalGraph, Memory
 from src.module.agent.memory.indexer import Indexer
@@ -22,10 +23,24 @@ a = Memory()
 
 a['a'] = [0, 100]
 a['b'] = [0, 200]
-print(a['a'])
+
+
+if 'c' not in a:
+    a['c'] = [1, 300]
+
+print('for')
+for key in a:
+    print(key)
+
+print(f"a[\'a\'] {a['a']}")
+
+print(len(a))
 
 print(a.max_value)
 print(a.max_value_init_obs)
+print(dict(a))
+print(a)
+
 
 
 

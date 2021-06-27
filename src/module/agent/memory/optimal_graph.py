@@ -4,29 +4,20 @@ from src.module.context import Profile as P
 
 
 
-class Memory:
+class Memory(dict):
     def __init__(self) -> None:
-        self.max_value = None
-        self.max_value_init_obs = None
-        self.obs_to_action = dict()
-
-    def keys(self):
-        return self.obs_to_action.keys()
-
-    def values(self):
-        return self.obs_to_action.values()
-
-    def __getitem__(self, key):
-        return self.obs_to_action[key]
+        super().__init__()
+        # self.max_value = None
+        # self.max_value_init_obs = None
 
     def __setitem__(self, key, value):
-        self.obs_to_action[key] = value
-        if self.max_value is None:
-            self.max_value = value[1]
-            self.max_value_init_obs = key
-        elif value[1] > self.max_value:
-            self.max_value = value[1]
-            self.max_value_init_obs = key
+        super().__setitem__(key, value)
+        # if self.max_value is None:
+        #     self.max_value = value[1]
+        #     self.max_value_init_obs = key
+        # elif value[1] > self.max_value:
+        #     self.max_value = value[1]
+        #     self.max_value_init_obs = key
 
     
 

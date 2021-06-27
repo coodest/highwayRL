@@ -74,7 +74,7 @@ class MemRL:
         # 1. make env and actor
         from src.module.env.actor import Actor
 
-        actor = Actor(id, MemRL.create_env, actor_learner_queues, learner_actor_queues)
+        actor = Actor(id, MemRL.create_env, actor_learner_queues, learner_actor_queues, finish)
 
         # 2. start interaction loop (actor loop)
         while True:
