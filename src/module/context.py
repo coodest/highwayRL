@@ -31,6 +31,7 @@ class Context:
     projected_dim = 8
     sync_every = 60  # in second
     e_greedy = [0.5, 1]
+    add_obs = True  # false: last_obs-prev_action pairs, True: last_obs-prev_action-obs triple
 
 
 class Profile(Context):

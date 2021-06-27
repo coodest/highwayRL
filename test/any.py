@@ -20,11 +20,7 @@ from src.module.agent.memory.projector import RandomProjector
 # print([1, 2, 3, 4, 9, 4].index(0))
 
 
-a = 'ss'
-if type(a) is str:
-    print(1)
-else:
-    print(0)
+
 
 
 # -------------------------------------------------------------------
@@ -58,12 +54,12 @@ else:
 
 # a = dict()
 # sample = set()
-# for _ in range(50):
-#     env = Atari.make_env(False)
+# env = Atari.make_env(False)
+# for _ in range(5000):
 #     obs = env.reset()  # random_noops = 15
-#     obs = env.reset()  # random_noops = 30
-#     obs = env.reset()  # random_noops = 11
-#     for i in range(10):
+#     # obs = env.reset()  # random_noops = 30
+#     # obs = env.reset()  # random_noops = 11
+#     for i in range(1):
 #         obs, reward, done, info = env.step(i)
 #     # h = Indexer.get_ind(obs)
 #     h = Funcs.matrix_hashing(obs)
@@ -72,20 +68,58 @@ else:
 #     else:
 #         a[h] += 1
 
-# print(a)
+# # print(a)
 # print(len(a))
 
 # -------------------------------------------------------------------
 
-# o = IO.read_disk_dump(P.model_dir + 'optimal.pkl')
-# env = Atari.make_env(False)
-# obs = env.reset()
-# random_projector = RandomProjector(0)
-# obs = random_projector.batch_project([obs])[0]
-# obs = Indexer.get_ind(obs)
+o = IO.read_disk_dump(P.model_dir + 'optimal.pkl')
+m = max([i[1] for i in o.values()])
+print(f'max value: {m}')
+print(f'm len: {len(o)}')
 
-# print(o[obs])
-# print(max([i[1] for i in o.values()]))
+print("starting point with max value")
+ml = set()
+for key in o:
+    if o[key][1] == m:
+        ml.add(o[key][2])
+xx = []
+for key in o:
+    if o[key][1] == m:
+        if key not in ml:
+            xx.append(key)
+print(xx)
+print(len(xx))
+
+print("end point with max value")
+ml = set()
+for key in o:
+    if o[key][1] == m:
+        ml.add(o[key][2])
+xx = []
+for e in ml:
+    if o[e][1] != m:
+        print(o[e][1])
+        xx.append(e)
+print(xx)
+print(len(xx))
+
+
+env = Atari.make_env(False)
+random_projector = RandomProjector(0)
+obs = env.reset()
+# for _ in range(500):
+obs = random_projector.batch_project([obs])[0]
+obs = Indexer.get_ind(obs)
+print(obs)
+#     if obs in ml:
+#         print(1)
+#     obs, reward, done, info = env.step(0)
+
+#     if done:
+#         break
+# print('fin')
+
 
 
 # -------------------------------------------------------------------

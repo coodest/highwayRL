@@ -1,4 +1,6 @@
 import time
+
+from gym.core import ObservationWrapper
 from src.util.tools import IO
 from src.module.context import Profile as P
 
@@ -34,12 +36,17 @@ class OptimalGraph:
             return None
 
     def store_increments(self, trajectory, total_reward):
-        for last_obs, pre_action in trajectory:
+        for last_obs, pre_action, obs in trajectory:
+            if P.add_obs:
+                info = [pre_action, total_reward, obs]
+            else:
+                info = [pre_action, total_reward]
+
             if last_obs not in self.main:
-                self.increments[last_obs] = [pre_action, total_reward]
+                self.increments[last_obs] = info
                 self.increments.update_max(total_reward, last_obs)
             elif self.main[last_obs][1] < total_reward:
-                self.increments[last_obs] = [pre_action, total_reward]
+                self.increments[last_obs] = info
                 self.increments.update_max(total_reward, last_obs)
 
     def sync(self):

@@ -83,7 +83,7 @@ class Policy:
                         init_obs = obs
 
                     if add:
-                        trajectory.append([last_obs, pre_action])
+                        trajectory.append([last_obs, pre_action, obs])
                         total_reward += reward
                     if done:
                         if add:
