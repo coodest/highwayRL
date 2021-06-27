@@ -76,49 +76,66 @@ from src.module.agent.memory.projector import RandomProjector
 o = IO.read_disk_dump(P.model_dir + 'optimal.pkl')
 m = max([i[1] for i in o.values()])
 print(f'max value: {m}')
-print(f'm len: {len(o)}')
+print(f'o len: {len(o)}')
 
-print("starting point with max value")
-ml = set()
+
+one = set()
 for key in o:
     if o[key][1] == m:
-        ml.add(o[key][2])
-xx = []
+        one.add(key)
+print(f'num max point {len(one)}')
+
+two = set()
 for key in o:
     if o[key][1] == m:
-        if key not in ml:
-            xx.append(key)
-print(xx)
-print(len(xx))
+        two.add(o[key][2])
 
-print("end point with max value")
-ml = set()
-for key in o:
-    if o[key][1] == m:
-        ml.add(o[key][2])
-xx = []
-for e in ml:
-    if o[e][1] != m:
-        print(o[e][1])
-        xx.append(e)
-print(xx)
-print(len(xx))
+two_out = set()
+two_end = set()
+for e in two:
+    if e in o:
+        if o[e][1] != m:
+            two_out.add(e)
+    else:
+        two_end.add(e)
+print(f'two_out {len(two_out)}')
+print(f'two_end {len(two_end)}')
 
 
-env = Atari.make_env(False)
-random_projector = RandomProjector(0)
-obs = env.reset()
-# for _ in range(500):
-obs = random_projector.batch_project([obs])[0]
-obs = Indexer.get_ind(obs)
-print(obs)
-#     if obs in ml:
-#         print(1)
+
+# xx = []
+# for e in ml:
+#     if o[e][1] != m:
+#         xx.append(e)
+# print(f'num ending obs from last max value point: {len(xx)}')
+
+# m2 = set()
+# for key in o:
+#     if o[key][1] == m:
+#         m2.add(key)
+
+# for e in m2:
+#     if o[e][1] == m:
+#         if e not in o:
+#             print(f'pure ending point with max value: {x}')
+
+
+# env = Atari.make_env(False)
+# random_projector = RandomProjector(0)
+# obs = env.reset()
+# total_reward = 0
+# while True:
+#     obs = random_projector.batch_project([obs])[0]
+#     obs = Indexer.get_ind(obs)
+#     a = o[obs]
 #     obs, reward, done, info = env.step(0)
 
+#     total_reward += reward
+
 #     if done:
+#         print(f'R: {total_reward}')
 #         break
-# print('fin')
+print('fin')
 
 
 

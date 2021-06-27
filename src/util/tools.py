@@ -267,7 +267,12 @@ class IO:
 
     @staticmethod
     def delete_file(path):
-        os.remove(path)
+        if Path(path).exists():
+            os.remove(path)
+
+    @staticmethod
+    def move_file(src, dst):
+        shutil.move(src, dst)
 
     @staticmethod
     def list_dir(directory):

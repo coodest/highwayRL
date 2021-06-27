@@ -1,7 +1,6 @@
 import time
 
-from gym.core import ObservationWrapper
-from src.util.tools import IO
+from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 
 
@@ -11,13 +10,13 @@ class Memory(dict):
         self.max_value = None
         self.max_value_init_obs = None
     
-    def update_max(self, value, init_obs):
+    def update_max(self, value, obs):
         if self.max_value is None:
             self.max_value = value
-            self.max_value_init_obs = init_obs
+            self.max_value_init_obs = obs
         elif value > self.max_value:
             self.max_value = value
-            self.max_value_init_obs = init_obs
+            self.max_value_init_obs = obs
 
 
 class OptimalGraph:
@@ -44,10 +43,8 @@ class OptimalGraph:
 
             if last_obs not in self.main:
                 self.increments[last_obs] = info
-                self.increments.update_max(total_reward, last_obs)
             elif self.main[last_obs][1] < total_reward:
                 self.increments[last_obs] = info
-                self.increments.update_max(total_reward, last_obs)
 
     def sync(self):
         if not self.is_head:
@@ -79,5 +76,6 @@ class OptimalGraph:
                     continue
                 IO.stick_read_disk_dump(P.result_dir + f'{i}.finish')
 
+            IO.delete_file(P.model_dir + 'optimal.pkl')
+            IO.move_file(P.result_dir + 'target.pkl', P.model_dir + 'optimal.pkl')
             IO.renew_dir(P.result_dir)
-            IO.write_disk_dump(P.model_dir + 'optimal.pkl', self.main)
