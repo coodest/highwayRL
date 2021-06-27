@@ -1,5 +1,5 @@
 from src.util.imports.num import np
-from src.module.agent.memory.optimal_graph import OptimalGraph
+from src.module.agent.memory.optimal_graph import OptimalGraph, Memory
 from src.module.agent.memory.indexer import Indexer
 from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
 from src.module.env.atari import Atari
@@ -16,11 +16,20 @@ from src.module.agent.memory.projector import RandomProjector
 # print(b)
 
 
+# print([1, 2, 3, 4, 9, 4].index(0))
 
-print([1,2,3,4,9,4].index(0))
+a = Memory()
+
+a['a'] = [0, 100]
+a['b'] = [0, 200]
+print(a['a'])
+
+print(a.max_value)
+print(a.max_value_init_obs)
 
 
-#-------------------------------------------------------------------
+
+# -------------------------------------------------------------------
 
 # a = dict()
 # sample = set()
@@ -41,7 +50,7 @@ print([1,2,3,4,9,4].index(0))
 # print(a)
 # print(len(a))
 
-#-------------------------------------------------------------------
+# -------------------------------------------------------------------
 
 # o = IO.read_disk_dump(P.model_dir + 'optimal.pkl')
 # env = Atari.make_env(False)
@@ -54,7 +63,7 @@ print([1,2,3,4,9,4].index(0))
 # print(max([i[1] for i in o.values()]))
 
 
-#-------------------------------------------------------------------
+# -------------------------------------------------------------------
 # a = Queue()
 # a.put(1)
 # a.put(2)
@@ -65,9 +74,3 @@ print([1,2,3,4,9,4].index(0))
 # print(a.get())
 # print(a.get())
 # print(a.get())
-
-
-
-
-
-
