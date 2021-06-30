@@ -102,6 +102,6 @@ class OptimalGraph:
                     continue
                 IO.stick_read_disk_dump(P.result_dir + f'{i}.finish')
 
-            IO.delete_file(P.model_dir + 'optimal.pkl')
-            IO.move_file(P.result_dir + 'target.pkl', P.model_dir + 'optimal.pkl')
+            IO.delete_file(P.optimal_graph_path)
+            IO.move_file(P.result_dir + 'target.pkl', P.optimal_graph_path)
             IO.renew_dir(P.result_dir)

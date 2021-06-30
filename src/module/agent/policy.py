@@ -27,7 +27,7 @@ class Policy:
         for p in processes:
             p.join()
 
-        return IO.read_disk_dump(P.model_dir + 'optimal.pkl')
+        return IO.read_disk_dump(P.optimal_graph_path)
 
 
     @staticmethod
@@ -55,13 +55,13 @@ class Policy:
                     if frames.value > P.total_frames:
                         return
                     # sync graph
-                    now = time.time()
-                    if now - last_sync > P.sync_every:
+                    if time.time() - last_sync > P.sync_every:
                         optimal_graph.sync()
-                        last_sync = now
+                        last_sync = time.time()
                     # logging info
                     if Policy.is_head(id):
                         cur_frame = frames.value
+                        now = time.time()
                         if now - last_report > P.log_every:
                             Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G: {} V: {}/{}".format(
                                 cur_frame / 1e6,

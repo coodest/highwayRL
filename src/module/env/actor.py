@@ -4,6 +4,7 @@ import time
 from multiprocessing import Queue
 from collections import deque
 from src.util.imports.random import random
+from src.util.imports.num import np
 
 
 class Actor:
@@ -100,8 +101,9 @@ class Actor:
                     else:
                         lost_step = len(self.hit)
                     if self.is_testing_actor():
-                        Logger.log("evl_actor R: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
+                        Logger.log("evl_actor R: {:6.2f} AR:{:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
                             self.episodic_reward[-1],
+                            np.mean(self.episodic_reward),
                             self.fps[-1],
                             hit_rate,
                             lost_step,

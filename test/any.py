@@ -73,7 +73,7 @@ from src.module.agent.memory.projector import RandomProjector
 
 # -------------------------------------------------------------------
 
-o = IO.read_disk_dump(P.model_dir + 'optimal.pkl')
+o = IO.read_disk_dump(P.optimal_graph_path)
 m = max([i[1] for i in o.values()])
 print(f'max value: {m}')
 print(f'o len: {len(o)}')

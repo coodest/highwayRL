@@ -33,10 +33,11 @@ class Context:
     projected_dim = 8
     sync_every = 60  # in second
     sync_modes = ['highest', 'confident', 'mixed']  # highest to max R, confident to max hit rate 
-    sync_tolerance = 0.5
+    sync_tolerance = 0.7
     sync_mode = sync_modes[2]
     e_greedy = [0.1, 1]
     add_obs = True  # false: last_obs-prev_action pairs, True: last_obs-prev_action-obs triple
+    optimal_graph_path = None
 
 
 class Profile(Context):
@@ -47,7 +48,7 @@ class Profile(Context):
         profiles[i] = str(i)
 
     current_profile = sys.argv[1]
-
+    
     for i in range(1, 27):
         if current_profile == "1":
             clean = True
@@ -56,3 +57,5 @@ class Profile(Context):
         
         if current_profile == str(i):
             C.env_name = C.env_name_list[int(current_profile)]
+
+    C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'
