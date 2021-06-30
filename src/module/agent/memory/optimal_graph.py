@@ -7,14 +7,11 @@ from src.module.context import Profile as P
 class Memory(dict):
     def __init__(self) -> None:
         super().__init__()
-        self.max_value = None
+        self.max_value = - float('inf')
         self.max_value_init_obs = None
     
     def update_max(self, value, obs):
-        if self.max_value is None:
-            self.max_value = value
-            self.max_value_init_obs = obs
-        elif value > self.max_value:
+        if value > self.max_value:
             self.max_value = value
             self.max_value_init_obs = obs
 
@@ -51,10 +48,20 @@ class OptimalGraph:
                 if P.sync_mode == P.sync_modes[0]:
                     if last_obs not in self.increments:
                         self.increments[last_obs] = info
+                        self.increments.update_max(total_reward, last_obs)
                     elif self.increments[last_obs][1] < total_reward:
                         self.increments[last_obs] = info
+                        self.increments.update_max(total_reward, last_obs)
                 if P.sync_mode == P.sync_modes[1]:
                     self.increments[last_obs] = info
+                    self.increments.update_max(total_reward, last_obs)
+                if P.sync_mode == P.sync_modes[2]:
+                    if last_obs not in self.increments:
+                        self.increments[last_obs] = info
+                        self.increments.update_max(total_reward, last_obs)
+                    elif self.increments.max_value * P.sync_tolerance < total_reward:
+                        self.increments[last_obs] = info
+                        self.increments.update_max(total_reward, last_obs)
 
     def sync(self):
         if not self.is_head:
