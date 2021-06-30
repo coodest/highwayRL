@@ -1,10 +1,12 @@
 import sys
+from src.util.tools import IO
 
 
 class Context:
     # common
     work_dir = './'
     out_dir = work_dir + "output/"
+    asset_dir = work_dir + "assets/"
     log_dir = out_dir + "log/"
     model_dir = out_dir + "model/"
     result_dir = out_dir + "result/"
@@ -17,14 +19,13 @@ class Context:
     # env
     total_frames = 1e7
     env_type = "atari"
-    num_action = 18
-    env_name = "Pong"  # StarGunner, Pong
+    env_name_list = IO.read_file(asset_dir + "Atari_game_list.txt")
+    env_name = None
     max_episode_steps = 108000
     max_random_noops = 30
     num_action_repeats = 4
     render = False  # whether test actor to render the env
     render_every = 5
-    num_action = None
 
     # agent
     num_actor = 8
@@ -32,9 +33,9 @@ class Context:
     projected_dim = 8
     sync_every = 60  # in second
     sync_modes = ['highest', 'confident', 'mixed']  # highest to max R, confident to max hit rate 
-    sync_tolerance = 0.8
+    sync_tolerance = 0.5
     sync_mode = sync_modes[2]
-    e_greedy = [0.5, 1]
+    e_greedy = [0.1, 1]
     add_obs = True  # false: last_obs-prev_action pairs, True: last_obs-prev_action-obs triple
 
 
@@ -42,20 +43,16 @@ class Profile(Context):
     C = Context
 
     profiles = dict()
-    profiles[1] = "1"
-    profiles[2] = "2"
-    profiles[3] = "3"
-    profiles[4] = "4"
-    profiles[5] = "5"
-    profiles[6] = "6"
-    profiles[7] = "7"
-    profiles[8] = "8"
+    for i in range(1, 27):
+        profiles[i] = str(i)
 
     current_profile = sys.argv[1]
 
-    if current_profile == profiles[1]:
-        clean = True
-    if current_profile == profiles[2]:
-        clean = False
-    if current_profile == profiles[3]:
-        clean = False
+    for i in range(1, 27):
+        if current_profile == "1":
+            clean = True
+        else:
+            clean = False
+        
+        if current_profile == str(i):
+            C.env_name = C.env_name_list[int(current_profile)]

@@ -7,7 +7,7 @@ class MemRL:
     @staticmethod
     def start():
         # 1. init
-        Logger.path = P.log_dir + Logger.get_date() + ".log"
+        Logger.path = f"{P.log_dir}{P.env_name}-{Logger.get_date()}.log"
         IO.make_dir(P.out_dir)
         IO.make_dir(P.log_dir)
         IO.make_dir(P.model_dir)

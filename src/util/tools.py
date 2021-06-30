@@ -241,6 +241,14 @@ class IO:
         return restore
 
     @staticmethod
+    def read_file(path):
+        content = []
+        with open(path, "r") as file:
+            for line in file:
+                content.append(line.replace('\n', ''))
+        return content
+
+    @staticmethod
     def stick_read_disk_dump(path):
         while True:
             try:
