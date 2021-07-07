@@ -26,17 +26,20 @@ class Context:
     num_action_repeats = 4
     render = False  # whether test actor to render the env
     render_every = 5
+    num_action = 18
 
     # agent
     num_actor = 8
     obs_min_dis = 1e-3
     projected_dim = 8
+    gamma = 0.99
     sync_every = 60  # in second
     sync_modes = ['highest', 'confident', 'mixed']  # highest to max R, confident to max hit rate 
     sync_tolerance = 0.7
     sync_mode = sync_modes[2]
-    e_greedy = [0.1, 1]
-    add_obs = True  # false: last_obs-prev_action pairs, True: last_obs-prev_action-obs triple
+    graph_types = ['transition', 'optimal']
+    graph_type = graph_types[0]
+    e_greedy = [0.5, 1]
     optimal_graph_path = None
 
 
@@ -50,12 +53,9 @@ class Profile(Context):
     current_profile = sys.argv[1]
     
     for i in range(1, 27):
-        if current_profile == "1":
-            clean = True
-        else:
-            clean = False
-        
         if current_profile == str(i):
             C.env_name = C.env_name_list[int(current_profile)]
+
+    clean = True
 
     C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'

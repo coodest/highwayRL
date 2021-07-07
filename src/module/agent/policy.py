@@ -38,12 +38,15 @@ class Policy:
     def response_action(id, actor_learner_queue, learner_actor_queue, frames):
         from src.module.agent.memory.projector import RandomProjector
         from src.module.agent.memory.indexer import Indexer
-        from src.module.agent.memory.optimal_graph import OptimalGraph
+        from src.module.agent.memory.graph import OptimalGraph, TransitionGraph
 
         last_report = time.time()
         last_frame = frames.value
         last_sync = time.time()
-        optimal_graph = OptimalGraph(id, Policy.is_head(id))
+        if P.graph_type == P.graph_types[0]:
+            graph = TransitionGraph(id, Policy.is_head(id))
+        if P.graph_type == P.graph_types[1]:
+            graph = OptimalGraph(id, Policy.is_head(id))
         random_projector = RandomProjector(id)
         while True:
             trajectory = []
@@ -56,7 +59,7 @@ class Policy:
                         return
                     # sync graph
                     if time.time() - last_sync > P.sync_every:
-                        optimal_graph.sync()
+                        graph.sync()
                         last_sync = time.time()
                     # logging info
                     if Policy.is_head(id):
@@ -66,9 +69,9 @@ class Policy:
                             Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G: {} V: {}/{}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
-                                len(optimal_graph.main.keys()),
-                                optimal_graph.main.max_value,
-                                str(optimal_graph.main.max_value_init_obs)[-4:]
+                                len(graph.main.keys()),
+                                graph.main.max_value,
+                                str(graph.main.max_value_init_obs)[-4:]
                             ))
                             last_report = now
                             last_frame = cur_frame
@@ -83,7 +86,7 @@ class Policy:
                         init_obs = obs
 
                     if add:
-                        trajectory.append([last_obs, pre_action, obs])
+                        trajectory.append([last_obs, pre_action, obs, reward])
                         total_reward += reward
                     if done:
                         if add:
@@ -91,13 +94,13 @@ class Policy:
                                 frames.value += (
                                     len(trajectory) * P.num_action_repeats
                                 )
-                            optimal_graph.store_increments(trajectory, total_reward)
+                            graph.store_increments(trajectory, total_reward)
                         learner_actor_queue.put(
                             init_obs
                         )
                         break
                     else:
-                        action = optimal_graph.get_action(obs)
+                        action = graph.get_action(obs)
                         learner_actor_queue.put(action)
                 except Exception:
                     Funcs.trace_exception()

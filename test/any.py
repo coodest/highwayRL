@@ -1,6 +1,6 @@
 from ctypes import sizeof
 from src.util.imports.num import np
-from src.module.agent.memory.optimal_graph import OptimalGraph, Memory
+from src.module.agent.memory.optimal_graph import OptimalGraph, OptimalStorage
 from src.module.agent.memory.indexer import Indexer
 from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
 from src.module.env.atari import Atari
