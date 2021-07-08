@@ -18,7 +18,11 @@ class OptimalStorage(Storeage):
 class TransitionStorage(Storeage):
     def __init__(self) -> None:
         super().__init__()
+        self.ends = set()
 
     def update_max(self, value):
         if value > self.max_value:
             self.max_value = value
+
+    def add_end(self, end):
+        self.ends.add(end)

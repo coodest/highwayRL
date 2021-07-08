@@ -33,7 +33,7 @@ class Context:
     obs_min_dis = 1e-3
     projected_dim = 8
     gamma = 0.99
-    sync_every = 60  # in second
+    sync_every = 20  # in second
     sync_modes = ['highest', 'confident', 'mixed']  # highest to max R, confident to max hit rate 
     sync_tolerance = 0.7
     sync_mode = sync_modes[2]
@@ -41,6 +41,7 @@ class Context:
     graph_type = graph_types[0]
     e_greedy = [0.5, 1]
     optimal_graph_path = None
+    num_bp = 1
 
 
 class Profile(Context):
