@@ -163,8 +163,9 @@ class TransitionGraph(Graph):
             if last_obs not in self.increments:
                 self.init_obs(self.increments, last_obs)
 
-            if self.increments[last_obs]['action'][pre_action] < current_value:
-                self.increments[last_obs]['action'][pre_action] = current_value  # may over estimate the value
+            # if self.increments[last_obs]['action'][pre_action] < current_value:
+                # self.increments[last_obs]['action'][pre_action] = current_value  # may over estimate the value
+            self.increments[last_obs]['action'][pre_action] = 0.8 * self.increments[last_obs]['action'][pre_action] + 0.2 * current_value
 
     def merge_inc(self, inc):
         for last_obs in inc:
@@ -174,13 +175,24 @@ class TransitionGraph(Graph):
                 for p in inc[last_obs]['parents']:
                     self.main[last_obs]['parents'][p] = inc[last_obs]['parents'][p]
                     
-                self.main[last_obs]['action'] = np.maximum(
-                    self.main[last_obs]['action'],
-                    inc[last_obs]['action']
+                # self.main[last_obs]['action'] = np.maximum(
+                #     self.main[last_obs]['action'],
+                #     inc[last_obs]['action']
+                # )
+
+                # self.main[last_obs]['reward'] = max(
+                #     self.main[last_obs]['reward'],
+                #     inc[last_obs]['reward']
+                # )
+
+                self.main[last_obs]['action'] = (
+                    self.main[last_obs]['action'] * 0.8 +
+                    inc[last_obs]['action'] * 0.2
                 )
-                self.main[last_obs]['reward'] = max(
-                    self.main[last_obs]['reward'],
-                    inc[last_obs]['reward']
+
+                self.main[last_obs]['reward'] = (
+                    self.main[last_obs]['reward'] * 0.8 +
+                    inc[last_obs]['reward'] * 0.2
                 )
 
         self.main.update_max(inc.max_value)
