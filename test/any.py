@@ -1,12 +1,14 @@
 from ctypes import sizeof
 from src.util.imports.num import np
-from src.module.agent.memory.optimal_graph import OptimalGraph, OptimalStorage
 from src.module.agent.memory.indexer import Indexer
 from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
 from src.module.env.atari import Atari
 from src.util.tools import *
 from src.module.context import Profile as P
 from src.module.agent.memory.projector import RandomProjector
+
+import numpy as np
+from sklearn.neighbors import KDTree
 
 
 # r = RandomProjector(0)
@@ -73,33 +75,33 @@ from src.module.agent.memory.projector import RandomProjector
 
 # -------------------------------------------------------------------
 
-o = IO.read_disk_dump(P.optimal_graph_path)
-m = max([i[1] for i in o.values()])
-print(f'max value: {m}')
-print(f'o len: {len(o)}')
+# o = IO.read_disk_dump(P.optimal_graph_path)
+# m = max([i[1] for i in o.values()])
+# print(f'max value: {m}')
+# print(f'o len: {len(o)}')
 
 
-one = set()
-for key in o:
-    if o[key][1] == m:
-        one.add(key)
-print(f'num max point {len(one)}')
+# one = set()
+# for key in o:
+#     if o[key][1] == m:
+#         one.add(key)
+# print(f'num max point {len(one)}')
 
-two = set()
-for key in o:
-    if o[key][1] == m:
-        two.add(o[key][2])
+# two = set()
+# for key in o:
+#     if o[key][1] == m:
+#         two.add(o[key][2])
 
-two_out = set()
-two_end = set()
-for e in two:
-    if e in o:
-        if o[e][1] != m:
-            two_out.add(e)
-    else:
-        two_end.add(e)
-print(f'two_out {len(two_out)}')
-print(f'two_end {len(two_end)}')
+# two_out = set()
+# two_end = set()
+# for e in two:
+#     if e in o:
+#         if o[e][1] != m:
+#             two_out.add(e)
+#     else:
+#         two_end.add(e)
+# print(f'two_out {len(two_out)}')
+# print(f'two_end {len(two_end)}')
 
 
 
@@ -135,7 +137,7 @@ print(f'two_end {len(two_end)}')
 #     if done:
 #         print(f'R: {total_reward}')
 #         break
-print('fin')
+# print('fin')
 
 
 
@@ -150,3 +152,8 @@ print('fin')
 # print(a.get())
 # print(a.get())
 # print(a.get())
+# -------------------------------------------------------------------
+
+a =[0,0,0,1]
+
+print(np.argmin(a))

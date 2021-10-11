@@ -11,9 +11,9 @@ class Context:
     model_dir = out_dir + "model/"
     result_dir = out_dir + "result/"
     video_dir = out_dir + "video/"
-    clean = True
+    clean = False
     log_every = 20
-    num_gpu = 1
+    num_gpu = 2
     prio_gpu = 0
 
     # env
@@ -29,9 +29,9 @@ class Context:
     num_action = 18
 
     # agent
-    num_actor = 8
+    num_actor = 16
     obs_min_dis = 1e-3
-    projected_dim = 8
+    projected_dim = 4
     gamma = 0.99
     sync_every = 20  # in second
     sync_modes = ['highest', 'confident', 'mixed']  # highest to max R, confident to max hit rate 
@@ -42,6 +42,9 @@ class Context:
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     num_bp = 0  # set 0 to disable back value propagation
+    k_nearest_neighbor = 5
+    projector_types = ["random", "cnn"]
+    projector = projector_types[1]
 
 
 class Profile(Context):
@@ -57,6 +60,6 @@ class Profile(Context):
         if current_profile == str(i):
             C.env_name = C.env_name_list[int(current_profile)]
 
-    # clean = True
+    C.clean = True
 
     C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'

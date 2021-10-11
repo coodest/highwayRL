@@ -37,6 +37,7 @@ class Policy:
     @staticmethod
     def response_action(id, actor_learner_queue, learner_actor_queue, frames):
         from src.module.agent.memory.projector import RandomProjector
+        from src.module.agent.memory.projector import CNNProjector
         from src.module.agent.memory.indexer import Indexer
         from src.module.agent.memory.graph import OptimalGraph, TransitionGraph
 
@@ -47,7 +48,12 @@ class Policy:
             graph = TransitionGraph(id, Policy.is_head(id))
         if P.graph_type == P.graph_types[1]:
             graph = OptimalGraph(id, Policy.is_head(id))
-        random_projector = RandomProjector(id)
+        
+        if P.projector == P.projector_types[0]:
+            projector = RandomProjector(id)
+        if P.projector == P.projector_types[1]:
+            projector = CNNProjector(id)
+
         while True:
             trajectory = []
             total_reward = 0
@@ -79,7 +85,8 @@ class Policy:
 
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
-                    last_obs, obs = random_projector.batch_project([last_obs, obs])
+                    last_obs, obs = projector.batch_project([last_obs, obs])
+                    raw_obs = obs
                     last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
 
                     if init_obs is None:
@@ -100,7 +107,10 @@ class Policy:
                         )
                         break
                     else:
-                        action = graph.get_action(obs)
+                        if P.graph_type == P.graph_types[0]:
+                            action = graph.get_action(obs, raw_obs)
+                        if P.graph_type == P.graph_types[1]:
+                            action = graph.get_action(obs)
                         learner_actor_queue.put(action)
                 except Exception:
                     Funcs.trace_exception()

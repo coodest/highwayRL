@@ -41,28 +41,39 @@ class RandomProjector(Projector):
         if P.env_type == "atari":
             # [2, 84 * 84]
             input = torch.tensor(batch, dtype=torch.float).to(self.device)
+
         with torch.no_grad():  # no grad calculation
             output = self.random_matrix(input)
 
         return output.cpu().detach().numpy().tolist()
 
 
-# class CNNProjector(Projector):
-#     conv1 = torch.nn.Conv2d(1, 1, (3, 3), stride=(2, 2)).to(Projector.device)
-#     conv2 = torch.nn.Conv2d(1, 1, (3, 3), stride=(2, 2)).to(Projector.device)
-#     conv3 = torch.nn.Conv2d(1, 1, (3, 3), stride=(2, 2)).to(Projector.device)
+class CNNProjector(Projector):
+    def __init__(self, id) -> None:
+        super().__init__(id)
+        self.random_matrix = None
+        if P.env_type == "atari":
+            self.random_matrix = RandomMatrix(84 * 84, P.projected_dim).to(self.device)
 
-#     @staticmethod
-#     def project(obs):
-#         input = None
-#         if P.env_type == "atari":
-#             input = torch.tensor(obs, dtype=torch.float, requires_grad=False).to(Projector.device)
-#             input = input.squeeze(-1)
-#             input = input.unsqueeze(0).unsqueeze(0)
-#         input = CNNProjector.conv1(input)
-#         input = CNNProjector.conv2(input)
-#         output = CNNProjector.conv3(input)
-#         output = torch.flatten(output)
-#         output = output.cpu().detach().numpy()  # detach to remove grad_fn
+        self.conv1 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
+        self.conv2 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
+        self.conv3 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
 
-#         return output
+    def batch_project(self, obs_list):
+        # [2, 84 * 84]
+        batch = np.vstack(obs_list)  
+        input = None
+        if P.env_type == "atari":
+            input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
+            input = input.unsqueeze(1)
+            # [2, 1, 84, 84]
+            input = input.reshape(input.shape[0], input.shape[1], 84, -1)
+
+        with torch.no_grad():  # no grad calculation
+            output = self.conv1(input)
+            output = self.conv2(output)
+            output = self.conv3(output)
+            output = output.squeeze(1)
+            output = torch.flatten(output, start_dim=1)
+
+        return output.cpu().detach().numpy().tolist()  # detach to remove grad_fn

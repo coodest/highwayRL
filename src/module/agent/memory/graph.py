@@ -1,10 +1,15 @@
 import time
+from typing import ValuesView
+
+from torch._C import _logging_set_logger
 
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 from src.module.agent.memory.storage import TransitionStorage
 from src.module.agent.memory.storage import OptimalStorage
 import numpy as np
+from sklearn.neighbors import KDTree
+from src.module.agent.memory.indexer import Indexer
 
 
 class Graph:
@@ -125,14 +130,34 @@ class TransitionGraph(Graph):
     def __init__(self, id, is_head) -> None:
         super().__init__(id, is_head)
         self.stack = list()
+        self.known_states = []
 
     def make_new_store(self):
         return TransitionStorage()
 
-    def get_action(self, obs):
+    def get_action(self, obs, raw_obs):
         if obs in self.main:
             return np.argmax(self.main[obs]['action'])
         else:
+            if raw_obs not in self.known_states:
+                self.known_states.append(raw_obs)
+            if len(self.known_states) > P.k_nearest_neighbor:
+                kdtree = KDTree(self.known_states)
+                # return index of the closest neighbors in self.known_states
+                neighbors = kdtree.query([raw_obs], P.k_nearest_neighbor)[1][0]
+                values = np.zeros([P.num_action])
+                num_validate_nb = 0
+                for neighbor in neighbors:
+                    ind = Indexer.get_ind(self.known_states[neighbor])
+                    if ind in self.main:
+                        values += self.main[ind]['action']
+                        num_validate_nb += 1
+                if num_validate_nb > 0:
+                    values /= num_validate_nb
+                    best_actions = np.argwhere(values == np.max(values)).flatten()
+                    action = np.random.choice(best_actions)
+                    return action
+
             return None
 
     def init_obs(self, a, b):
@@ -163,9 +188,9 @@ class TransitionGraph(Graph):
             if last_obs not in self.increments:
                 self.init_obs(self.increments, last_obs)
 
-            # if self.increments[last_obs]['action'][pre_action] < current_value:
-                # self.increments[last_obs]['action'][pre_action] = current_value  # may over estimate the value
-            self.increments[last_obs]['action'][pre_action] = 0.8 * self.increments[last_obs]['action'][pre_action] + 0.2 * current_value
+            if self.increments[last_obs]['action'][pre_action] < current_value:
+                self.increments[last_obs]['action'][pre_action] = current_value  # may over estimate the value
+            # self.increments[last_obs]['action'][pre_action] = 0.8 * self.increments[last_obs]['action'][pre_action] + 0.2 * current_value
 
     def merge_inc(self, inc):
         for last_obs in inc:
@@ -175,6 +200,7 @@ class TransitionGraph(Graph):
                 for p in inc[last_obs]['parents']:
                     self.main[last_obs]['parents'][p] = inc[last_obs]['parents'][p]
                     
+                # hard merge
                 # self.main[last_obs]['action'] = np.maximum(
                 #     self.main[last_obs]['action'],
                 #     inc[last_obs]['action']
@@ -185,6 +211,7 @@ class TransitionGraph(Graph):
                 #     inc[last_obs]['reward']
                 # )
 
+                # soft merge
                 self.main[last_obs]['action'] = (
                     self.main[last_obs]['action'] * 0.8 +
                     inc[last_obs]['action'] * 0.2
