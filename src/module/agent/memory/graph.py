@@ -199,28 +199,29 @@ class TransitionGraph(Graph):
             else:
                 for p in inc[last_obs]['parents']:
                     self.main[last_obs]['parents'][p] = inc[last_obs]['parents'][p]
-                    
-                # hard merge
-                # self.main[last_obs]['action'] = np.maximum(
-                #     self.main[last_obs]['action'],
-                #     inc[last_obs]['action']
-                # )
+                
+                if not P.soft_merge:
+                    # hard merge
+                    self.main[last_obs]['action'] = np.maximum(
+                        self.main[last_obs]['action'],
+                        inc[last_obs]['action']
+                    )
 
-                # self.main[last_obs]['reward'] = max(
-                #     self.main[last_obs]['reward'],
-                #     inc[last_obs]['reward']
-                # )
+                    self.main[last_obs]['reward'] = max(
+                        self.main[last_obs]['reward'],
+                        inc[last_obs]['reward']
+                    )
+                else:
+                    # soft merge
+                    self.main[last_obs]['action'] = (
+                        self.main[last_obs]['action'] * 0.8 +
+                        inc[last_obs]['action'] * 0.2
+                    )
 
-                # soft merge
-                self.main[last_obs]['action'] = (
-                    self.main[last_obs]['action'] * 0.8 +
-                    inc[last_obs]['action'] * 0.2
-                )
-
-                self.main[last_obs]['reward'] = (
-                    self.main[last_obs]['reward'] * 0.8 +
-                    inc[last_obs]['reward'] * 0.2
-                )
+                    self.main[last_obs]['reward'] = (
+                        self.main[last_obs]['reward'] * 0.8 +
+                        inc[last_obs]['reward'] * 0.2
+                    )
 
         self.main.update_max(inc.max_value)
         for e in inc.ends:

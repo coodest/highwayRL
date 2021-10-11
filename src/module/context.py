@@ -39,12 +39,14 @@ class Context:
     sync_mode = sync_modes[2]
     graph_types = ['transition', 'optimal']
     graph_type = graph_types[1]
-    e_greedy = [0.1, 1]
-    optimal_graph_path = None
-    num_bp = 0  # set 0 to disable back value propagation
-    k_nearest_neighbor = 5
     projector_types = ["random", "cnn"]
     projector = projector_types[1]
+    e_greedy = [0.1, 1]
+    optimal_graph_path = None
+    # transition graph
+    num_bp = 0  # set 0 to disable back value propagation
+    k_nearest_neighbor = 5
+    soft_merge = True
 
 
 class Profile(Context):
