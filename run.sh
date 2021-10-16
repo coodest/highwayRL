@@ -1,5 +1,29 @@
-#!/usr/bin/env bash
-rm -rf output
+#!/bin/bash
+
+# Configure the resources required
+# v100 partition (for GPU jobs) notes:
+# max job time 2-00:00:00
+# max cpus/node: 32
+# max RAM per cpu: 4915 MB
+# max RAM per node 153 GB
+# cost per node: 0.5 SU per cpu-hour + 33 SU per GPU-hour
+#SBATCH -p v100
+#SBATCH -N 1  # number of nodes
+#SBATCH -n 24  # number of cores
+#SBATCH --time=0-00:20:00  # time of execution, D-HH:MM:SS
+#SBATCH --mem=64GB
+#SBATCH --gres=gpu:2
+
+# Configure the notification
+#SBATCH --mail-type=END
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=a1226115@adelaide.edu.au
+
+# ---------Execute the script by the following---------------
+# pip install pipreqs
+# pipreqs .
+
+rm -rf ./output
 
 # python -X pycache_prefix=./cache -m src.app.memrl 1
 # python -X pycache_prefix=./cache -m src.app.memrl 2

@@ -1,0 +1,6 @@
+numpy==1.21.2
+psutil==5.8.0
+pynvml==11.0.0
+pytz==2021.3
+scikit_learn==1.0
+torch

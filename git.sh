@@ -8,6 +8,7 @@ git add .
 git update-index --chmod=+x run.sh
 git update-index --chmod=+x git.sh
 git update-index --chmod=+x debug.sh
+git update-index --chmod=+x submit.sh
 git --no-pager diff --cached ./
 commit_label=$(head -n 1 ./CHANGELOG)
 git commit -m "${commit_label}"

@@ -1,6 +1,7 @@
 .vscode
 output/
 cache/
+*.out
 
 __pycache__/
 */__pycache__/

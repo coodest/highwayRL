@@ -1,7 +1,4 @@
 import time
-from typing import ValuesView
-
-from torch._C import _logging_set_logger
 
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
