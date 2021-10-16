@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # 1. git puu
+echo "pull"
 git pull --rebase
 
 # 2. commit with context information
+echo "push"
 git config --global credential.helper store
 git config --global user.email 350526878@qq.com
 git config --global user.name Heptagram
