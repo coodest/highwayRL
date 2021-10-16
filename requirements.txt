@@ -6,3 +6,4 @@ scikit_learn==1.0
 torch
 gym
 opencv-python
+gym[atari]
