@@ -3,7 +3,7 @@ psutil==5.8.0
 pynvml==11.0.0
 pytz==2021.3
 scikit_learn==1.0
-torch
+torch==1.9.1
 gym==0.19.0
-opencv-python
 gym[atari]
+opencv-python==4.5.3.56

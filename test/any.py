@@ -26,13 +26,23 @@
 
 
 # -------------------------------------------------------------------
-import gym
+# import gym
+# from gym import envs
 
-gym.make("StarGunner-v0")
+# # print(envs.registry.all())
+
+# gym.make("StarGunner-v0")
+
+# -------------------------------------------------------------------
+
+from src.module.agent.memory.projector import CNNProjector
+import torch
 
 
-
-
+a = CNNProjector(0)
+b = torch.rand(2, 84 * 84)
+c = a.batch_project(b)
+print(c)
 
 # -------------------------------------------------------------------
 

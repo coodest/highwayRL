@@ -1,3 +1,5 @@
+211017 add support for adelaide Phoenix
+211017 fix cnn projector issue
 211011 add knn action for transition graph
 211011 add cnn projector
 210630 value propagation (slow)

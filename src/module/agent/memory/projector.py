@@ -51,29 +51,26 @@ class RandomProjector(Projector):
 class CNNProjector(Projector):
     def __init__(self, id) -> None:
         super().__init__(id)
-        self.random_matrix = None
-        if P.env_type == "atari":
-            self.random_matrix = RandomMatrix(84 * 84, P.projected_dim).to(self.device)
 
         self.conv1 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
-        self.conv2 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
-        self.conv3 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
+        self.conv2 = torch.nn.Conv2d(1, 1, kernel_size=(3, 3), stride=(5, 5), dilation=(2, 2)).to(self.device)
 
     def batch_project(self, obs_list):
         # [2, 84 * 84]
         batch = np.vstack(obs_list)  
-        input = None
-        if P.env_type == "atari":
-            input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
-            input = input.unsqueeze(1)
-            # [2, 1, 84, 84]
-            input = input.reshape(input.shape[0], input.shape[1], 84, -1)
+        input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
+        input = input.unsqueeze(1)
+        # [2, 1, 84, 84]
+        input = input.reshape(input.shape[0], input.shape[1], 84, -1)
 
         with torch.no_grad():  # no grad calculation
+            # [2, 1, 15, 15]
             output = self.conv1(input)
+            # [2, 1, 3, 3]
             output = self.conv2(output)
-            output = self.conv3(output)
+            # [2, 3, 3]
             output = output.squeeze(1)
+            # [2, 9]
             output = torch.flatten(output, start_dim=1)
 
         return output.cpu().detach().numpy().tolist()  # detach to remove grad_fn

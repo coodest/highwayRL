@@ -13,7 +13,7 @@ class Context:
     video_dir = out_dir + "video/"
     clean = False
     log_every = 20
-    num_gpu = 2
+    num_gpu = 1
     prio_gpu = 0
 
     # env
@@ -29,7 +29,7 @@ class Context:
     num_action = 18
 
     # agent
-    num_actor = 16
+    num_actor = num_gpu * 8
     obs_min_dis = 1e-3
     projected_dim = 4
     gamma = 0.99
@@ -40,7 +40,7 @@ class Context:
     graph_types = ['transition', 'optimal']
     graph_type = graph_types[1]
     projector_types = ["random", "cnn"]
-    projector = projector_types[1]
+    projector = projector_types[0]
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     # transition graph
