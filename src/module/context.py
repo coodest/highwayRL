@@ -58,7 +58,7 @@ class Profile(Context):
 
     current_profile = sys.argv[1]
     
-    for i in range(1, 27):iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+    for i in range(1, 27):
         if current_profile == str(i):
             C.env_name = C.env_name_list[int(current_profile)]
 
