@@ -1,14 +1,14 @@
-from ctypes import sizeof
-from src.util.imports.num import np
-from src.module.agent.memory.indexer import Indexer
-from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
-from src.module.env.atari import Atari
-from src.util.tools import *
-from src.module.context import Profile as P
-from src.module.agent.memory.projector import RandomProjector
+# from ctypes import sizeof
+# from src.util.imports.num import np
+# from src.module.agent.memory.indexer import Indexer
+# from multiprocessing import Pool, Process, Value, Queue, Lock, Manager
+# from src.module.env.atari import Atari
+# from src.util.tools import *
+# from src.module.context import Profile as P
+# from src.module.agent.memory.projector import RandomProjector
 
-import numpy as np
-from sklearn.neighbors import KDTree
+# import numpy as np
+# from sklearn.neighbors import KDTree
 
 
 # r = RandomProjector(0)
@@ -20,6 +20,15 @@ from sklearn.neighbors import KDTree
 
 
 # print([1, 2, 3, 4, 9, 4].index(0))
+
+
+
+
+
+# -------------------------------------------------------------------
+import gym
+
+gym.make("StarGunner-v0")
 
 
 
@@ -154,6 +163,6 @@ from sklearn.neighbors import KDTree
 # print(a.get())
 # -------------------------------------------------------------------
 
-a =[0,0,0,1]
+# a =[0,0,0,1]
 
-print(np.argmin(a))
+# print(np.argmin(a))
