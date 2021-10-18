@@ -62,7 +62,7 @@ class MemRL:
         # 3. parameterization
         try:
             # TODO: Q-table parameterization
-            Logger.log(len(optimal_data))  # convert policy into dnn
+            pass
         except Exception:
             Funcs.trace_exception()
         Logger.log("dnn model saved")

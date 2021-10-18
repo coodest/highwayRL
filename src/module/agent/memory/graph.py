@@ -84,17 +84,34 @@ class OptimalGraph(Graph):
         else:
             return None
 
-    def store_increments(self, trajectory, total_reward):
+    def store_increments(self, trajectory, total_reward):  # by the non-head
         for last_obs, pre_action, obs, reward in trajectory:
-            info = [pre_action, total_reward]
-
-            add = False
+            # check the importance ot the traj to determine whether to add it
             if last_obs not in self.main:
                 add = True
             elif self.main[last_obs][1] < total_reward:
                 add = True
+            else:
+                add = False
 
-            if add:
+            if add:           
+                # check crossing obs
+                if last_obs not in self.main and last_obs not in self.increments:
+                    last_obs_existence = 0  # check the existence in the graph
+                else:
+                    last_obs_existence = 1
+                if obs not in self.main and obs not in self.increments:
+                    obs_existence = 0
+                else:
+                    obs_existence = 1
+                if last_obs_existence + obs_existence == 1:
+                    if last_obs_existence == 1:
+                        self.increments.crossing_obs.add(last_obs)
+                    if obs_existence == 1:
+                        self.increments.crossing_obs.add(obs)
+
+                # add last_oobs to the storage
+                info = [pre_action, total_reward]
                 if P.sync_mode == P.sync_modes[0]:
                     if last_obs not in self.increments:
                         self.increments[last_obs] = info
@@ -112,8 +129,8 @@ class OptimalGraph(Graph):
                     elif self.increments.max_value * P.sync_tolerance < total_reward:
                         self.increments[last_obs] = info
                         self.increments.update_max(total_reward, last_obs)
-
-    def merge_inc(self, inc):
+                
+    def merge_inc(self, inc):  # by the head
         for last_obs in inc:
             if last_obs not in self.main:
                 self.main[last_obs] = inc[last_obs]
@@ -121,6 +138,7 @@ class OptimalGraph(Graph):
             elif self.main[last_obs][1] < inc[last_obs][1]:
                 self.main[last_obs] = inc[last_obs]
                 self.main.update_max(inc[last_obs][1], last_obs)
+        self.main.crossing_obs = self.main.crossing_obs.union(inc.crossing_obs)
 
 
 class TransitionGraph(Graph):

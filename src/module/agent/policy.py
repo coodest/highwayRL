@@ -27,7 +27,14 @@ class Policy:
         for p in processes:
             p.join()
 
-        return IO.read_disk_dump(P.optimal_graph_path)
+        optimal_graph = IO.read_disk_dump(P.optimal_graph_path)
+        Logger.log("stored corssing obs and obs are: {} / {}: {}%".format(
+            len(optimal_graph.crossing_obs),
+            len(optimal_graph),
+            (100 * len(optimal_graph.crossing_obs)) / len(optimal_graph)
+        ))
+
+        return optimal_graph
 
 
     @staticmethod
@@ -72,17 +79,17 @@ class Policy:
                         cur_frame = frames.value
                         now = time.time()
                         if now - last_report > P.log_every:
-                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G: {} V: {}/{}".format(
+                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{} V: {}/{}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
                                 len(graph.main.keys()),
+                                len(graph.main.crossing_obs),
                                 graph.main.max_value,
-                                str(graph.main.max_value_init_obs)[-4:]
+                                str(graph.main.max_value_init_obs)[-4:],
                             ))
                             last_report = now
                             last_frame = cur_frame
                     
-
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
                     last_obs, obs = projector.batch_project([last_obs, obs])
@@ -92,7 +99,7 @@ class Policy:
                     if init_obs is None:
                         init_obs = obs
 
-                    if add:
+                    if add:  # head for testing actor does not add traj
                         trajectory.append([last_obs, pre_action, obs, reward])
                         total_reward += reward
                     if done:

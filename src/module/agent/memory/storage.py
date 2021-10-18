@@ -8,6 +8,7 @@ class Storeage(dict):
 class OptimalStorage(Storeage):
     def __init__(self) -> None:
         super().__init__()
+        self.crossing_obs = set()
     
     def update_max(self, value, obs):
         if value > self.max_value:
