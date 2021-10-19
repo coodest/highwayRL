@@ -1,9 +1,10 @@
 import time
 
-from src.util.tools import IO, Logger
+from src.util.tools import IO
 from src.module.context import Profile as P
 from src.module.agent.memory.storage import TransitionStorage
 from src.module.agent.memory.storage import OptimalStorage
+from src.module.agent.memory.storage import OptimalStorageCell, TransitionStorageCell
 import numpy as np
 from sklearn.neighbors import KDTree
 from src.module.agent.memory.indexer import Indexer
@@ -27,41 +28,45 @@ class Graph:
         pass
 
     def sync(self):
+        """
+        Synconization that independent to the inner structure and content of increments 
+        and main storage.
+        """
         if not self.is_head:
             # write increments (not head)
-            IO.write_disk_dump(P.result_dir + f'{self.id}.pkl', self.increments)
+            IO.write_disk_dump(P.result_dir + f"{self.id}.pkl", self.increments)
             self.increments = self.make_new_store()
-            IO.write_disk_dump(P.result_dir + f'{self.id}.ready', ["ready"])
-            IO.stick_read_disk_dump(P.result_dir + 'target.ok')
-            self.main = IO.read_disk_dump(P.result_dir + 'target.pkl')
-            IO.write_disk_dump(P.result_dir + f'{self.id}.finish', ["finish"])
+            IO.write_disk_dump(P.result_dir + f"{self.id}.ready", ["ready"])
+            IO.stick_read_disk_dump(P.result_dir + "target.ok")
+            self.main = IO.read_disk_dump(P.result_dir + "target.pkl")
+            IO.write_disk_dump(P.result_dir + f"{self.id}.finish", ["finish"])
         else:
             # make sure writes are complete
             for i in range(P.num_actor):
                 if self.id == i:
                     continue
-                IO.stick_read_disk_dump(P.result_dir + f'{i}.ready')
-            
+                IO.stick_read_disk_dump(P.result_dir + f"{i}.ready")
+
             # read increments (head)
             for i in range(P.num_actor):
                 if self.id == i:
                     continue  # head has no increments stored
-                inc = IO.stick_read_disk_dump(P.result_dir + f'{i}.pkl')
+                inc = IO.stick_read_disk_dump(P.result_dir + f"{i}.pkl")
                 self.merge_inc(inc)
             self.post_process()
-            
+
             # write target (head)
-            IO.write_disk_dump(P.result_dir + 'target.pkl', self.main)
-            IO.write_disk_dump(P.result_dir + 'target.ok', ['ok'])
+            IO.write_disk_dump(P.result_dir + "target.pkl", self.main)
+            IO.write_disk_dump(P.result_dir + "target.ok", ["ok"])
 
             # remove increments (head)
             for i in range(P.num_actor):
                 if self.id == i:
                     continue
-                IO.stick_read_disk_dump(P.result_dir + f'{i}.finish')
+                IO.stick_read_disk_dump(P.result_dir + f"{i}.finish")
 
             IO.delete_file(P.optimal_graph_path)
-            IO.move_file(P.result_dir + 'target.pkl', P.optimal_graph_path)
+            IO.move_file(P.result_dir + "target.pkl", P.optimal_graph_path)
             IO.renew_dir(P.result_dir)
 
     def merge_inc(self, inc):
@@ -80,43 +85,44 @@ class OptimalGraph(Graph):
 
     def get_action(self, obs):
         if obs in self.main:
-            return self.main[obs][0]
+            return self.main[obs].best_action
         else:
             return None
 
     def store_increments(self, trajectory, total_reward):  # by the non-head
         for last_obs, pre_action, obs, reward in trajectory:
-            # check the importance ot the traj to determine whether to add it
+            # check the importance of the traj to determine whether to add it
             if last_obs not in self.main:
                 add = True
-            elif self.main[last_obs][1] < total_reward:
+            elif self.main[last_obs].total_reward < total_reward:
                 add = True
             else:
                 add = False
 
-            if add:           
-                # check crossing obs
-                if last_obs not in self.main and last_obs not in self.increments:
-                    last_obs_existence = 0  # check the existence in the graph
-                else:
-                    last_obs_existence = 1
-                if obs not in self.main and obs not in self.increments:
-                    obs_existence = 0
-                else:
-                    obs_existence = 1
-                if last_obs_existence + obs_existence == 1:
-                    if last_obs_existence == 1:
-                        self.increments.crossing_obs.add(last_obs)
-                    if obs_existence == 1:
-                        self.increments.crossing_obs.add(obs)
+            if add:
+                if P.statistic_crossing_obs:
+                    # check crossing obs
+                    if last_obs not in self.main and last_obs not in self.increments:
+                        last_obs_existence = 0  # check the existence in the graph
+                    else:
+                        last_obs_existence = 1
+                    if obs not in self.main and obs not in self.increments:
+                        obs_existence = 0
+                    else:
+                        obs_existence = 1
+                    if last_obs_existence + obs_existence == 1:
+                        if last_obs_existence == 1:
+                            self.increments.crossing_obs.add(last_obs)
+                        if obs_existence == 1:
+                            self.increments.crossing_obs.add(obs)
 
                 # add last_oobs to the storage
-                info = [pre_action, total_reward]
+                info = OptimalStorageCell(action=pre_action, total_action=total_reward)
                 if P.sync_mode == P.sync_modes[0]:
                     if last_obs not in self.increments:
                         self.increments[last_obs] = info
                         self.increments.update_max(total_reward, last_obs)
-                    elif self.increments[last_obs][1] < total_reward:
+                    elif self.increments[last_obs].total_reward < total_reward:
                         self.increments[last_obs] = info
                         self.increments.update_max(total_reward, last_obs)
                 if P.sync_mode == P.sync_modes[1]:
@@ -129,15 +135,15 @@ class OptimalGraph(Graph):
                     elif self.increments.max_value * P.sync_tolerance < total_reward:
                         self.increments[last_obs] = info
                         self.increments.update_max(total_reward, last_obs)
-                
+
     def merge_inc(self, inc):  # by the head
         for last_obs in inc:
             if last_obs not in self.main:
                 self.main[last_obs] = inc[last_obs]
-                self.main.update_max(inc[last_obs][1], last_obs)
-            elif self.main[last_obs][1] < inc[last_obs][1]:
+                self.main.update_max(inc[last_obs].total_reward, last_obs)
+            elif self.main[last_obs].total_reward < inc[last_obs].total_reward:
                 self.main[last_obs] = inc[last_obs]
-                self.main.update_max(inc[last_obs][1], last_obs)
+                self.main.update_max(inc[last_obs].total_reward, last_obs)
         self.main.crossing_obs = self.main.crossing_obs.union(inc.crossing_obs)
 
 
@@ -152,7 +158,7 @@ class TransitionGraph(Graph):
 
     def get_action(self, obs, raw_obs):
         if obs in self.main:
-            return np.argmax(self.main[obs]['action'])
+            return np.argmax(self.main[obs].action)
         else:
             if raw_obs not in self.known_states:
                 self.known_states.append(raw_obs)
@@ -165,7 +171,7 @@ class TransitionGraph(Graph):
                 for neighbor in neighbors:
                     ind = Indexer.get_ind(self.known_states[neighbor])
                     if ind in self.main:
-                        values += self.main[ind]['action']
+                        values += self.main[ind].action
                         num_validate_nb += 1
                 if num_validate_nb > 0:
                     values /= num_validate_nb
@@ -174,12 +180,6 @@ class TransitionGraph(Graph):
                     return action
 
             return None
-
-    def init_obs(self, a, b):
-        a[b] = dict()
-        a[b]['action'] = np.zeros([P.num_action])
-        a[b]['parents'] = dict()
-        a[b]['reward'] = 0
 
     def store_increments(self, trajectory, total_reward):
         # filtering
@@ -195,16 +195,34 @@ class TransitionGraph(Graph):
         self.increments.update_max(total_reward)
         current_value = 0
         for last_obs, pre_action, obs, reward in trajectory[::-1]:
+            if P.statistic_crossing_obs:
+                # check crossing obs
+                if last_obs not in self.main and last_obs not in self.increments:
+                    last_obs_existence = 0  # check the existence in the graph
+                else:
+                    last_obs_existence = 1
+                if obs not in self.main and obs not in self.increments:
+                    obs_existence = 0
+                else:
+                    obs_existence = 1
+                if last_obs_existence + obs_existence == 1:
+                    if last_obs_existence == 1:
+                        self.increments.crossing_obs.add(last_obs)
+                    if obs_existence == 1:
+                        self.increments.crossing_obs.add(obs)
+
             current_value = current_value * P.gamma + reward
             if obs not in self.increments:
-                self.init_obs(self.increments, obs)
-            self.increments[obs]['parents'][last_obs] = pre_action
-            self.increments[obs]['reward'] = reward
+                self.increments[obs] = TransitionStorageCell(action=np.zeros([P.num_action]), parents=dict(), reward=0)
+            self.increments[obs].parents[last_obs] = pre_action
+            self.increments[obs].reward = reward
             if last_obs not in self.increments:
-                self.init_obs(self.increments, last_obs)
+                self.increments[last_obs] = TransitionStorageCell(action=np.zeros([P.num_action]), parents=dict(), reward=0)
 
-            if self.increments[last_obs]['action'][pre_action] < current_value:
-                self.increments[last_obs]['action'][pre_action] = current_value  # may over estimate the value
+            if self.increments[last_obs].action[pre_action] < current_value:
+                self.increments[last_obs].action[
+                    pre_action
+                ] = current_value  # may over estimate the value
             # self.increments[last_obs]['action'][pre_action] = 0.8 * self.increments[last_obs]['action'][pre_action] + 0.2 * current_value
 
     def merge_inc(self, inc):
@@ -212,30 +230,28 @@ class TransitionGraph(Graph):
             if last_obs not in self.main:
                 self.main[last_obs] = inc[last_obs]
             else:
-                for p in inc[last_obs]['parents']:
-                    self.main[last_obs]['parents'][p] = inc[last_obs]['parents'][p]
-                
+                for p in inc[last_obs].parents:
+                    self.main[last_obs].parents[p] = inc[last_obs].parents[p]
+
                 if not P.soft_merge:
                     # hard merge
-                    self.main[last_obs]['action'] = np.maximum(
-                        self.main[last_obs]['action'],
-                        inc[last_obs]['action']
+                    self.main[last_obs].action = np.maximum(
+                        self.main[last_obs].action, inc[last_obs].action
                     )
 
-                    self.main[last_obs]['reward'] = max(
-                        self.main[last_obs]['reward'],
-                        inc[last_obs]['reward']
+                    self.main[last_obs].reward = max(
+                        self.main[last_obs].reward, inc[last_obs].reward
                     )
                 else:
                     # soft merge
-                    self.main[last_obs]['action'] = (
-                        self.main[last_obs]['action'] * 0.8 +
-                        inc[last_obs]['action'] * 0.2
+                    self.main[last_obs].action = (
+                        self.main[last_obs].action * 0.8
+                        + inc[last_obs].action * 0.2
                     )
 
-                    self.main[last_obs]['reward'] = (
-                        self.main[last_obs]['reward'] * 0.8 +
-                        inc[last_obs]['reward'] * 0.2
+                    self.main[last_obs].reward = (
+                        self.main[last_obs].reward * 0.8
+                        + inc[last_obs].reward * 0.2
                     )
 
         self.main.update_max(inc.max_value)
@@ -251,10 +267,10 @@ class TransitionGraph(Graph):
     def back_propagation(self):
         while len(self.stack) > 0:
             cur_obs = self.stack.pop()
-            max_value = max(self.main[cur_obs]['action'])
-            for par_obs in self.main[cur_obs]['parents']:
-                action = self.main[cur_obs]['parents'][par_obs]
-                new_value = max_value * P.gamma + self.main[cur_obs]['reward']
-                if self.main[par_obs]['action'][action] < new_value:
-                    self.main[par_obs]['action'][action] = new_value
+            max_value = max(self.main[cur_obs].action)
+            for par_obs in self.main[cur_obs].parents:
+                action = self.main[cur_obs].parents[par_obs]
+                new_value = max_value * P.gamma + self.main[cur_obs].reward
+                if self.main[par_obs].action[action] < new_value:
+                    self.main[par_obs].action[action] = new_value
                 self.stack.append(par_obs)

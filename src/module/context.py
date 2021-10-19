@@ -17,7 +17,7 @@ class Context:
     prio_gpu = 0
 
     # env
-    total_frames = 1e7
+    total_frames = 1e7  # default 1e7
     env_type = "atari"
     env_name_list = IO.read_file(asset_dir + "Atari_game_list.txt")
     env_name = None
@@ -43,6 +43,7 @@ class Context:
     projector = projector_types[0]
     e_greedy = [0.1, 1]
     optimal_graph_path = None
+    statistic_crossing_obs = True
     # transition graph
     num_bp = 0  # set 0 to disable back value propagation
     k_nearest_neighbor = 5

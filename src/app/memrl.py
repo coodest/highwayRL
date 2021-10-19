@@ -53,7 +53,7 @@ class MemRL:
         # 2. train
         policy = Policy(actor_learner_queues, learner_actor_queues)
         try:
-            optimal_data = policy.train()  # tain the policy
+            optimal_graph = policy.train()  # tain the policy
         except Exception:
             Funcs.trace_exception()
         Logger.log("training finished")

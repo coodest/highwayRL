@@ -28,10 +28,11 @@ class Policy:
             p.join()
 
         optimal_graph = IO.read_disk_dump(P.optimal_graph_path)
+
         Logger.log("stored corssing obs and obs are: {} / {}: {}%".format(
-            len(optimal_graph.crossing_obs),
+            len(optimal_graph.crossing_obs) if P.statistic_crossing_obs else "-",
             len(optimal_graph),
-            (100 * len(optimal_graph.crossing_obs)) / len(optimal_graph)
+            ((100 * len(optimal_graph.crossing_obs)) / len(optimal_graph)) if P.statistic_crossing_obs else "-",
         ))
 
         return optimal_graph
@@ -83,7 +84,7 @@ class Policy:
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
                                 len(graph.main.keys()),
-                                len(graph.main.crossing_obs),
+                                len(graph.main.crossing_obs) if P.statistic_crossing_obs else "-",
                                 graph.main.max_value,
                                 str(graph.main.max_value_init_obs)[-4:],
                             ))
