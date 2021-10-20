@@ -42,4 +42,3 @@ class TransitionStorage(Storeage):
 
     def add_end(self, end):
         self.ends.add(end)
-
