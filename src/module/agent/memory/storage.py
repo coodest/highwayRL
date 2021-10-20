@@ -7,8 +7,18 @@ class Storeage(dict):
 
 
 class OptimalStorage(Storeage):
+    # base cell index
+    best_action = 0
+    afiliated_trajectories = 1
+    # trajectory_infos cell index
+    value = 0
+    init_obs = 1
+    action = 2
+    reward = 3
+
     def __init__(self) -> None:
         super().__init__()
+        self.trajectory_infos = dict()
 
     def update_max(self, value, obs):
         if value > self.max_value:
@@ -17,6 +27,11 @@ class OptimalStorage(Storeage):
 
 
 class TransitionStorage(Storeage):
+    # base cell index
+    action = 0
+    parents = 1
+    reward = 2
+
     def __init__(self) -> None:
         super().__init__()
         self.ends = set()
@@ -28,22 +43,3 @@ class TransitionStorage(Storeage):
     def add_end(self, end):
         self.ends.add(end)
 
-
-class StorageCell:
-    def __init__(self, action) -> None:
-        pass
-
-
-class OptimalStorageCell(StorageCell):
-    def __init__(self, action, total_action) -> None:
-        super().__init__(action)
-        self.best_action = action
-        self.total_reward = total_action
-
-
-class TransitionStorageCell(StorageCell):
-    def __init__(self, action, parents, reward) -> None:
-        super().__init__(action)
-        self.action = action
-        self.parents = parents
-        self.reward = reward

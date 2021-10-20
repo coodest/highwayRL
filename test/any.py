@@ -46,18 +46,29 @@
 
 # -------------------------------------------------------------------
 
-a = set()
+import sys
 
-a.add(1)
 
-b = set()
+class Storeage(dict):
+    def __init__(self) -> None:
+        self.ggg = None
 
-b.add(2)
 
-a = a.union(b)
+class Game:
+    def __init__(self) -> None:
+        pass
 
-print(a)
-print(len(a))
+
+a = dict()
+b = Storeage()
+c = list()
+d = list()
+
+
+print(sys.getsizeof(a), "B")
+print(sys.getsizeof(b), "B")
+print(sys.getsizeof(c), "B")
+print(sys.getsizeof(d), "B")
 
 
 

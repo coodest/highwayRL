@@ -1,6 +1,7 @@
 from src.module.context import Profile as P
 from src.util.tools import Logger, Funcs, IO
 from multiprocessing import Process, Value, Queue
+import time
 
 
 class MemRL:
@@ -47,8 +48,9 @@ class MemRL:
 
     @staticmethod
     def learner_run(actor_learner_queues, learner_actor_queues, finish):
-        # 1. make model-based agent
+        # 1. init
         from src.module.agent.policy import Policy
+        start_time = time.time()
 
         # 2. train
         policy = Policy(actor_learner_queues, learner_actor_queues)
@@ -67,7 +69,9 @@ class MemRL:
             Funcs.trace_exception()
         Logger.log("dnn model saved")
         
-        Logger.log("learner exit")
+        # 4. output time
+        minutes = (time.time() - start_time) / 60
+        Logger.log(f"learner exit, up {minutes:.1f} min")
         
     @staticmethod
     def actor_run(id, actor_learner_queues, learner_actor_queues, finish):
