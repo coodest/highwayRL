@@ -116,12 +116,12 @@ class Graph:
                 self.main.obs_afiliated_traj(last_obs).update(
                     inc.obs_afiliated_traj(last_obs)
                 )
-        for traj_ind in inc.traj:
+        for traj_ind in inc.traj_dict():
             self.main.total_reward_update(
                 total_reward=inc.traj_total_reward(traj_ind),
                 init_obs=inc.traj_init_obs(traj_ind)
             )
-        self.main.crossing_obs_union(inc.crossing_obs)
+        self.main.crossing_obs_union(inc.crossing_obs_set())
 
     def post_process(self):
         return

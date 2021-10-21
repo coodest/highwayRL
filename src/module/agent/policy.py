@@ -80,7 +80,7 @@ class Policy:
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
                                 len(graph.main.obs_dict()),
-                                graph.main.crossing_obs_size() if P.statistic_crossing_obs else "-",
+                                len(graph.main.crossing_obs_set()) if P.statistic_crossing_obs else "-",
                                 graph.main.get_max_total_reward(),
                                 str(graph.main.get_max_total_reward_init_obs())[-4:],
                             ))
