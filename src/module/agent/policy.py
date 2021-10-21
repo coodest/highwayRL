@@ -37,7 +37,6 @@ class Policy:
 
         return optimal_graph
 
-
     @staticmethod
     def is_head(index):
         return index == P.num_actor - 1
@@ -47,15 +46,12 @@ class Policy:
         from src.module.agent.memory.projector import RandomProjector
         from src.module.agent.memory.projector import CNNProjector
         from src.module.agent.memory.indexer import Indexer
-        from src.module.agent.memory.graph import OptimalGraph, TransitionGraph
+        from src.module.agent.memory.graph import Graph
 
         last_report = time.time()
         last_frame = frames.value
         last_sync = time.time()
-        if P.graph_type == P.graph_types[0]:
-            graph = TransitionGraph(id, Policy.is_head(id))
-        if P.graph_type == P.graph_types[1]:
-            graph = OptimalGraph(id, Policy.is_head(id))
+        graph = Graph(id, Policy.is_head(id))
         
         if P.projector == P.projector_types[0]:
             projector = RandomProjector(id)
@@ -83,10 +79,10 @@ class Policy:
                             Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{} V: {}/{}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
-                                len(graph.main.keys()),
-                                len(graph.main.crossing_obs) if P.statistic_crossing_obs else "-",
-                                graph.main.max_value,
-                                str(graph.main.max_value_init_obs)[-4:],
+                                len(graph.main.obs_dict()),
+                                graph.main.crossing_obs_size() if P.statistic_crossing_obs else "-",
+                                graph.main.get_max_total_reward(),
+                                str(graph.main.get_max_total_reward_init_obs())[-4:],
                             ))
                             last_report = now
                             last_frame = cur_frame
@@ -94,7 +90,6 @@ class Policy:
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
                     last_obs, obs = projector.batch_project([last_obs, obs])
-                    raw_obs = obs
                     last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
 
                     if init_obs is None:
@@ -106,19 +101,12 @@ class Policy:
                     if done:
                         if add:
                             with frames.get_lock():
-                                frames.value += (
-                                    len(trajectory) * P.num_action_repeats
-                                )
-                            graph.store_increments(trajectory, total_reward)
-                        learner_actor_queue.put(
-                            init_obs
-                        )
+                                frames.value += (len(trajectory) * P.num_action_repeats)
+                            graph.store_inc(trajectory, total_reward)
+                        learner_actor_queue.put(init_obs)
                         break
                     else:
-                        if P.graph_type == P.graph_types[0]:
-                            action = graph.get_action(obs, raw_obs)
-                        if P.graph_type == P.graph_types[1]:
-                            action = graph.get_action(obs)
+                        action = graph.get_action(obs)
                         learner_actor_queue.put(action)
                 except Exception:
                     Funcs.trace_exception()

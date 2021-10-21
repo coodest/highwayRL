@@ -1,3 +1,4 @@
+211021 auto propagation: remove transition graph amd simplify code
 211020 auto propagation: step 3, imrove memory consumption
 211020 auto propagation: remove storage cell due to high memory consumption
 211019 auto propagation: step 3, add trajectory info

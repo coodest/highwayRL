@@ -9,7 +9,7 @@ class Indexer:
         return Funcs.matrix_hashing(cell_num)
 
     @staticmethod
-    def get_trajectory_ind(trajectory):
+    def get_traj_ind(trajectory):
         obs_list = list()
         for t in trajectory:
             obs_list.append(t[0])

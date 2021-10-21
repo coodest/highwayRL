@@ -6,7 +6,7 @@ import logging
 import shutil
 import time
 import traceback
-from src.util.imports.num import np
+from src.util.imports.numpy import np
 import psutil
 import pytz
 from pathlib import Path

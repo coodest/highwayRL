@@ -34,20 +34,11 @@ class Context:
     projected_dim = 4
     gamma = 0.99
     sync_every = 20  # in second
-    sync_modes = ['highest', 'confident', 'mixed']  # highest to max R, confident to max hit rate 
-    sync_tolerance = 0.7  # work with mixed mode
-    sync_mode = sync_modes[2]
-    graph_types = ['transition', 'optimal']
-    graph_type = graph_types[1]
     projector_types = ["random", "cnn"]
     projector = projector_types[0]
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True
-    # transition graph
-    num_bp = 0  # set 0 to disable back value propagation
-    k_nearest_neighbor = 5
-    soft_merge = True
 
 
 class Profile(Context):
