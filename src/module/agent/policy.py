@@ -81,8 +81,8 @@ class Policy:
                                 (cur_frame - last_frame) / (now - last_report),
                                 len(graph.main.obs_dict()),
                                 len(graph.main.crossing_obs_set()) if P.statistic_crossing_obs else "-",
-                                graph.main.get_max_total_reward(),
-                                str(graph.main.get_max_total_reward_init_obs())[-4:],
+                                graph.main.max_total_reward_value(),
+                                str(graph.main.max_total_reward_init_obs_value())[-4:],
                             ))
                             last_report = now
                             last_frame = cur_frame

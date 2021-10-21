@@ -84,8 +84,8 @@ class Storage:
             self._max_total_reward = total_reward
             self._max_total_reward_init_obs = init_obs
 
-    def get_max_total_reward(self):
+    def max_total_reward_value(self):
         return self._max_total_reward
 
-    def get_max_total_reward_init_obs(self):
+    def max_total_reward_init_obs_value(self):
         return self._max_total_reward_init_obs
