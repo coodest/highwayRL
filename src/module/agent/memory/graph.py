@@ -1,7 +1,8 @@
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 from src.module.agent.memory.storage import Storage
-from src.module.agent.memory.indexer import Indexer        
+from src.module.agent.memory.indexer import Indexer   
+from src.util.imports.numpy import np
 
 
 class Graph:
@@ -124,10 +125,9 @@ class Graph:
         self.main.crossing_obs_union(inc.crossing_obs_set())
 
     def post_process(self):
-        return
         # 1. insert new crossing obs and value propagation
-        for cb in self.main.processed_crossing_obs:
-            if cb in self.shrinked_graph.crossing_nodes:
+        for cb in self.main.crossing_obs_set():
+            if cb in self.processed_crossing_obs:
                 continue
 
             # for each new cb, find related traj and shrinked node to insert
