@@ -125,6 +125,7 @@ class Graph:
         self.main.crossing_obs_union(inc.crossing_obs_set())
 
     def post_process(self):
+        return
         # 1. insert new crossing obs and value propagation
         for cb in self.main.crossing_obs_set():
             if cb in self.processed_crossing_obs:

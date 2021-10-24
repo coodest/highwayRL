@@ -3,10 +3,10 @@ from src.util.imports.numpy import np
 
 class Storage:
     # base cell index
-    _best_action = 0
-    _afiliated_traj = 1
+    _obs_action = 0
+    _obs_sg_id = 1
+    _obs_traj_step = 2
     # trajectory_infos cell index
-    _total_reward = 0
     _init_obs = 1
     _action = 2
     _reward = 3
@@ -14,13 +14,12 @@ class Storage:
     def __init__(self) -> None:
         super().__init__()
         self._obs = dict()
-        self._max_total_reward = -float("inf")
-        self._max_total_reward_init_obs = None
         self._crossing_obs = set()
-        self._traj = dict()
+        self._node = dict()
+        self._max_total_reward = dict()
 
     def obs_best_action(self, obs):
-        return self._obs[obs][Storage._best_action]
+        return self._obs[obs][Storage._obs_best_action]
 
     def obs_exist(self, obs):
         return obs in self._obs
@@ -33,7 +32,7 @@ class Storage:
         self.obs_update_afiliated_traj(obs, afiliated_traj, step)
 
     def obs_update_action(self, obs, action):
-        self._obs[obs][Storage._best_action] = action
+        self._obs[obs][Storage._obs_best_action] = action
 
     def obs_update_afiliated_traj(self, obs, afiliated_traj, step):
         self._obs[obs][Storage._afiliated_traj][afiliated_traj] = step
@@ -80,12 +79,16 @@ class Storage:
         return self._traj[traj_ind][Storage._total_reward]
 
     def total_reward_update(self, total_reward, init_obs):
-        if total_reward > self._max_total_reward:
-            self._max_total_reward = total_reward
-            self._max_total_reward_init_obs = init_obs
+        if len(self._max_total_reward) == 0:
+            self._max_total_reward[total_reward] = init_obs
+        elif total_reward > self.max_total_reward_value():
+            self._max_total_reward.clear()
+            self._max_total_reward[total_reward] = init_obs
 
     def max_total_reward_value(self):
-        return self._max_total_reward
+        return self._max_total_reward.keys()[0]
 
     def max_total_reward_init_obs_value(self):
-        return self._max_total_reward_init_obs
+        return self._max_total_reward[
+            self.max_total_reward_value()
+        ]
