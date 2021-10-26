@@ -54,6 +54,8 @@ class Storage:
         self._node[node_ind] = [obs, actions, reward, next, node_value]
         # add or update obs
         for ind, o in enumerate(obs):
+            if o in self._crossing_nodes:  # to solve obs-multi-node issue
+                continue
             # list object reduces a lot mem comsuption
             self._obs[o] = [node_ind, ind]
 
@@ -80,7 +82,21 @@ class Storage:
                 Logger.log("stochastical env, ignored new obs record")
         except ValueError:
             self._node[node_ind][Storage._node_actions][0].append(action)
-            self._node[node_ind][Storage._node_next].append(next_node_ind)
+            try:
+                self._node[node_ind][Storage._node_next].append(next_node_ind)
+            except:
+                Logger.log("inner")
+                Logger.log(self._node[node_ind][Storage._node_next])
+                Logger.log(self._node[node_ind])
+                Logger.log(node_ind)
+                exit(0)
+        except:
+            Logger.log("outer")
+            Logger.log(self._node[node_ind][Storage._node_next])
+            Logger.log(self._node[node_ind])
+            Logger.log(node_ind)
+            exit(0)
+
             
     def node_split(self, crossing_obs: str) -> int:
         """
@@ -118,6 +134,7 @@ class Storage:
                 [node_reward[step]], 
                 [new_node_ind]
             )
+            self._crossing_nodes.add(crossing_node_ind)
         elif step >= node_length - 1:  # crossing node is the last one
             crossing_node_ind = self.node_next_ind()
             self.node_update(
@@ -127,6 +144,7 @@ class Storage:
                 [node_reward[step]], 
                 node_next
             )
+            self._crossing_nodes.add(crossing_node_ind)
 
             self.node_update(
                 node_ind, 
@@ -153,6 +171,7 @@ class Storage:
                 [node_reward[step]], 
                 [new_node_ind]
             )
+            self._crossing_nodes.add(crossing_node_ind)
 
             self.node_update(
                 node_ind, 
@@ -167,7 +186,6 @@ class Storage:
         # assert str(crossing_obs).startswith(self._node[self._obs[crossing_obs][Storage._obs_node_ind]][Storage._node_obs][0]), f"obs not match, {crossing_obs} - {self._node[crossing_node_ind][Storage._node_obs][0]}"
         # assert crossing_node_ind == self._obs[crossing_obs][Storage._obs_node_ind], f"_obs update failed, new {crossing_node_ind} - queue {self._obs[crossing_obs][Storage._obs_node_ind]} - origin {node_ind}"
         
-        self._crossing_nodes.add(crossing_node_ind)
         return crossing_node_ind
 
     def node_value_propagate(self, index: int):

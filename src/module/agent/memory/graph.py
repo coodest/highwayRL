@@ -135,7 +135,7 @@ class Graph:
             # fragment after alst crossing obs or the traj without crossing obs
             o, a, r = self.get_traj_frag(traj, last_step, len(traj))
             if len(o) > 0:
-                shrunk_node_ind = self.main.node_add(o, a, r, [])
+                shrunk_node_ind = self.main.node_add(o, a, r, list())
                 if last_crossing_node_id is not None:
                     self.main.crossing_node_add_action(last_crossing_node_id, last_action, shrunk_node_ind)
 
