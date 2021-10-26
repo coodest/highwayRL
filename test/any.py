@@ -47,28 +47,53 @@
 # -------------------------------------------------------------------
 
 import sys
+from src.util.tools import Funcs
+import ctypes
+
+# class Storeage(dict):
+#     def __init__(self) -> None:
+#         self.ggg = None
 
 
-class Storeage(dict):
-    def __init__(self) -> None:
-        self.ggg = None
+# class Game:
+#     def __init__(self) -> None:
+#         pass
 
 
-class Game:
-    def __init__(self) -> None:
-        pass
+# a = dict()
+# b = Storeage()
+# c = list()
+# d = list()
 
 
-a = dict()
-b = Storeage()
-c = list()
-d = list()
+# print(sys.getsizeof(a), "B")
+# print(sys.getsizeof(b), "B")
+# print(sys.getsizeof(c), "B")
+# print(sys.getsizeof(d), "B")
 
+# a = dict()
+# s = Funcs.matrix_hashing([1, 2, 3, 4, 5, 6, 7])
+# a[s] = [90000, 5698]
+# c = id(a[s])
+# a[s] = [90000, 6698]
 
-print(sys.getsizeof(a), "B")
-print(sys.getsizeof(b), "B")
-print(sys.getsizeof(c), "B")
-print(sys.getsizeof(d), "B")
+# print(sys.getsizeof(c), "B")
+# print(sys.getsizeof(s), "B")
+
+# print(a[s])
+# value = ctypes.cast(c, ctypes.py_object).value
+# print(value)
+
+a = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+step = 3
+
+b = a[:step]
+print(b)
+c = [a[step]]
+print(c)
+d = a[step + 1:]
+print(d)
+
 
 
 

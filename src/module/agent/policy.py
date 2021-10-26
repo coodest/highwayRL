@@ -61,7 +61,6 @@ class Policy:
         while True:
             trajectory = []
             total_reward = 0
-            init_obs = None
             while True:
                 try:
                     # check to stop
@@ -79,10 +78,10 @@ class Policy:
                             Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{} V: {}/{}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
-                                len(graph.main.obs_dict()),
-                                len(graph.main.crossing_obs_set()) if P.statistic_crossing_obs else "-",
-                                graph.main.max_total_reward_value(),
-                                str(graph.main.max_total_reward_init_obs_value())[-4:],
+                                len(graph.main.obs()),
+                                graph.main.num_crossing_node() if P.statistic_crossing_obs else "-",
+                                graph.main.max_total_reward(),
+                                str(graph.main.max_total_reward_init_obs())[-4:],
                             ))
                             last_report = now
                             last_frame = cur_frame
@@ -92,9 +91,6 @@ class Policy:
                     last_obs, obs = projector.batch_project([last_obs, obs])
                     last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
 
-                    if init_obs is None:
-                        init_obs = obs
-
                     if add:  # head for testing actor does not add traj
                         trajectory.append([last_obs, pre_action, obs, reward])
                         total_reward += reward
@@ -103,7 +99,7 @@ class Policy:
                             with frames.get_lock():
                                 frames.value += (len(trajectory) * P.num_action_repeats)
                             graph.store_inc(trajectory, total_reward)
-                        learner_actor_queue.put(init_obs)
+                        learner_actor_queue.put("traj_finished")
                         break
                     else:
                         action = graph.get_action(obs)

@@ -41,8 +41,8 @@ class Actor:
                 if self.finish.value:
                     raise Exception()
 
-        if type(action) is str:  # hashing 
-            return action
+        if type(action) is str:  # traj_finished
+            return
 
         if action is not None:
             self.hit.append(1)
@@ -64,8 +64,8 @@ class Actor:
     def interact(self):
         while True:  # episode loop
             # 0. init episode
-            last_obs = self.env.reset()
-            obs = last_obs
+            init_obs = self.env.reset()
+            obs = last_obs = init_obs
             total_reward = 0
             epi_step = 0
             pre_action = 0
@@ -73,7 +73,7 @@ class Actor:
             start_time = time.time()
             reward = 0
             self.hit = list()
-            while self.learner_actor_queues.qsize() > 0:
+            while self.learner_actor_queues.qsize() > 0:  # empty queue before env interaction
                 self.learner_actor_queues.get()
             while True:  # step loop
                 # 1. get action
@@ -90,7 +90,7 @@ class Actor:
 
                 # 4. done ops
                 if done:
-                    init_obs = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
+                    self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
                     self.fps.append(
                         epi_step * P.num_action_repeats / (time.time() - start_time)
                     )

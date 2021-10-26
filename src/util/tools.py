@@ -10,6 +10,7 @@ from src.util.imports.numpy import np
 import psutil
 import pytz
 from pathlib import Path
+# import rich
 
 
 class IndexedDict:
