@@ -79,7 +79,8 @@ class Storage:
                 return
             else:
                 # TODO: env may (near) stochastical
-                Logger.log("stochastical env, ignored new obs record")
+                # Logger.log("stochastical env, ignored new obs record")
+                pass
         except ValueError:
             self._node[node_ind][Storage._node_actions][0].append(action)
             self._node[node_ind][Storage._node_next].append(next_node_ind)
