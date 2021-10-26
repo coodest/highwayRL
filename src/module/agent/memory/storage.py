@@ -23,7 +23,7 @@ class Storage:
     def obs_action(self, obs: str) -> int:
         node_ind, step = self._obs[obs]
         # algorithm makes the first element the best action
-        return self._node[node_ind][Storage._node_action][step][0]
+        return self._node[node_ind][Storage._node_actions][step][0]
 
     def obs_exist(self, obs: str) -> bool:
         return obs in self._obs
@@ -82,21 +82,7 @@ class Storage:
                 Logger.log("stochastical env, ignored new obs record")
         except ValueError:
             self._node[node_ind][Storage._node_actions][0].append(action)
-            try:
-                self._node[node_ind][Storage._node_next].append(next_node_ind)
-            except:
-                Logger.log("inner")
-                Logger.log(self._node[node_ind][Storage._node_next])
-                Logger.log(self._node[node_ind])
-                Logger.log(node_ind)
-                exit(0)
-        except:
-            Logger.log("outer")
-            Logger.log(self._node[node_ind][Storage._node_next])
-            Logger.log(self._node[node_ind])
-            Logger.log(node_ind)
-            exit(0)
-
+            self._node[node_ind][Storage._node_next].append(next_node_ind)
             
     def node_split(self, crossing_obs: str) -> int:
         """
@@ -113,7 +99,7 @@ class Storage:
 
         # 2. existing crossing node, do nothing
         if node_length <= 1:  
-            return
+            return node_ind
 
         # 3. node split
         if step <= 0:  # crossing node is the first obs
