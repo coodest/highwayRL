@@ -64,6 +64,7 @@ class Graph:
     def store_inc(self, trajectory, total_reward):
         """
         store the trajectory by the non-head process
+        o0, a0, o1, r1 --> o1, a1, o2, r2 --> ... --> on-1, an-1, on, rn
         """
         self.inc.trajs_add(trajectory)
 
