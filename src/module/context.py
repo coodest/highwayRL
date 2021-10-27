@@ -17,7 +17,7 @@ class Context:
     prio_gpu = 0
 
     # env
-    total_frames = 1e6  # default 1e7
+    total_frames = 1e7  # default 1e7
     env_type = "atari"
     env_name_list = IO.read_file(asset_dir + "Atari_game_list.txt")
     env_name = None
