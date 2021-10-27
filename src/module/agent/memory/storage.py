@@ -55,6 +55,9 @@ class Storage:
         # add or update obs
         for ind, o in enumerate(obs):
             if o in self._crossing_nodes:  # to solve obs-multi-node issue
+                if self._obs[o][Storage._obs_node_ind] != node_ind:
+                    # TODO: env may (near) stochastical OR obs cannot indicate corresponding state
+                    pass
                 continue
             # list object reduces a lot mem comsuption
             self._obs[o] = [node_ind, ind]
@@ -78,8 +81,7 @@ class Storage:
                 # existing action and next node
                 return
             else:
-                # TODO: env may (near) stochastical
-                # Logger.log("stochastical env, ignored new obs record")
+                # TODO: env may (near) stochastical OR obs cannot indicate corresponding state 
                 pass
         except ValueError:
             self._node[node_ind][Storage._node_actions][0].append(action)
