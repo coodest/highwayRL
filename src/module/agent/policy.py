@@ -75,11 +75,12 @@ class Policy:
                         cur_frame = frames.value
                         now = time.time()
                         if now - last_report > P.log_every:
-                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{} V: {}/{}".format(
+                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{}({:.1f}%) V: {}/{}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
                                 len(graph.main.obs()),
                                 graph.main.num_crossing_node() if P.statistic_crossing_obs else "-",
+                                100 * (graph.main.num_crossing_node() / len(graph.main.obs())) if P.statistic_crossing_obs else "-",
                                 graph.main.max_total_reward(),
                                 str(graph.main.max_total_reward_init_obs())[-4:],
                             ))
