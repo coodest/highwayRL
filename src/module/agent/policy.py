@@ -27,15 +27,7 @@ class Policy:
         for p in processes:
             p.join()
 
-        optimal_graph = IO.read_disk_dump(P.optimal_graph_path)
-
-        Logger.log("stored corssing obs and obs are: {} / {}: {}%".format(
-            len(optimal_graph.crossing_obs) if P.statistic_crossing_obs else "-",
-            len(optimal_graph),
-            ((100 * len(optimal_graph.crossing_obs)) / len(optimal_graph)) if P.statistic_crossing_obs else "-",
-        ))
-
-        return optimal_graph
+        return IO.read_disk_dump(P.optimal_graph_path)
 
     @staticmethod
     def is_head(index):
@@ -83,7 +75,7 @@ class Policy:
                                 100 * (graph.main.num_crossing_node() / len(graph.main.obs())) if P.statistic_crossing_obs else "-",
                                 graph.main.max_total_reward(),
                                 str(graph.main.max_total_reward_init_obs())[-4:],
-                            ))
+                            ), color="yellow")
                             last_report = now
                             last_frame = cur_frame
                     

@@ -189,12 +189,13 @@ class Storage:
         self._node[index][Storage._node_value] = node_reward + max_next_node_value
         return abs(abs_change)
 
-    def crossing_node_action_update(self):
+    def crossing_node_action_updte(self):
         for crossing_node_ind in self._crossing_nodes:
             next_nodes = self._node[crossing_node_ind][Storage._node_next]
 
             max_next_node_value = - float("inf")
             target_ind = None
+            assert len(next_nodes) > 0, f"fake crossing node, {self._node[crossing_node_ind]}"
             for next_ind in range(len(next_nodes)):
                 next_node_ind = next_nodes[next_ind]
                 next_node_value = self._node[next_node_ind][Storage._node_value]
