@@ -150,7 +150,7 @@ class Graph:
         # 1. value propagation
         total_abs_change = 0
         last_changed_node = set()
-        max_iter = 50
+        max_iter = 5000
         while True:
             max_iter -= 1
             if max_iter == 0:

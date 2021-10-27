@@ -1,3 +1,4 @@
+211027 auto propagation: issue: value propagation slow
 211025 auto propagation: issue: obs to multiple graph nodes
 211024 auto propagation: redesign
 211021 auto propagation: remove transition graph amd simplify code
