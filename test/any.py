@@ -143,8 +143,17 @@ for i in nodes:
     obs, action, reward, next, value = nodes[i]
     print(f"node:{ind} obs:{obs} action:{action} reward:{reward} next:{next} value:{value}")
 
+a.post_process()
+print("------------------------")
 
+for i in nodes:
+    ind = i
+    obs, action, reward, next, value = nodes[i]
+    print(f"node:{ind} obs:{obs} action:{action} reward:{reward} next:{next} value:{value}")
 
+print("------------------------")
+for obs in ["a2", "b4", "a4"]:
+    print(a.get_action(obs))
 
 
 
