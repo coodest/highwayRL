@@ -95,6 +95,7 @@
 # print(d)
 
 # -------------------------------------------------------------------
+# this section test the shrunk grpah building algorithm
 
 from src.module.agent.memory.graph import Graph
 from src.module.agent.memory.storage import Storage
