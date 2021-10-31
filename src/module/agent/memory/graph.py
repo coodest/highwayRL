@@ -63,10 +63,21 @@ class Graph:
 
     def store_inc(self, trajectory, total_reward):
         """
-        store the trajectory by the non-head process
-        o0, a0, o1, r1 --> o1, a1, o2, r2 --> ... --> on-1, an-1, on, rn
+        store the trajectory by the non-head process.
+        trajectory: o0, a0, o1, r1 --> o1, a1, o2, r2 --> ... --> on-1, an-1, on, rn
         """
-        self.inc.trajs_add(trajectory)
+        amend_traj = list()
+        last_reward = 0
+        final_obs = None
+        final_reward = None
+        for last_obs, prev_action, obs, reward in trajectory:
+            amend_traj.append([last_obs, prev_action, obs, last_reward])
+            last_reward = reward
+            final_obs = obs
+            final_reward = reward
+        amend_traj.append([final_obs, None, final_obs, final_reward])
+
+        self.inc.trajs_add(amend_traj)
 
         # last_obs, prev_action, obs, reward (form obs) = trajectory item
         self.inc.total_reward_update(total_reward, trajectory[0][0])

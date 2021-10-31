@@ -41,8 +41,8 @@ class Actor:
                 if self.finish.value:
                     raise Exception()
 
-        if type(action) is str:  # traj_finished
-            return
+        if type(action) is str:  # the projected and indexed init obs
+            return action
 
         if action is not None:
             self.hit.append(1)
@@ -64,8 +64,7 @@ class Actor:
     def interact(self):
         while True:  # episode loop
             # 0. init episode
-            init_obs = self.env.reset()
-            obs = last_obs = init_obs
+            obs = last_obs = self.env.reset()
             total_reward = 0
             epi_step = 0
             pre_action = 0
@@ -90,7 +89,7 @@ class Actor:
 
                 # 4. done ops
                 if done:
-                    self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
+                    proj_index_init_obs = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
                     self.fps.append(
                         epi_step * P.num_action_repeats / (time.time() - start_time)
                     )
@@ -108,7 +107,7 @@ class Actor:
                             hit_rate,
                             lost_step,
                             epi_step,
-                            str(init_obs)[-4:]
+                            str(proj_index_init_obs)[-4:]
                         ))
                     break
             self.num_episode += 1

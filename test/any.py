@@ -46,9 +46,9 @@
 
 # -------------------------------------------------------------------
 
-import sys
-from src.util.tools import Funcs
-import ctypes
+# import sys
+# from src.util.tools import Funcs
+# import ctypes
 
 # class Storeage(dict):
 #     def __init__(self) -> None:
@@ -84,15 +84,65 @@ import ctypes
 # value = ctypes.cast(c, ctypes.py_object).value
 # print(value)
 
-a = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-step = 3
+# a = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+# step = 3
 
-b = a[:step]
-print(b)
-c = [a[step]]
-print(c)
-d = a[step + 1:]
-print(d)
+# b = a[:step]
+# print(b)
+# c = [a[step]]
+# print(c)
+# d = a[step + 1:]
+# print(d)
+
+# -------------------------------------------------------------------
+
+from src.module.agent.memory.graph import Graph
+from src.module.agent.memory.storage import Storage
+
+a = Graph(0, True)
+
+
+a.store_inc(
+    [
+        ["a0", 1, "a1", 5],
+        ["a1", 1, "a2", 0],
+        ["a2", 1, "a3", 0],
+        ["a3", 1, "a4", 0],
+        ["a4", 1, "a5", 3],
+        ["a5", 1, "a6", 2],
+    ], 10
+)
+a.store_inc(
+    [
+        ["b0", 2, "b1", 0],
+        ["b1", 2, "a2", 0],
+        ["a2", 2, "b3", 0],
+        ["b3", 2, "b4", 1],
+        ["b4", 2, "b5", 0],
+    ], 1
+)
+a.store_inc(
+    [
+        ["c0", 3, "c1", 0],
+        ["c1", 3, "b4", 1],
+        ["b4", 3, "c3", 0],
+        ["c3", 3, "c4", 0],
+        ["c4", 3, "a4", 0],
+        ["a4", 3, "c6", 0],
+        ["c6", 3, "c7", 1],
+    ], 2
+)
+
+a.merge_inc(a.inc)
+
+nodes = a.main.node()
+
+for i in nodes:
+    ind = i
+    obs, action, reward, next, value = nodes[i]
+    print(f"node:{ind} obs:{obs} action:{action} reward:{reward} next:{next} value:{value}")
+
+
 
 
 

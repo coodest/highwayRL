@@ -178,6 +178,9 @@ class Storage:
         return crossing_node_ind
 
     def node_value_propagate(self, index: int):
+        """
+        cpu version of value propagation
+        """
         if len(self._node[index][Storage._node_next]) > 0:
             max_next_node_value = - float("inf")
             for next_node_ind in self._node[index][Storage._node_next]:
@@ -190,6 +193,10 @@ class Storage:
         abs_change = self._node[index][Storage._node_value] - (node_reward + max_next_node_value)
         self._node[index][Storage._node_value] = node_reward + max_next_node_value
         return abs(abs_change)
+
+    def node_vp_GPU(self):
+        pass
+
 
     def crossing_node_action_update(self):
         for crossing_node_ind in self._crossing_nodes:

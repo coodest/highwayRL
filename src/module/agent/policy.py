@@ -53,6 +53,7 @@ class Policy:
         while True:
             trajectory = []
             total_reward = 0
+            proj_index_init_obs = None
             while True:
                 try:
                     # check to stop
@@ -84,6 +85,9 @@ class Policy:
                     last_obs, obs = projector.batch_project([last_obs, obs])
                     last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
 
+                    if proj_index_init_obs is None:
+                        proj_index_init_obs = last_obs
+
                     if add:  # head for testing actor does not add traj
                         trajectory.append([last_obs, pre_action, obs, reward])
                         total_reward += reward
@@ -92,7 +96,7 @@ class Policy:
                             with frames.get_lock():
                                 frames.value += (len(trajectory) * P.num_action_repeats)
                             graph.store_inc(trajectory, total_reward)
-                        learner_actor_queue.put("traj_finished")
+                        learner_actor_queue.put(proj_index_init_obs)
                         break
                     else:
                         action = graph.get_action(obs)
