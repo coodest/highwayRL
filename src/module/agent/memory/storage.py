@@ -175,6 +175,7 @@ class Storage:
         # assert str(crossing_obs).startswith(self._node[self._obs[crossing_obs][Storage._obs_node_ind]][Storage._node_obs][0]), f"obs not match, {crossing_obs} - {self._node[crossing_node_ind][Storage._node_obs][0]}"
         # assert crossing_node_ind == self._obs[crossing_obs][Storage._obs_node_ind], f"_obs update failed, new {crossing_node_ind} - queue {self._obs[crossing_obs][Storage._obs_node_ind]} - origin {node_ind}"
         
+
         return crossing_node_ind
 
     def node_value_propagate(self, index: int):
@@ -182,13 +183,14 @@ class Storage:
         cpu version of value propagation
         """
         if len(self._node[index][Storage._node_next]) > 0:
-            max_next_node_value = - float("inf")
-            for next_node_ind in self._node[index][Storage._node_next]:
-                next_node_value = self._node[next_node_ind][Storage._node_value]
-                if next_node_value > max_next_node_value:
-                    max_next_node_value = next_node_value
-        else:  # end node
-            max_next_node_value = 0
+            if self._node[index][Storage._node_next] != [None]:
+                max_next_node_value = - float("inf")
+                for next_node_ind in self._node[index][Storage._node_next]:
+                    next_node_value = self._node[next_node_ind][Storage._node_value]
+                    if next_node_value > max_next_node_value:
+                        max_next_node_value = next_node_value
+            else:  # end node
+                max_next_node_value = 0
         node_reward = sum(self._node[index][Storage._node_reward])
         abs_change = self._node[index][Storage._node_value] - (node_reward + max_next_node_value)
         self._node[index][Storage._node_value] = node_reward + max_next_node_value
