@@ -126,9 +126,9 @@ traj3, traj3_tr = [
         ["a4", 3, "c6", 0],
         ["c6", 3, "c7", 1],
     ], 2
-a.store_inc(traj1, traj1_tr)
 a.store_inc(traj2, traj2_tr)
 a.store_inc(traj3, traj3_tr)
+a.store_inc(traj1, traj1_tr)
 
 a.merge_inc(a.inc)
 
@@ -151,7 +151,26 @@ print("------------------------")
 for obs in ["a2", "b4", "a4"]:
     print(a.get_action(obs))
 
+# -------------------------------------------------------------------
+# this section test the hadmard product
 
+# import torch
+# import numpy as np
+
+# p = np.array([
+#     [0, 1, 0, 0],
+#     [0, 0, 0, 1],
+#     [1, 0, 0, 1],
+#     [1, 0, 0, 1],
+# ])
+
+# a = torch.from_numpy(p)
+
+# b = torch.rand(4)
+
+# c = a * b
+
+# print(c)
 
 
 

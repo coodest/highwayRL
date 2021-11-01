@@ -1,4 +1,6 @@
 from src.util.tools import IO, Logger
+from src.module.agent.memory.iterator import Iterator
+import numpy as np
 
 
 class Storage:
@@ -19,6 +21,7 @@ class Storage:
         self._node = dict()
         self._max_total_reward = dict()
         self._trajs = list()
+        self._iterator = Iterator()
 
     def obs_action(self, obs: str) -> int:
         node_ind, step = self._obs[obs]
@@ -175,13 +178,38 @@ class Storage:
         # assert str(crossing_obs).startswith(self._node[self._obs[crossing_obs][Storage._obs_node_ind]][Storage._node_obs][0]), f"obs not match, {crossing_obs} - {self._node[crossing_node_ind][Storage._node_obs][0]}"
         # assert crossing_node_ind == self._obs[crossing_obs][Storage._obs_node_ind], f"_obs update failed, new {crossing_node_ind} - queue {self._obs[crossing_obs][Storage._obs_node_ind]} - origin {node_ind}"
         
-
         return crossing_node_ind
 
-    def node_value_propagate(self, index: int):
+    def node_value_propagate(self):
+        # self.cpu_vp()
+        self.gpu_vp()
+
+    def cpu_vp(self):
         """
         cpu version of value propagation
         """
+        total_abs_change = 0
+        last_changed_node = set()
+        max_iter = 5000
+        while True:
+            max_iter -= 1
+            if max_iter <= 0:
+                break
+            changed_node = set()
+            for i in self._node:
+                abs_change = self.single_node_value_propagation(i)
+                if abs(abs_change) > 0:
+                    changed_node.add(i)
+                total_abs_change += abs_change
+            if total_abs_change == 0:
+                break
+            elif changed_node == last_changed_node:
+                # contains loop
+                break
+            else:
+                last_changed_node = changed_node
+
+    def single_node_value_propagation(self, index: int):
         if len(self._node[index][Storage._node_next]) > 0:
             if self._node[index][Storage._node_next] != [None]:
                 max_next_node_value = - float("inf")
@@ -196,9 +224,27 @@ class Storage:
         self._node[index][Storage._node_value] = node_reward + max_next_node_value
         return abs(abs_change)
 
-    def node_vp_GPU(self):
-        pass
-
+    def gpu_vp(self):
+        """
+        GNN-based value propagation
+        """
+        total_nodes = len(self._node)
+        adj = np.zeros([total_nodes, total_nodes], dtype=np.int8)
+        rew = np.zeros([total_nodes], dtype=np.float32)
+        val_0 = np.zeros([total_nodes], dtype=np.float32)
+        for node in self._node:
+            next = self._node[node][Storage._node_next]
+            rew[node] = sum(self._node[node][Storage._node_reward])
+            val_0[node] = self._node[node][Storage._node_value]
+            for n in next:
+                if n is None:
+                    continue
+                adj[node][n] = 1
+        
+        self._iterator.init(adj, rew, val_0)
+        propagated_val = self._iterator.iterate()
+        for ind, val in enumerate(propagated_val):
+            self._node[ind][Storage._node_value] = val
 
     def crossing_node_action_update(self):
         for crossing_node_ind in self._crossing_nodes:

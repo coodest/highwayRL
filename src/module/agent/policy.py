@@ -73,7 +73,7 @@ class Policy:
                                 (cur_frame - last_frame) / (now - last_report),
                                 len(graph.main.obs()),
                                 graph.main.num_crossing_node() if P.statistic_crossing_obs else "-",
-                                100 * (graph.main.num_crossing_node() / len(graph.main.obs())) if P.statistic_crossing_obs else "-",
+                                100 * (graph.main.num_crossing_node() / (len(graph.main.obs()) + 1e-8)) if P.statistic_crossing_obs else "-",
                                 graph.main.max_total_reward(),
                                 str(graph.main.max_total_reward_init_obs())[-4:],
                             ), color="yellow")

@@ -160,26 +160,7 @@ class Graph:
 
     def post_process(self):
         # 1. value propagation
-        total_abs_change = 0
-        last_changed_node = set()
-        max_iter = 50000
-        while True:
-            max_iter -= 1
-            if max_iter == 0:
-                break
-            changed_node = set()
-            for i in self.main.node():
-                abs_change = self.main.node_value_propagate(i)
-                if abs(abs_change) > 0:
-                    changed_node.add(i)
-                total_abs_change += abs_change
-            if total_abs_change == 0:
-                break
-            elif changed_node == last_changed_node:
-                # contains loop
-                break
-            else:
-                last_changed_node = changed_node
+        self.main.node_value_propagate()
         
         # 2. update action of crossing obs
         self.main.crossing_node_action_update()
