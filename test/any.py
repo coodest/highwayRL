@@ -102,9 +102,7 @@ from src.module.agent.memory.storage import Storage
 
 a = Graph(0, True)
 
-
-a.store_inc(
-    [
+traj1, traj1_tr = [
         ["a0", 1, "a1", 5],
         ["a1", 1, "a2", 0],
         ["a2", 1, "a3", 0],
@@ -112,18 +110,14 @@ a.store_inc(
         ["a4", 1, "a5", 3],
         ["a5", 1, "a6", 2],
     ], 10
-)
-a.store_inc(
-    [
+traj2, traj2_tr = [
         ["b0", 2, "b1", 0],
         ["b1", 2, "a2", 0],
         ["a2", 2, "b3", 0],
         ["b3", 2, "b4", 1],
         ["b4", 2, "b5", 0],
     ], 1
-)
-a.store_inc(
-    [
+traj3, traj3_tr = [
         ["c0", 3, "c1", 0],
         ["c1", 3, "b4", 1],
         ["b4", 3, "c3", 0],
@@ -132,7 +126,9 @@ a.store_inc(
         ["a4", 3, "c6", 0],
         ["c6", 3, "c7", 1],
     ], 2
-)
+a.store_inc(traj1, traj1_tr)
+a.store_inc(traj2, traj2_tr)
+a.store_inc(traj3, traj3_tr)
 
 a.merge_inc(a.inc)
 
