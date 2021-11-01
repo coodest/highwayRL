@@ -19,7 +19,12 @@ class Iterator:
 
     def iterate(self):
         last_changed_node = None
+        max_iter = 1e5
         while True:
+            max_iter -= 1
+            if max_iter <= 0:
+                break
+            
             old_val = self.val
             self.val = torch.max(self.adj * self.val, dim=1).values + self.rew
             
