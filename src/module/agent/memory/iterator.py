@@ -18,7 +18,7 @@ class Iterator:
         while True:
             iters += 1
             last_val = val
-            val = torch.max(adj * val, dim=1).values + rew
+            val = torch.max(adj * val, dim=1).values * P.gamma + rew
             if torch.sum(last_val - val) == 0:
                 break
         Logger.log(f"iters: {iters}", color="yellow")
