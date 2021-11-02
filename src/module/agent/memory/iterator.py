@@ -8,35 +8,20 @@ class Iterator:
     def __init__(self) -> None:
         ind = P.prio_gpu
         self.device = torch.device(f"cuda:{ind}" if torch.cuda.is_available() else "cpu")
-        self.adj = None
-        self.rew = None
-        self.val = None
 
-    def init(self, adj, rew, val_0):
-        self.adj = torch.from_numpy(adj).to(self.device)
-        self.rew = torch.from_numpy(rew).to(self.device)
-        self.val = torch.from_numpy(val_0).to(self.device)
+    def iterate(self, np_adj, np_rew, np_val_0):
+        adj = torch.from_numpy(np_adj).to(self.device)
+        rew = torch.from_numpy(np_rew).to(self.device)
+        val = torch.from_numpy(np_val_0).to(self.device)
 
-    def iterate(self):
-        last_changed_node = None
-        max_iter = 1e5
+        iters = 0
         while True:
-            max_iter -= 1
-            if max_iter <= 0:
+            iters += 1
+            if iters >= 2e3:
+                Logger.log("max iters")
                 break
-            
-            old_val = self.val
-            self.val = torch.max(self.adj * self.val, dim=1).values + self.rew
-            
-            change = self.val - old_val
-            if torch.sum(change) == 0:
-                break
-
-            changed_node = change > 0
-            changed_node = changed_node.long()
-            if last_changed_node is not None:
-                if torch.sum(torch.abs(last_changed_node - changed_node)) == 0:
-                    # contains loop
-                    break
-            last_changed_node = changed_node
-        return self.val.cpu().detach().numpy().tolist()
+            else:
+                Logger.log(f"iters: {iters}") if iters % 10000 == 0 else None
+            val = torch.max(adj * val, dim=1).values + rew
+        Logger.log(f"iters: {iters}")
+        return val.cpu().detach().numpy().tolist()

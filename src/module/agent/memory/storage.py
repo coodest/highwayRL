@@ -21,7 +21,6 @@ class Storage:
         self._node = dict()
         self._max_total_reward = dict()
         self._trajs = list()
-        self._iterator = Iterator()
 
     def obs_action(self, obs: str) -> int:
         node_ind, step = self._obs[obs]
@@ -186,15 +185,18 @@ class Storage:
 
     def cpu_vp(self):
         """
-        cpu version of value propagation
+        cpu version of value propagation, slow, only for debugging
         """
         total_abs_change = 0
         last_changed_node = set()
-        max_iter = 5000
+        iters = 0
         while True:
-            max_iter -= 1
-            if max_iter <= 0:
+            iters += 1
+            if iters >= 5000:
+                Logger.log("max iters")
                 break
+            else:
+                Logger.log(f"iters: {iters}") if iters % 1000 == 0 else None
             changed_node = set()
             for i in self._node:
                 abs_change = self.single_node_value_propagation(i)
@@ -204,10 +206,11 @@ class Storage:
             if total_abs_change == 0:
                 break
             elif changed_node == last_changed_node:
-                # contains loop
+                Logger.log("loop detected during VP, VP finish")
                 break
             else:
                 last_changed_node = changed_node
+        Logger.log(f"iters: {iters}")
 
     def single_node_value_propagation(self, index: int):
         if len(self._node[index][Storage._node_next]) > 0:
@@ -241,14 +244,16 @@ class Storage:
                     continue
                 adj[node][n] = 1
         
-        self._iterator.init(adj, rew, val_0)
-        propagated_val = self._iterator.iterate()
-        for ind, val in enumerate(propagated_val):
+        iterator = Iterator()
+        val_n = iterator.iterate(adj, rew, val_0)
+        for ind, val in enumerate(val_n):
             self._node[ind][Storage._node_value] = val
 
     def crossing_node_action_update(self):
         for crossing_node_ind in self._crossing_nodes:
             next_nodes = self._node[crossing_node_ind][Storage._node_next]
+            if next_nodes == [None]:  # NOTE: crossing node is the last obs in the traj before done (done obs no stored)
+                continue
 
             max_next_node_value = - float("inf")
             target_ind = None
@@ -258,8 +263,6 @@ class Storage:
                 if next_node_value > max_next_node_value:
                     max_next_node_value = next_node_value
                     target_ind = next_ind
-            if target_ind is None:  # NOTE: crossing node is the last obs in the traj before done (done obs no stored)
-                continue
             
             # make pointer to the lists
             action_list = self._node[crossing_node_ind][Storage._node_actions][0]
