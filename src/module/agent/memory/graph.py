@@ -121,6 +121,10 @@ class Graph:
                         crossing_obs[last_obs] = step
                     if obs_existence == 1:
                         crossing_obs[obs] = step + 1
+                if last_obs_existence + obs_existence == 2:
+                    if not self.main.node_next_contain(last_obs, obs):
+                        crossing_obs[last_obs] = step
+                        crossing_obs[obs] = step + 1
                 # add exising crossing obs
                 if self.main.obs_is_crossing(last_obs):
                     crossing_obs[last_obs] = step

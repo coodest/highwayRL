@@ -64,6 +64,14 @@ class Storage:
 
     def node_next_ind(self):
         return len(self._node)
+
+    def node_next_contain(self, last_obs, obs):
+        from_node = self._obs[last_obs][Storage._obs_node_ind]
+        to_node = self._obs[obs][Storage._obs_node_ind]
+        if to_node in self._node[from_node][Storage._node_next]:
+            return True
+        else:
+            return False
     
     def node_add(self, obs: list, action: list, reward: list, next: list):
         # exising node, return 
@@ -185,8 +193,9 @@ class Storage:
 
         # deal with the loops/cycles
         dg = nx.DiGraph(edges)
-        loop = list(nx.simple_cycles(dg))
-        Logger.log(loop)
+        loops = list(nx.simple_cycles(dg))
+        for loop in loops:
+            adj[loop[-1]][loop[0]] = 0  # remove loop back
         
         iterator = Iterator()
         val_n = iterator.iterate(adj, rew, val_0)
