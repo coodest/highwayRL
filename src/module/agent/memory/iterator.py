@@ -14,14 +14,9 @@ class Iterator:
         rew = torch.from_numpy(np_rew).to(self.device)
         val = torch.from_numpy(np_val_0).to(self.device)
 
-        iters = 0
         while True:
-            iters += 1
-            if iters >= 2e3:
-                Logger.log("max iters")
-                break
-            else:
-                Logger.log(f"iters: {iters}") if iters % 10000 == 0 else None
+            last_val = val
             val = torch.max(adj * val, dim=1).values + rew
-        Logger.log(f"iters: {iters}")
+            if torch.sum(last_val - val) == 0:
+                break
         return val.cpu().detach().numpy().tolist()
