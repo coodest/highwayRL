@@ -81,7 +81,7 @@ class Graph:
         self.inc.trajs_add(amend_traj)
 
         # last_obs, prev_action, obs, reward (form obs) = trajectory item
-        self.inc.total_reward_update(total_reward, trajectory[0][0])
+        self.inc.max_total_reward_update(total_reward, trajectory[0][0])
 
     def get_traj_frag(self, traj, start, end):
         """
@@ -153,7 +153,7 @@ class Graph:
                     self.main.crossing_node_add_action(last_crossing_node_id, last_action, shrunk_node_ind)
 
         # total reward update
-        self.main.total_reward_update(
+        self.main.max_total_reward_update(
             total_reward=inc.max_total_reward(),
             init_obs=inc.max_total_reward_init_obs()
         )

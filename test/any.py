@@ -132,7 +132,7 @@ a.store_inc(traj1, traj1_tr)
 
 a.merge_inc(a.inc)
 
-nodes = a.main.node()
+nodes = a.main._node
 
 for i in nodes:
     ind = i

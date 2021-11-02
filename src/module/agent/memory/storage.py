@@ -30,8 +30,8 @@ class Storage:
     def obs_exist(self, obs: str) -> bool:
         return obs in self._obs
     
-    def obs(self) -> dict:
-        return self._obs
+    def obs_size(self) -> int:
+        return len(self._obs)
 
     def obs_is_crossing(self, obs):
         if obs not in self._obs:
@@ -47,9 +47,6 @@ class Storage:
     
     def trajs_add(self, traj):
         self._trajs.append(traj)
-
-    def node(self) -> dict:
-        return self._node
 
     def node_update(self, node_ind: int, obs: list, actions: list, reward: list, next: list):
         node_value = sum(reward)
@@ -75,19 +72,6 @@ class Storage:
         node_ind = self.node_next_ind()
         self.node_update(node_ind, obs, action, reward, next)
         return node_ind
-    
-    def crossing_node_add_action(self, node_ind: int, action: int, next_node_ind: int) -> None:
-        try:
-            ind = self._node[node_ind][Storage._node_actions][0].index(action)
-            if self._node[node_ind][Storage._node_next][ind] == next_node_ind:
-                # existing action and next node
-                return
-            else:
-                # TODO: env may (near) stochastical OR obs cannot indicate corresponding state 
-                pass
-        except ValueError:
-            self._node[node_ind][Storage._node_actions][0].append(action)
-            self._node[node_ind][Storage._node_next].append(next_node_ind)
             
     def node_split(self, crossing_obs: str) -> int:
         """
@@ -180,54 +164,6 @@ class Storage:
         return crossing_node_ind
 
     def node_value_propagate(self):
-        # self.cpu_vp()
-        self.gpu_vp()
-
-    def cpu_vp(self):
-        """
-        cpu version of value propagation, slow, only for debugging
-        """
-        total_abs_change = 0
-        last_changed_node = set()
-        iters = 0
-        while True:
-            iters += 1
-            if iters >= 5000:
-                Logger.log("max iters")
-                break
-            else:
-                Logger.log(f"iters: {iters}") if iters % 1000 == 0 else None
-            changed_node = set()
-            for i in self._node:
-                abs_change = self.single_node_value_propagation(i)
-                if abs(abs_change) > 0:
-                    changed_node.add(i)
-                total_abs_change += abs_change
-            if total_abs_change == 0:
-                break
-            elif changed_node == last_changed_node:
-                Logger.log("loop detected during VP, VP finish")
-                break
-            else:
-                last_changed_node = changed_node
-        Logger.log(f"iters: {iters}")
-
-    def single_node_value_propagation(self, index: int):
-        if len(self._node[index][Storage._node_next]) > 0:
-            if self._node[index][Storage._node_next] != [None]:
-                max_next_node_value = - float("inf")
-                for next_node_ind in self._node[index][Storage._node_next]:
-                    next_node_value = self._node[next_node_ind][Storage._node_value]
-                    if next_node_value > max_next_node_value:
-                        max_next_node_value = next_node_value
-            else:  # end node
-                max_next_node_value = 0
-        node_reward = sum(self._node[index][Storage._node_reward])
-        abs_change = self._node[index][Storage._node_value] - (node_reward + max_next_node_value)
-        self._node[index][Storage._node_value] = node_reward + max_next_node_value
-        return abs(abs_change)
-
-    def gpu_vp(self):
         """
         GNN-based value propagation
         """
@@ -248,6 +184,19 @@ class Storage:
         val_n = iterator.iterate(adj, rew, val_0)
         for ind, val in enumerate(val_n):
             self._node[ind][Storage._node_value] = val
+
+    def crossing_node_add_action(self, node_ind: int, action: int, next_node_ind: int) -> None:
+        try:
+            ind = self._node[node_ind][Storage._node_actions][0].index(action)
+            if self._node[node_ind][Storage._node_next][ind] == next_node_ind:
+                # existing action and next node
+                return
+            else:
+                # TODO: env may (near) stochastical OR obs cannot indicate corresponding state 
+                pass
+        except ValueError:
+            self._node[node_ind][Storage._node_actions][0].append(action)
+            self._node[node_ind][Storage._node_next].append(next_node_ind)
 
     def crossing_node_action_update(self):
         for crossing_node_ind in self._crossing_nodes:
@@ -277,10 +226,10 @@ class Storage:
             action_list.insert(0, target_action)
             next_node_list.insert(0, target_next)
     
-    def num_crossing_node(self):
+    def crossing_node_size(self):
         return len(self._crossing_nodes)
     
-    def total_reward_update(self, total_reward, init_obs):
+    def max_total_reward_update(self, total_reward, init_obs):
         current = - float('inf') if len(self._max_total_reward) == 0 else self.max_total_reward()
         if total_reward > current:
             self._max_total_reward.clear()

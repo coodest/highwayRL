@@ -71,9 +71,9 @@ class Policy:
                             Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{}({:.1f}%) V: {}/{}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
-                                len(graph.main.obs()),
-                                graph.main.num_crossing_node() if P.statistic_crossing_obs else "-",
-                                100 * (graph.main.num_crossing_node() / (len(graph.main.obs()) + 1e-8)) if P.statistic_crossing_obs else "-",
+                                graph.main.obs_size(),
+                                graph.main.crossing_node_size() if P.statistic_crossing_obs else "-",
+                                100 * (graph.main.crossing_node_size() / (graph.main.obs_size() + 1e-8)) if P.statistic_crossing_obs else "-",
                                 graph.main.max_total_reward(),
                                 str(graph.main.max_total_reward_init_obs())[-4:],
                             ), color="yellow")
