@@ -192,11 +192,13 @@ class Storage:
                 edges.append([node, n])
 
         # deal with the loops/cycles
+        Logger.log("find loop", color="yellow")
         dg = nx.DiGraph(edges)
         loops = list(nx.simple_cycles(dg))
         for loop in loops:
             adj[loop[-1]][loop[0]] = 0  # remove loop back
         
+        Logger.log("value propagate", color="yellow")
         iterator = Iterator()
         val_n = iterator.iterate(adj, rew, val_0)
         for ind, val in enumerate(val_n):
