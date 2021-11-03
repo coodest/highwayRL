@@ -3,7 +3,7 @@
 211102 auto propagation: remove cpu value propagation
 211101 auto propagation: gpu value propagation
 211031 auto propagation: shrunk graph building alg fix
-211027 auto propagation: issue: value propagation slow (SOLVED)
+211027 auto propagation: (SOLVED) issue: value propagation slow 
 211025 auto propagation: issue: multiple same obs in the same graph nodes, by stochastics and self loop
 211024 auto propagation: redesign
 211021 auto propagation: remove transition graph amd simplify code
