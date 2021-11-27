@@ -435,16 +435,10 @@
 # -------------------------------------------------------------------
 
 
-# from src.module.agent.memory.projector import RNNProjector
-# import torch
+from src.module.agent.memory.projector import RNNProjector
+import torch
 
-# a = RNNProjector(0)
-# b = torch.rand(84 * 84)
-# c = torch.rand(84 * 84)
-# d = a.batch_project([b, c])
-
-# import numpy as np
-
-# a = torch.rand(2, 3)
-# b = a.cpu().detach().numpy().tolist()
-# print(b)
+a = RNNProjector(0)
+b = torch.rand(84 * 84)
+c = torch.rand(84 * 84)
+d = a.batch_project([b, c])

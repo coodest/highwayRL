@@ -63,7 +63,7 @@ class Actor:
             # 0. init episode
             obs = last_obs = self.env.reset()
             total_reward = 0
-            epi_step = 0
+            epi_step = 1
             pre_action = 0
             done = False
             start_time = time.time()

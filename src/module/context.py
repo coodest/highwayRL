@@ -30,7 +30,7 @@ class Context:
     # agent
     num_actor = num_gpu * 8
     head_actor = num_actor - 1  # num_actor - 1, last actor
-    obs_min_dis = 1e-7  # 0: turn  off associative memory, 1e-3: min distance
+    obs_min_dis = 0  # 0: turn  off associative memory, 1e-3: distance
     projected_dim = 8
     projected_hidden_dim = 32
     gamma = 0.99

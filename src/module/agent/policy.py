@@ -90,7 +90,7 @@ class Policy:
                     last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
 
                     if proj_index_init_obs is None:
-                        proj_index_init_obs = last_obs
+                        proj_index_init_obs = obs
 
                     if add:  # head for testing actor does not add traj
                         trajectory.append([last_obs, pre_action, obs, reward])

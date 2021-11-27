@@ -17,8 +17,9 @@ class RandomMatrix(torch.nn.Module):
 class Projector:
     def __init__(self, id) -> None:
         ind = P.prio_gpu
+        self.id = id
         if P.num_gpu > 1:
-            ind = id % P.num_gpu
+            ind = self.id % P.num_gpu
         self.device = torch.device(f"cuda:{ind}" if torch.cuda.is_available() else "cpu")
 
     def project(self, obs):
@@ -60,6 +61,7 @@ class RNNProjector(Projector):
         if P.env_type == "atari":
             self.random_matrix = RandomMatrix(84 * 84 + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         self.reset()
+        self.last_result = np.zeros(P.projected_dim)
 
     def reset(self):
         if P.env_type == "atari":
@@ -82,12 +84,15 @@ class RNNProjector(Projector):
             self.hidden = output[0, P.projected_dim:]
             output = output[0, :P.projected_dim]
 
-        return output.cpu().detach().numpy().tolist()
+        result = output.cpu().detach().numpy().tolist()
+        self.last_result = result.copy()
+
+        return result
 
     def batch_project(self, obs_list):   
         results = []
-        for obs in obs_list:
-            results.append(self.project(obs))
+        results.append(self.last_result)
+        results.append(self.project(obs_list[-1]))
         return results
 
 
