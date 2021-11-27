@@ -15,7 +15,7 @@ class Iterator:
         val = torch.from_numpy(np_val_0).to(self.device)
 
         iters = 0
-        while True:
+        while iters < P.max_vp_iter:
             iters += 1
             last_val = val
             val = torch.max(adj * val, dim=1).values * P.gamma + rew
@@ -23,3 +23,8 @@ class Iterator:
                 break
         Logger.log(f"iters: {iters}", color="yellow")
         return val.cpu().detach().numpy().tolist()
+
+    def release(self):
+        # release resorces
+        with torch.no_grad():
+            torch.cuda.empty_cache()

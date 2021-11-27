@@ -5,7 +5,10 @@ from src.util.tools import Funcs
 class Indexer:
     @staticmethod
     def get_ind(obs):
-        cell_num = [int(i / P.obs_min_dis) for i in obs]
+        if P.obs_min_dis > 0:
+            cell_num = [int(i / P.obs_min_dis) for i in obs]
+        else:
+            cell_num = obs
         return Funcs.matrix_hashing(cell_num)
 
     @staticmethod

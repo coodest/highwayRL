@@ -1,7 +1,7 @@
 from src.util.imports.torch import torch
 from src.util.imports.numpy import np
 from src.module.context import Profile as P
-from src.util.tools import Logger
+from src.util.tools import Logger, Funcs
 
 
 class RandomMatrix(torch.nn.Module):
@@ -27,6 +27,9 @@ class Projector:
     def batch_project(self, infos):
         pass
 
+    def reset(self):
+        pass
+
 
 class RandomProjector(Projector):
     def __init__(self, id) -> None:
@@ -46,6 +49,46 @@ class RandomProjector(Projector):
             output = self.random_matrix(input)
 
         return output.cpu().detach().numpy().tolist()
+
+
+class RNNProjector(Projector):
+    def __init__(self, id) -> None:
+        super().__init__(id)
+        self.random_matrix = None
+        self.hidden_0 = torch.rand(P.projected_hidden_dim).to(self.device)
+        self.hidden = None
+        if P.env_type == "atari":
+            self.random_matrix = RandomMatrix(84 * 84 + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+        self.reset()
+
+    def reset(self):
+        if P.env_type == "atari":
+            self.hidden = self.hidden_0
+
+    def project(self, obs):
+        batch = obs
+        input = None
+        if P.env_type == "atari":
+            # [84 * 84]
+            input = torch.tensor(batch, dtype=torch.float).to(self.device)
+            # [84 * 84 + hidden_dim]
+            input = torch.cat([input, self.hidden], dim=0)
+            # [1, 84 * 84 + hidden_dim]
+            input = input.unsqueeze(0)
+
+        with torch.no_grad():  # no grad calculation
+            # [1, projected_dim + hidden_dim]
+            output = self.random_matrix(input)
+            self.hidden = output[0, P.projected_dim:]
+            output = output[0, :P.projected_dim]
+
+        return output.cpu().detach().numpy().tolist()
+
+    def batch_project(self, obs_list):   
+        results = []
+        for obs in obs_list:
+            results.append(self.project(obs))
+        return results
 
 
 class CNNProjector(Projector):

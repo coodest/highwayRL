@@ -1,5 +1,5 @@
 from src.module.context import Profile as P
-from src.util.tools import Logger
+from src.util.tools import Logger, Funcs
 import time
 from multiprocessing import Queue
 from collections import deque
@@ -17,14 +17,14 @@ class Actor:
         self.actor_learner_queue = actor_learner_queue
         self.learner_actor_queues = learner_actor_queues
         self.episodic_reward = deque(maxlen=10)
-        self.p = (P.e_greedy[1] - P.e_greedy[0]) * (self.id + 1) / P.num_actor + P.e_greedy[0]
+        self.p = 1
         self.hit = None
             
     def is_testing_actor(self):
         """
         only last actor will be the testing actor
         """
-        return self.id == P.num_actor - 1
+        return self.id == P.head_actor
 
     def get_action(self, last_obs, pre_action, obs, reward, done, first_frame):
         # query action from policy
@@ -55,9 +55,6 @@ class Actor:
         elif action is None:
             # if policy can not return action
             action = self.env.action_space.sample()
-
-        if self.is_testing_actor():
-            assert not random.random() > self.p
             
         return action
 
@@ -109,5 +106,9 @@ class Actor:
                             epi_step,
                             str(proj_index_init_obs)[-4:]
                         ))
+                    else:
+                        # update e_greed prob for training actors
+                        self.p = Funcs.rand_prob() * (P.e_greedy[1] - P.e_greedy[0]) + P.e_greedy[0]
+
                     break
             self.num_episode += 1

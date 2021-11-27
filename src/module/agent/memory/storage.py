@@ -1,7 +1,6 @@
 from src.util.tools import IO, Logger
 from src.module.agent.memory.iterator import Iterator
-import numpy as np
-import networkx as nx
+from src.util.imports.numpy import np
 
 
 class Storage:
@@ -180,7 +179,6 @@ class Storage:
         adj = np.zeros([total_nodes, total_nodes], dtype=np.int8)
         rew = np.zeros([total_nodes], dtype=np.float32)
         val_0 = np.zeros([total_nodes], dtype=np.float32)
-        edges = []
         for node in self._node:
             next = self._node[node][Storage._node_next]
             rew[node] = sum(self._node[node][Storage._node_reward])
@@ -189,18 +187,11 @@ class Storage:
                 if n is None:
                     continue
                 adj[node][n] = 1
-                edges.append([node, n])
-
-        # deal with the loops/cycles
-        Logger.log("finding loop ...", color="yellow")
-        dg = nx.DiGraph(edges)
-        loops = list(nx.simple_cycles(dg))
-        for loop in loops:
-            adj[loop[-1]][loop[0]] = 0  # remove loop back
         
         Logger.log("value propagation", color="yellow")
         iterator = Iterator()
         val_n = iterator.iterate(adj, rew, val_0)
+        iterator.release()
         for ind, val in enumerate(val_n):
             self._node[ind][Storage._node_value] = val
 

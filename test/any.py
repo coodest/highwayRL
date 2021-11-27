@@ -423,6 +423,28 @@
 # print(a.get())
 # -------------------------------------------------------------------
 
-# a =[0,0,0,1]
+# import gym 
 
-# print(np.argmin(a))
+# from gym import envs
+
+# a = [env_spec.id for env_spec in envs.registry.all()]
+
+# for b in a :
+#     print(b)
+
+# -------------------------------------------------------------------
+
+
+# from src.module.agent.memory.projector import RNNProjector
+# import torch
+
+# a = RNNProjector(0)
+# b = torch.rand(84 * 84)
+# c = torch.rand(84 * 84)
+# d = a.batch_project([b, c])
+
+# import numpy as np
+
+# a = torch.rand(2, 3)
+# b = a.cpu().detach().numpy().tolist()
+# print(b)

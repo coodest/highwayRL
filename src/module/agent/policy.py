@@ -31,12 +31,10 @@ class Policy:
 
     @staticmethod
     def is_head(index):
-        return index == P.num_actor - 1
+        return index == P.head_actor
 
     @staticmethod
     def response_action(id, actor_learner_queue, learner_actor_queue, frames):
-        from src.module.agent.memory.projector import RandomProjector
-        from src.module.agent.memory.projector import CNNProjector
         from src.module.agent.memory.indexer import Indexer
         from src.module.agent.memory.graph import Graph
 
@@ -45,10 +43,15 @@ class Policy:
         last_sync = time.time()
         graph = Graph(id, Policy.is_head(id))
         
-        if P.projector == P.projector_types[0]:
-            projector = RandomProjector(id)
         if P.projector == P.projector_types[1]:
+            from src.module.agent.memory.projector import RandomProjector
+            projector = RandomProjector(id)
+        if P.projector == P.projector_types[2]:
+            from src.module.agent.memory.projector import CNNProjector
             projector = CNNProjector(id)
+        if P.projector == P.projector_types[3]:
+            from src.module.agent.memory.projector import RNNProjector
+            projector = RNNProjector(id)
 
         while True:
             trajectory = []
@@ -82,7 +85,8 @@ class Policy:
                     
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
-                    last_obs, obs = projector.batch_project([last_obs, obs])
+                    if P.projector is not None:
+                        last_obs, obs = projector.batch_project([last_obs, obs])
                     last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
 
                     if proj_index_init_obs is None:
@@ -97,6 +101,8 @@ class Policy:
                                 frames.value += (len(trajectory) * P.num_action_repeats)
                             graph.store_inc(trajectory, total_reward)
                         learner_actor_queue.put(proj_index_init_obs)
+                        if P.projector is not None:
+                            projector.reset()
                         break
                     else:
                         action = graph.get_action(obs)

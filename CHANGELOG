@@ -1,10 +1,13 @@
+211127 rethinking state modelling
+211127 add rnn projector
+211127 auto propagation: (SOLVED) issue: cycle / self-loop is not a issue now
 211102 auto propagation: issue: cycle / self-loop detection and amend
 211102 auto propagation: loop detection and amend
 211102 auto propagation: remove cpu value propagation
 211101 auto propagation: gpu value propagation
 211031 auto propagation: shrunk graph building alg fix
 211027 auto propagation: (SOLVED) issue: value propagation slow 
-211025 auto propagation: issue: multiple same obs in the same graph nodes, by stochastics and self loop
+211025 auto propagation: issue: fake stochastics and self loop
 211024 auto propagation: redesign
 211021 auto propagation: remove transition graph amd simplify code
 211020 auto propagation: step 3, imrove memory consumption

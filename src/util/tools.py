@@ -202,6 +202,10 @@ class Funcs:
         return one_hot
 
     @staticmethod
+    def rand_prob():
+        return np.random.random()
+
+    @staticmethod
     def print_obj(obj):
         s = "["
         for name in dir(obj):
