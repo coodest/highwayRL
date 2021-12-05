@@ -5,8 +5,12 @@ from src.util.tools import Logger
 
 
 class Iterator:
-    def __init__(self) -> None:
+    def __init__(self, id) -> None:
+        self.id = id
         ind = P.prio_gpu
+        if len(P.gpus) > 1:
+            ind = self.id % len(P.gpus)
+        torch.cuda.set_device(int(ind))
         self.device = torch.device(f"cuda:{ind}" if torch.cuda.is_available() else "cpu")
 
     def iterate(self, np_adj, np_rew, np_val_0):
@@ -22,9 +26,11 @@ class Iterator:
             if torch.sum(last_val - val) == 0:
                 break
         Logger.log(f"iters: {iters}", color="yellow")
-        return val.cpu().detach().numpy().tolist()
+        result = val.cpu().detach().numpy().tolist()
 
-    def release(self):
         # release resorces
+        del adj, rew, val, last_val
         with torch.no_grad():
             torch.cuda.empty_cache()
+
+        return result

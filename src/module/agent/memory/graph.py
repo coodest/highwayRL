@@ -10,8 +10,8 @@ class Graph:
     def __init__(self, id, is_head) -> None:
         self.id = id
         self.is_head = is_head
-        self.main = Storage()  # main storage
-        self.inc = Storage()  # incremental storage
+        self.main = Storage(self.id)  # main storage
+        self.inc = Storage(self.id)  # incremental storage
 
     def sync(self):
         """
@@ -21,7 +21,7 @@ class Graph:
         if not self.is_head:
             # write increments (not head)
             IO.write_disk_dump(P.result_dir + f"{self.id}.pkl", self.inc)
-            self.inc = Storage()
+            self.inc = Storage(self.id)
             IO.write_disk_dump(P.result_dir + f"{self.id}.ready", ["ready"])
             IO.stick_read_disk_dump(P.result_dir + "target.ok")
             self.main = IO.read_disk_dump(P.result_dir + "target.pkl")

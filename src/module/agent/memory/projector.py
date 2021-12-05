@@ -16,10 +16,11 @@ class RandomMatrix(torch.nn.Module):
 
 class Projector:
     def __init__(self, id) -> None:
-        ind = P.prio_gpu
         self.id = id
+        ind = P.prio_gpu
         if len(P.gpus) > 1:
             ind = self.id % len(P.gpus)
+        torch.cuda.set_device(int(ind))
         self.device = torch.device(f"cuda:{ind}" if torch.cuda.is_available() else "cpu")
 
     def project(self, obs):

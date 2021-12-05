@@ -14,13 +14,15 @@ class Storage:
     _node_next = 3  # list[int], corresponding to the next node for last obs's action
     _node_value = 4  # initialized as the sum of node reward
 
-    def __init__(self) -> None:
+    def __init__(self, id) -> None:
         super().__init__()
+        self.id = id
         self._obs = dict()
         self._crossing_nodes = set()
         self._node = dict()
         self._max_total_reward = dict()
         self._trajs = list()
+        self.iterator = Iterator(self.id)
 
     def obs_action(self, obs: str) -> int:
         node_ind, step = self._obs[obs]
@@ -189,9 +191,7 @@ class Storage:
                 adj[node][n] = 1
         
         Logger.log("value propagation", color="yellow")
-        iterator = Iterator()
-        val_n = iterator.iterate(adj, rew, val_0)
-        iterator.release()
+        val_n = self.iterator.iterate(adj, rew, val_0)
         for ind, val in enumerate(val_n):
             self._node[ind][Storage._node_value] = val
 

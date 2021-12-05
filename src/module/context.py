@@ -30,7 +30,7 @@ class Context:
 
     # agent
     num_actor = len(gpus) * 8
-    head_actor = num_actor - 1  # num_actor - 1, last actor
+    head_actor = num_actor - 1  # the last actor
     obs_min_dis = 0  # 0: turn  off associative memory, 1e-3: distance
     projected_dim = 8
     projected_hidden_dim = 32
@@ -41,7 +41,7 @@ class Context:
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True
-    max_vp_iter = 5  # num or float("inf")
+    max_vp_iter = 5000  # num or float("inf")
 
 
 class Profile(Context):
