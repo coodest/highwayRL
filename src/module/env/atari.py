@@ -51,7 +51,7 @@ class AtariPreprocessing(object):
         environment,
         frame_skip=4,
         terminal_on_life_loss=False,
-        screen_size=84,
+        screen_size=P.screen_size,
         max_random_noops=0,
     ):
         """Constructor for an Atari 2600 preprocessor.

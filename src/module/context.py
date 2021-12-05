@@ -14,7 +14,7 @@ class Context:
     clean = False
     log_every = 20
     num_gpu = 1
-    prio_gpu = 1
+    prio_gpu = 0
 
     # env
     total_frames = 1e7  # default 1e7
@@ -26,6 +26,7 @@ class Context:
     num_action_repeats = 4
     render = False  # whether test actor to render the env
     render_every = 5
+    screen_size = 84
 
     # agent
     num_actor = num_gpu * 8

@@ -37,13 +37,13 @@ class RandomProjector(Projector):
         super().__init__(id)
         self.random_matrix = None
         if P.env_type == "atari":
-            self.random_matrix = RandomMatrix(84 * 84, P.projected_dim).to(self.device)
+            self.random_matrix = RandomMatrix(P.screen_size * P.screen_size, P.projected_dim).to(self.device)
 
     def batch_project(self, obs_list):     
         batch = np.vstack(obs_list)  
         input = None
         if P.env_type == "atari":
-            # [2, 84 * 84]
+            # [2, P.screen_size * P.screen_size]
             input = torch.tensor(batch, dtype=torch.float).to(self.device)
 
         with torch.no_grad():  # no grad calculation
@@ -59,7 +59,7 @@ class RNNProjector(Projector):
         self.hidden_0 = torch.rand(P.projected_hidden_dim).to(self.device)
         self.hidden = None
         if P.env_type == "atari":
-            self.random_matrix = RandomMatrix(84 * 84 + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+            self.random_matrix = RandomMatrix(P.screen_size * P.screen_size + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         self.reset()
         self.last_result = np.zeros(P.projected_dim)
 
@@ -71,11 +71,11 @@ class RNNProjector(Projector):
         batch = obs
         input = None
         if P.env_type == "atari":
-            # [84 * 84]
+            # [P.screen_size * P.screen_size]
             input = torch.tensor(batch, dtype=torch.float).to(self.device)
-            # [84 * 84 + hidden_dim]
+            # [P.screen_size * P.screen_size + hidden_dim]
             input = torch.cat([input, self.hidden], dim=0)
-            # [1, 84 * 84 + hidden_dim]
+            # [1, P.screen_size * P.screen_size + hidden_dim]
             input = input.unsqueeze(0)
 
         with torch.no_grad():  # no grad calculation
@@ -104,12 +104,12 @@ class CNNProjector(Projector):
         self.conv2 = torch.nn.Conv2d(1, 1, kernel_size=(3, 3), stride=(5, 5), dilation=(2, 2)).to(self.device)
 
     def batch_project(self, obs_list):
-        # [2, 84 * 84]
+        # [2, P.screen_size * P.screen_size]
         batch = np.vstack(obs_list)  
         input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
         input = input.unsqueeze(1)
-        # [2, 1, 84, 84]
-        input = input.reshape(input.shape[0], input.shape[1], 84, -1)
+        # [2, 1, P.screen_size, P.screen_size]
+        input = input.reshape(input.shape[0], input.shape[1], P.screen_size, -1)
 
         with torch.no_grad():  # no grad calculation
             # [2, 1, 15, 15]
