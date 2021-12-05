@@ -13,6 +13,35 @@ class Iterator:
         torch.cuda.set_device(int(ind))
         self.device = torch.device(f"cuda:{ind}" if torch.cuda.is_available() else "cpu")
 
+    def build_dag(self, np_adj):
+        with torch.no_grad():
+            adj0 = torch.from_numpy(np_adj).to(self.device)
+            edge_to_remove = None
+            adj = adj0
+
+            for i in range(2, P.max_vp_iter):
+                print(i)
+                adj_new = torch.mm(adj, adj0)
+                diag = torch.diagonal(adj_new)
+                prev_rows = diag * torch.transpose(adj, 0, 1)
+                prev_cols = diag * adj0
+                change = prev_rows * prev_cols
+                if edge_to_remove is not None:
+                    if torch.sum(change) == 0 and torch.sum(adj_new - adj) == 0:
+                        break
+                    edge_to_remove += change.cpu().detach().numpy()
+                else:
+                    edge_to_remove = change.cpu().detach().numpy()
+                adj = adj_new
+                adj0 = adj0 - change
+                
+            # release resorces
+            del adj, adj_new, diag, prev_rows, prev_cols
+            torch.cuda.empty_cache()
+
+        return edge_to_remove
+
+    
     def iterate(self, np_adj, np_rew, np_val_0):
         with torch.no_grad():
             adj = torch.from_numpy(np_adj).to(self.device)

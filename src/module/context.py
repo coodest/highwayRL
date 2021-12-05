@@ -13,7 +13,7 @@ class Context:
     video_dir = out_dir + "video/"
     clean = False
     log_every = 20
-    gpus = [0, 1]  # [0, 1]
+    gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
 
     # env

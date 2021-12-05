@@ -434,26 +434,69 @@
 
 # -------------------------------------------------------------------
 
-from multiprocessing import Process, Value, Pool
-import torch
-import time
+# vram size test
+
+# import torch
+# import time
+
+# big_num = 1000000000
+# small_num = 24 * int(1024 * 1024 / 4)
+# times = 5
+
+# print(big_num * 4 / 1024 / 1024)
+# print(small_num * 4 / 1024 / 1024)
 
 
-def a():
-    x = torch.rand(10, 10, 10).to("cuda:0")
-    y = torch.rand(10, 10, 10).to("cuda:0")
-    print(torch.mul(x, y))
-    time.sleep(15)
+# class M(torch.nn.Module):
+#     def __init__(self):
+#         super().__init__()
+#         self.op = torch.rand(big_num * 2).to("cuda:0")
+
+#     def forward(self, input):
+#         return self.op
 
 
-b = []
-for i in range(10):
-    p = Process(
-        target=a,
-        args=()
-    )
-    p.start()
-    b.append(p)
+# def a():
+#     print("a")
+#     x = torch.rand(big_num).to("cuda:0")
+#     print(x.shape)
+#     time.sleep(times)
 
-for p in b:
-    p.join()
+
+# def b():
+#     print("b")
+#     m = M()
+#     y = m(None)
+#     print(y.shape)
+#     time.sleep(times)
+
+
+# def c():
+#     print("c")
+#     x = torch.rand(small_num).to("cuda:0")
+#     print(x.shape)
+#     time.sleep(times)
+
+
+# # a()
+# b()
+# # c()
+# -------------------------------------------------------------------
+
+from src.module.agent.memory.iterator import Iterator
+import numpy as np
+
+adj = [
+    [0, 1, 0, 0],
+    [0, 0, 1, 0],
+    [1, 0, 0, 1],
+    [0, 0, 0, 0],
+]
+adj = np.array(adj, dtype=np.float32)
+
+iterator = Iterator(0)
+etm = iterator.build_dag(adj)
+print(etm)
+
+adj = adj - etm
+print(adj)

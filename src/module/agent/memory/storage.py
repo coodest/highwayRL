@@ -191,6 +191,7 @@ class Storage:
                 adj[node][n] = 1
         
         Logger.log("value propagation", color="yellow")
+        adj = adj - self.iterator.build_dag(adj)
         val_n = self.iterator.iterate(adj, rew, val_0)
         for ind, val in enumerate(val_n):
             self._node[ind][Storage._node_value] = val
