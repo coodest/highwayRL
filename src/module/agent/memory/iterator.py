@@ -15,12 +15,11 @@ class Iterator:
 
     def build_dag(self, np_adj):
         with torch.no_grad():
-            adj0 = torch.from_numpy(np_adj).to(self.device)
+            adj0 = torch.tensor(np_adj, dtype=torch.float32).to(self.device)
             edge_to_remove = None
             adj = adj0
 
             for i in range(2, P.max_vp_iter):
-                print(i)
                 adj_new = torch.mm(adj, adj0)
                 diag = torch.diagonal(adj_new)
                 prev_rows = diag * torch.transpose(adj, 0, 1)
