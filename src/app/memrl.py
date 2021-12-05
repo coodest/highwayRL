@@ -2,6 +2,7 @@ from src.module.context import Profile as P
 from src.util.tools import Logger, Funcs, IO
 from multiprocessing import Process, Value, Queue
 import time
+import os
 
 
 class MemRL:
@@ -55,9 +56,21 @@ class MemRL:
         # 2. train
         policy = Policy(actor_learner_queues, learner_actor_queues)
         try:
+            # start CUDA multi-process server 
+            os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
+            Logger.log("start cuda mps")
+            os.popen("nvidia-cuda-mps-control -d").close()
+
             optimal_graph = policy.train()  # tain the policy
+        except KeyboardInterrupt:
+            Logger.log("ctrl-c pressed")
+            exit(0)
         except Exception:
             Funcs.trace_exception()
+        finally:
+            # stop CUDA multi-process server 
+            Logger.log("stop cuda mps")
+            os.popen("echo quit | nvidia-cuda-mps-control").close()
         Logger.log("training finished")
         finish.value = True
 

@@ -41,7 +41,7 @@ class Context:
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True
-    max_vp_iter = 500  # num or float("inf")
+    max_vp_iter = 5  # num or float("inf")
 
 
 class Profile(Context):

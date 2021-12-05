@@ -2,7 +2,6 @@ from src.module.context import Profile as P
 from src.util.tools import Logger, Funcs, IO
 import time
 from multiprocessing import Process, Value
-import os
 
 
 class Policy:
@@ -12,36 +11,21 @@ class Policy:
         self.learner_actor_queues = learner_actor_queues
 
     def train(self):
-        try:
-            # start CUDA multi-process server 
-            os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
-            Logger.log("start cuda mps")
-            os.system("echo quit | nvidia-cuda-mps-control")
-            os.system("nvidia-cuda-mps-control -d")
-
-            processes = []
-            for id in range(P.num_actor):
-                p = Process(
-                    target=Policy.response_action,
-                    args=[
-                        id,
-                        self.actor_learner_queues[id],
-                        self.learner_actor_queues[id],
-                        self.frames
-                    ],
-                )
-                p.start()
-                processes.append(p)
-            for p in processes:
-                p.join()
-        except KeyboardInterrupt:
-            Logger.log("ctrl-c pressed")
-            os.system("echo quit | nvidia-cuda-mps-control")
-            exit(0)
-        finally:
-            # stop CUDA multi-process server 
-            Logger.log("stop cuda mps")
-            os.system("echo quit | nvidia-cuda-mps-control")
+        processes = []
+        for id in range(P.num_actor):
+            p = Process(
+                target=Policy.response_action,
+                args=[
+                    id,
+                    self.actor_learner_queues[id],
+                    self.learner_actor_queues[id],
+                    self.frames
+                ],
+            )
+            p.start()
+            processes.append(p)
+        for p in processes:
+            p.join()
 
         return IO.read_disk_dump(P.optimal_graph_path)
 
