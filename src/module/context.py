@@ -13,8 +13,8 @@ class Context:
     video_dir = out_dir + "video/"
     clean = False
     log_every = 20
-    num_gpu = 1
-    prio_gpu = 0
+    gpus = [0]  # [0, 1]
+    prio_gpu = gpus[0]  # first device in gpu list
 
     # env
     total_frames = 1e7  # default 1e7
@@ -29,7 +29,7 @@ class Context:
     screen_size = 84
 
     # agent
-    num_actor = num_gpu * 8
+    num_actor = len(gpus) * 8
     head_actor = num_actor - 1  # num_actor - 1, last actor
     obs_min_dis = 0  # 0: turn  off associative memory, 1e-3: distance
     projected_dim = 8
@@ -41,7 +41,7 @@ class Context:
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True
-    max_vp_iter = 5000  # num or float("inf")
+    max_vp_iter = 500  # num or float("inf")
 
 
 class Profile(Context):

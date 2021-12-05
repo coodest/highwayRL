@@ -11,6 +11,12 @@ class Policy:
         self.learner_actor_queues = learner_actor_queues
 
     def train(self):
+        # # start CUDA multi-process server 
+        # os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
+        # Logger.log("start cuda mps")
+        # os.system("echo quit | nvidia-cuda-mps-control")
+        # os.system("nvidia-cuda-mps-control -d")
+
         processes = []
         for id in range(P.num_actor):
             p = Process(
@@ -27,6 +33,10 @@ class Policy:
         for p in processes:
             p.join()
 
+        # # stop CUDA multi-process server 
+        # Logger.log("stop cuda mps")
+        # os.system("echo quit | nvidia-cuda-mps-control")
+
         return IO.read_disk_dump(P.optimal_graph_path)
 
     @staticmethod
@@ -42,7 +52,7 @@ class Policy:
         last_frame = frames.value
         last_sync = time.time()
         graph = Graph(id, Policy.is_head(id))
-        
+
         if P.projector == P.projector_types[1]:
             from src.module.agent.memory.projector import RandomProjector
             projector = RandomProjector(id)

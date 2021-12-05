@@ -434,11 +434,26 @@
 
 # -------------------------------------------------------------------
 
-
-from src.module.agent.memory.projector import RNNProjector
+from multiprocessing import Process, Value, Pool
 import torch
+import time
 
-a = RNNProjector(0)
-b = torch.rand(84 * 84)
-c = torch.rand(84 * 84)
-d = a.batch_project([b, c])
+
+def a():
+    x = torch.rand(10, 10, 10).to("cuda:0")
+    y = torch.rand(10, 10, 10).to("cuda:0")
+    print(torch.mul(x, y))
+    time.sleep(15)
+
+
+b = []
+for i in range(10):
+    p = Process(
+        target=a,
+        args=()
+    )
+    p.start()
+    b.append(p)
+
+for p in b:
+    p.join()
