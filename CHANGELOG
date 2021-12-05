@@ -1,3 +1,4 @@
+211205 add cuda mps
 211127 rethinking state modelling
 211127 add rnn projector
 211127 auto propagation: (SOLVED) issue: cycle / self-loop is not a issue now
