@@ -485,18 +485,23 @@
 
 # to test the dag algorithm
 from src.module.agent.memory.iterator import Iterator
-import numpy as np
+from src.util.imports.numpy import np
 
 import networkx as nx
 import matplotlib.pyplot as plt
 
+np.random.seed(6)
 
-def show_graph(adj):
+
+def show_graph(adj, id):
     g = nx.DiGraph()
     rows, cols = np.where(adj == 1)
     g.add_edges_from(zip(rows.tolist(), cols.tolist()))
-    nx.draw(g, node_size=100, with_labels=False)
-    plt.show()
+    pos = nx.random_layout(g)
+    nx.draw_networkx(g, pos)
+    # nx.draw(g, node_size=100, with_labels=False)
+    plt.savefig(f'output/{id}.png', format='png')
+    plt.close()
 
 
 adj = [
@@ -505,11 +510,17 @@ adj = [
     [1, 0, 0, 1],
     [0, 0, 0, 0],
 ]
+adj = [
+    [0, 1, 0, 0],
+    [0, 0, 0, 0],
+    [0, 0, 0, 1],
+    [0, 0, 0, 0],
+]
 adj = np.array(adj, dtype=np.float32)
-adj = np.random.rand(6, 6)
-adj = np.where(adj > 0.8, 1, 0)
+# adj = np.random.rand(6, 6)
+# adj = np.where(adj > 0.8, 1.0, 0.0)
 print(adj)
-show_graph(adj)
+show_graph(adj, 0)
 
 iterator = Iterator(0)
 etm = iterator.build_dag(adj)
@@ -517,4 +528,4 @@ print(etm)
 
 adj = adj - etm
 print(adj)
-show_graph(adj)
+show_graph(adj, 1)
