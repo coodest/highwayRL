@@ -41,6 +41,7 @@ class Context:
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True
+    dag_stategy = 0  # 0: break loop and continue adj mul, 1: break loop and start over
     max_vp_iter = 5000  # num or float("inf")
 
 

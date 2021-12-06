@@ -1,6 +1,7 @@
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 from src.module.agent.memory.storage import Storage
+import operator
 
 
 class Graph:
@@ -63,7 +64,7 @@ class Graph:
 
     def store_inc(self, trajectory, total_reward):
         """
-        store the trajectory by the non-head process.
+        amend and store the trajectory by the non-head process.
         trajectory: o0, a0, o1, r1 --> o1, a1, o2, r2 --> ... --> on-1, an-1, on, rn
         amend_traj: o0, a0, o1, r0 --> o1, a1, o2, r1 --> ... --> on-1, an-1, on, rn-1 --> on, None, on, rn
         """
@@ -90,6 +91,7 @@ class Graph:
         o = list()
         a = list()
         r = list()
+        # the obs in the traj. end is not used due to traj. had been amended
         for last_obs, prev_action, obs, reward in traj[start: end]:
             o.append(last_obs)
             a.append([prev_action])
@@ -135,10 +137,11 @@ class Graph:
             last_crossing_node_id = None
             last_action = None
             last_step = 0
-            for co in crossing_obs:
-                step = crossing_obs[co]
+            sorted_crossing_obs = dict(sorted(crossing_obs.items(), key=operator.itemgetter(1)))
+            for co in sorted_crossing_obs:
+                step = sorted_crossing_obs[co]
                 # NOTE: process croossing_obs with ascending order
-                # assert step >= last_step, "order wrong"
+                assert step >= last_step, f"order wrong, last_step: {last_step}, step: {step}"
                 crossing_node_ind = self.main.node_split(co)
                 action = obs_to_action[co]
                 o, a, r = self.get_traj_frag(traj, last_step, step)
@@ -148,7 +151,7 @@ class Graph:
                         self.main.crossing_node_add_action(last_crossing_node_id, last_action, shrunk_node_ind)
                 last_crossing_node_id = crossing_node_ind
                 last_action = action
-                last_step = step + 1
+                last_step = step + 1  # step is the crossing node, thus let it as step + 1
             # fragment after alst crossing obs or the traj without crossing obs
             o, a, r = self.get_traj_frag(traj, last_step, len(traj))
             if len(o) > 0:

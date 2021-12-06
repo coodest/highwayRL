@@ -17,25 +17,64 @@ class Iterator:
         with torch.no_grad():
             adj0 = torch.tensor(np_adj, dtype=torch.float32).to(self.device)
             edge_to_remove = None
-            adj = adj0
 
-            for i in range(2, P.max_vp_iter):
-                adj_new = torch.mm(adj, adj0)
-                diag = torch.diagonal(adj_new)
-                prev_rows = diag * torch.transpose(adj, 0, 1)
-                prev_cols = diag * adj0
-                change = prev_rows * prev_cols
-                if edge_to_remove is not None:
-                    if torch.sum(change) == 0 and torch.sum(adj_new - adj) == 0:
+            if P.dag_stategy == 0:  # remove edge and continue adj mul
+                adj = adj0
+                for i in range(2, P.max_vp_iter):
+                    adj_new = torch.mm(adj, adj0)
+                    diag = torch.diagonal(adj_new)
+                    adj_new = torch.where(adj_new > 0, 1.0, 0.0)
+                    diag_bool = torch.where(diag > 0.5, 1.0, 0.0)
+                    prev_rows_t = diag_bool * torch.transpose(adj, 0, 1)
+                    prev_cols = diag_bool * adj0
+                    change = prev_rows_t * prev_cols
+
+                    abs_dist = torch.where((adj_new - adj) != 0, 1.0, 0.0)
+                    if torch.sum(change) == 0 and torch.sum(abs_dist) == 0:
                         break
-                    edge_to_remove += change.cpu().detach().numpy()
-                else:
-                    edge_to_remove = change.cpu().detach().numpy()
-                adj = adj_new
-                adj0 = adj0 - change
+
+                    if edge_to_remove is not None:
+                        edge_to_remove += change.cpu().detach().numpy()
+                    else:
+                        edge_to_remove = change.cpu().detach().numpy()
+
+                    if torch.sum(change) == 0:
+                        adj = adj_new
+                    else:
+                        adj0 = adj0 - change
+
+            if P.dag_stategy == 1:  # remove edge and restart adj mul
+                fin = False
+                while fin:
+                    adj = adj0
+                    for i in range(2, P.max_vp_iter):
+                        adj_new = torch.mm(adj, adj0)
+                        diag = torch.diagonal(adj_new)
+                        adj_new = torch.where(adj_new > 0, 1, 0)
+                        diag_bool = torch.where(diag > 0.5, 1, 0)
+                        prev_rows_t = diag_bool * torch.transpose(adj, 0, 1)
+                        prev_cols = diag_bool * adj0
+                        change = prev_rows_t * prev_cols
+
+
+                        abs_dist = torch.where((adj_new - adj) != 0, 1, 0)
+                        if torch.sum(change) == 0 and torch.sum(abs_dist) == 0:
+                            fin = True
+                            break
+
+                        if edge_to_remove is not None:
+                            edge_to_remove += change.cpu().detach().numpy()
+                        else:
+                            edge_to_remove = change.cpu().detach().numpy()
+
+                        if torch.sum(change) == 0:
+                            adj = adj_new
+                        else:
+                            adj0 = adj0 - change
+                            break
                 
             # release resorces
-            del adj, adj_new, diag, prev_rows, prev_cols
+            del adj0, adj, adj_new, diag, diag_bool, prev_rows_t, prev_cols, change
             torch.cuda.empty_cache()
 
         return edge_to_remove

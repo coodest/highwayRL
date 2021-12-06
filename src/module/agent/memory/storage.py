@@ -198,7 +198,8 @@ class Storage:
 
     def crossing_node_add_action(self, node_ind: int, action: int, next_node_ind: int) -> None:
         try:
-            ind = self._node[node_ind][Storage._node_actions][0].index(action)
+            # index() may raise ValueError if action is not in the list
+            ind = self._node[node_ind][Storage._node_actions][0].index(action)  # corssing node only has one obs and one action list
             if self._node[node_ind][Storage._node_next][ind] == next_node_ind:
                 # existing action and next node
                 return
@@ -206,6 +207,7 @@ class Storage:
                 # TODO: env may (near) stochastical OR obs cannot indicate corresponding state 
                 pass
         except ValueError:
+            # add action if not exist
             self._node[node_ind][Storage._node_actions][0].append(action)
             self._node[node_ind][Storage._node_next].append(next_node_ind)
 
@@ -220,12 +222,15 @@ class Storage:
             for next_ind in range(len(next_nodes)):
                 next_node_ind = next_nodes[next_ind]
                 next_node_value = self._node[next_node_ind][Storage._node_value]
+                if np.isnan(next_node_value):
+                    Logger.log("nan in node values", color="cyan")
+                    next_node_value = 0
                 if next_node_value > max_next_node_value:
                     max_next_node_value = next_node_value
                     target_ind = next_ind
             
             # make pointer to the lists
-            action_list = self._node[crossing_node_ind][Storage._node_actions][0]
+            action_list = self._node[crossing_node_ind][Storage._node_actions][0]  # crossing node only has one has list for one obs
             next_node_list = self._node[crossing_node_ind][Storage._node_next]
 
             target_action = action_list[target_ind]

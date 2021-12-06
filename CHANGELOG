@@ -1,3 +1,5 @@
+211206 improve dag build for cycle detection
+211205 bug fixed
 211205 add cuda mps
 211127 rethinking state modelling
 211127 add rnn projector
