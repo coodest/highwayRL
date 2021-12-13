@@ -1,3 +1,4 @@
+from types import prepare_class
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 from src.module.agent.memory.storage import Storage
@@ -91,7 +92,6 @@ class Graph:
         o = list()
         a = list()
         r = list()
-        # the obs in the traj. end is not used due to traj. had been amended
         for last_obs, prev_action, obs, reward in traj[start: end]:
             o.append(last_obs)
             a.append([prev_action])
@@ -107,7 +107,9 @@ class Graph:
             # find all crossing obs in current traj
             crossing_obs = dict()
             obs_to_action = dict()
+            past_obs = []
             for step, [last_obs, prev_action, obs, reward] in enumerate(traj):
+                # find corssing obs
                 obs_to_action[last_obs] = prev_action
                 if not self.main.obs_exist(last_obs):
                     last_obs_existence = 0  # check the existence in the graph
@@ -117,21 +119,35 @@ class Graph:
                     obs_existence = 0
                 else:
                     obs_existence = 1
-                # ad new crossing obs
-                if last_obs_existence + obs_existence == 1: 
+                # add new crossing obs
+                if last_obs_existence + obs_existence == 1:  # leave or enter a traj.
                     if last_obs_existence == 1:
                         crossing_obs[last_obs] = step
                     if obs_existence == 1:
                         crossing_obs[obs] = step + 1
-                if last_obs_existence + obs_existence == 2:
-                    if not self.main.node_next_contain(last_obs, obs):
+                if last_obs_existence + obs_existence == 2:  # between two existing traj.
+                    from_node = self.main.obs_node_ind(last_obs)
+                    to_node = self.main.obs_node_ind(obs)
+                    if from_node != to_node and to_node in self.main.node_next_accessable(from_node):
                         crossing_obs[last_obs] = step
                         crossing_obs[obs] = step + 1
                 # add exising crossing obs
+                last_obs_is_crossing = False
                 if self.main.obs_is_crossing(last_obs):
+                    last_obs_is_crossing = True
                     crossing_obs[last_obs] = step
-                if self.main.obs_is_crossing(obs):
-                    crossing_obs[obs] = step + 1
+
+                # check self-loop in the traj.
+                past_obs.append(last_obs)
+                if obs in past_obs:
+                    # NOTE: we assum RNN projector do not produce self-loop in a traj.
+                    Logger.log("self-loop detected in the traj.")
+                    pass
+
+                # update the obs-action prob
+                if step < len(traj) - 1:
+                    if last_obs_is_crossing and obs_existence == 1:
+                        self.main.node_next_update_visit(last_obs, prev_action, obs)  # last_obs cover all obs in the traj.
 
             # add node and build interralation
             last_crossing_node_id = None
@@ -146,7 +162,7 @@ class Graph:
                 action = obs_to_action[co]
                 o, a, r = self.get_traj_frag(traj, last_step, step)
                 if len(o) > 0:
-                    shrunk_node_ind = self.main.node_add(o, a, r, [crossing_node_ind])
+                    shrunk_node_ind = self.main.node_add(o, a, r, [{crossing_node_ind: 1}])
                     if last_crossing_node_id is not None:
                         self.main.crossing_node_add_action(last_crossing_node_id, last_action, shrunk_node_ind)
                 last_crossing_node_id = crossing_node_ind
@@ -155,9 +171,12 @@ class Graph:
             # fragment after alst crossing obs or the traj without crossing obs
             o, a, r = self.get_traj_frag(traj, last_step, len(traj))
             if len(o) > 0:
-                shrunk_node_ind = self.main.node_add(o, a, r, [None])
+                shrunk_node_ind = self.main.node_add(o, a, r, [{None: 1}])
                 if last_crossing_node_id is not None:
                     self.main.crossing_node_add_action(last_crossing_node_id, last_action, shrunk_node_ind)
+
+            for ind, [last_obs, prev_action, obs, reward] in enumerate(traj[:-1]):
+                assert self.main.obs_exist(last_obs) and self.main.obs_exist(obs), "add traj. error"
 
         # total reward update
         self.main.max_total_reward_update(

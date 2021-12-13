@@ -35,14 +35,16 @@ class Context:
     projected_dim = 8
     projected_hidden_dim = 32
     gamma = 0.99
-    sync_every = 20  # in second
+    sync_every = 10  # in second
     projector_types = [None, "random", "cnn", "rnn"]
     projector = projector_types[3]  # select None to disable random projection
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True
+    build_dag = False
     start_over = True  # break loop and start over for adj mat multification
     max_vp_iter = 500  # num or float("inf")
+    accessable_rate = 0.2  # minimum rate to treat a state is accessable
 
 
 class Profile(Context):

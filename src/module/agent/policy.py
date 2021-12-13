@@ -93,7 +93,7 @@ class Policy:
                     if proj_index_init_obs is None:
                         proj_index_init_obs = obs
 
-                    if add:  # head for testing actor does not add traj
+                    if add:  # does not add traj from head actor, and first transition from other actors
                         trajectory.append([last_obs, pre_action, obs, reward])
                         total_reward += reward
                     if done:
