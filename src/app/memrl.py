@@ -15,11 +15,13 @@ class MemRL:
         IO.make_dir(P.model_dir)
         IO.make_dir(P.result_dir)
         IO.make_dir(P.video_dir)
+        IO.make_dir(P.sync_dir)
         if P.clean:
             IO.renew_dir(P.log_dir)
             IO.renew_dir(P.model_dir)
             IO.renew_dir(P.result_dir)
             IO.renew_dir(P.video_dir)
+            IO.renew_dir(P.sync_dir)
 
         # 2. show args
         Funcs.print_obj(P)
@@ -109,6 +111,12 @@ class MemRL:
         if P.env_type == "atari":
             from src.module.env.atari import Atari
             return Atari.make_env(render)
+        if P.env_type == "atari_ram":
+            from src.module.env.atari_ram import AtariRam
+            return AtariRam.make_env(render)
+        if P.env_type == "simple_scene":
+            from src.module.env.simple_scene import SimpleScene
+            return SimpleScene.make_env(render)
 
 
 if __name__ == "__main__":

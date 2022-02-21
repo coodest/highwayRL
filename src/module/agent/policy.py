@@ -3,6 +3,7 @@ from src.util.tools import Logger, Funcs, IO
 import time
 from multiprocessing import Process, Value
 import os
+from multiprocessing import Process, Value, Queue
 
 
 class Policy:
@@ -10,6 +11,13 @@ class Policy:
         self.frames = Value("d", 0)
         self.actor_learner_queues = actor_learner_queues
         self.learner_actor_queues = learner_actor_queues
+
+        self.head_slave_queues = list()
+        for _ in range(P.num_actor):
+            self.head_slave_queues.append(Queue())
+        self.slave_head_queues = list()
+        for _ in range(P.num_actor):
+            self.slave_head_queues.append(Queue())
 
     def train(self):
         processes = []
@@ -20,6 +28,8 @@ class Policy:
                     id,
                     self.actor_learner_queues[id],
                     self.learner_actor_queues[id],
+                    self.head_slave_queues,
+                    self.slave_head_queues,
                     self.frames
                 ],
             )
@@ -35,7 +45,7 @@ class Policy:
         return index == P.head_actor
 
     @staticmethod
-    def response_action(id, actor_learner_queue, learner_actor_queue, frames):
+    def response_action(id, actor_learner_queue, learner_actor_queue, head_slave_queues, slave_head_queues, frames):
         from src.module.agent.memory.indexer import Indexer
         from src.module.agent.memory.graph import Graph
 
@@ -62,10 +72,15 @@ class Policy:
                 try:
                     # check to stop
                     if frames.value > P.total_frames:
+                        graph.save_graph()
                         return
                     # sync graph
                     if time.time() - last_sync > P.sync_every:
-                        graph.sync()
+                        if P.sync_mode == 0:
+                            graph.sync_by_pipe(head_slave_queues, slave_head_queues)
+                        if P.sync_mode == 1:
+                            graph.sync_by_file()
+                        graph.draw_graph()
                         last_sync = time.time()
                     # logging info
                     if Policy.is_head(id):

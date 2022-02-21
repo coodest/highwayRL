@@ -1,9 +1,10 @@
-211206 auto propagation: (SOLVED) issue: fake stochastics and self loop:
-    add truseness / confidence of transision 
+220221 add traj. intersection detection
+220221 sync by pipe
+211206 auto propagation: (SOLVED) issue: fake stochastics and self loop: add truseness / confidence of transision 
 211206 improve dag build for cycle detection
 211205 bug fixed
 211205 add cuda mps
-211127 rethinking state modelling
+211127 rethinking state modeling
 211127 add rnn projector
 211127 auto propagation: (SOLVED) issue: cycle / self-loop is not a issue now
 211102 auto propagation: issue: cycle / self-loop detection and amend
@@ -14,8 +15,8 @@
 211027 auto propagation: (SOLVED) issue: value propagation slow 
 211025 auto propagation: issue: fake stochastics and self loop
 211024 auto propagation: redesign
-211021 auto propagation: remove transition graph amd simplify code
-211020 auto propagation: step 3, imrove memory consumption
+211021 auto propagation: remove transition graph and simplify code
+211020 auto propagation: step 3, improve memory consumption
 211020 auto propagation: remove storage cell due to high memory consumption
 211019 auto propagation: step 3, add trajectory info
 211019 auto propagation: step 2, add storage cell of obs

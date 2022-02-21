@@ -11,7 +11,7 @@ class Atari:
     def make_env(render=False):
         # env = gym.make("{}Deterministic-v4".format(P.env_name), full_action_space=True)
         env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
-        env.seed(2021)
+        env.seed(2022)
 
         env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
 
@@ -259,11 +259,6 @@ class AtariPreprocessing(object):
         return np.ndarray.flatten(int_image)
 
 
-def remove_color(key):
-    for i in range(len(key)):
-        if key[i] == '@':
-            return key[:i]
-    return key
 
 
 class VanillaEnv():
@@ -313,9 +308,15 @@ class VanillaEnv():
 
     def process_info(self, obs, reward, info):
         return {
-            remove_color(key): value_func(obs, reward, info)
+            self.remove_color(key): value_func(obs, reward, info)
             for key, value_func in self.env_info.items()
         }
+
+    def remove_color(key):
+        for i in range(len(key)):
+            if key[i] == '@':
+                return key[:i]
+        return key
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)

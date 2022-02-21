@@ -41,14 +41,19 @@ class RandomProjector(Projector):
         self.random_matrix = None
         if P.env_type == "atari":
             self.random_matrix = RandomMatrix(P.screen_size * P.screen_size, P.projected_dim).to(self.device)
+        if P.env_type == "atari":
+            self.random_matrix = RandomMatrix(128, P.projected_dim).to(self.device)
+        if P.env_type == "simple_scene":
+            self.random_matrix = RandomMatrix(P.seq_len, P.projected_dim).to(self.device)
+
 
     def batch_project(self, obs_list):     
         batch = np.vstack(obs_list)  
         input = None
         with torch.no_grad():
-            if P.env_type == "atari":
-                # [2, P.screen_size * P.screen_size]
-                input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
+            # [2, P.screen_size * P.screen_size]
+            input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
+
             output = self.random_matrix(input)
             result = output.cpu().detach().numpy().tolist()
 
@@ -65,23 +70,30 @@ class RNNProjector(Projector):
             self.reset()
         if P.env_type == "atari":
             self.random_matrix = RandomMatrix(P.screen_size * P.screen_size + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+        if P.env_type == "atari_ram":
+            self.random_matrix = RandomMatrix(128 + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+        if P.env_type == "simple_scene":
+            self.random_matrix = RandomMatrix(P.seq_len + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         self.last_result = np.zeros(P.projected_dim)
 
     def reset(self):
         if P.env_type == "atari":
+            self.hidden = self.hidden_0
+        if P.env_type == "atari_ram":
+            self.hidden = self.hidden_0
+        if P.env_type == "simple_scene":
             self.hidden = self.hidden_0
 
     def project(self, obs):
         batch = obs
         input = None
         with torch.no_grad():  # no grad calculation
-            if P.env_type == "atari":
-                # [P.screen_size * P.screen_size]
-                input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
-                # [P.screen_size * P.screen_size + hidden_dim]
-                input = torch.cat([input, self.hidden], dim=0)
-                # [1, P.screen_size * P.screen_size + hidden_dim]
-                input = input.unsqueeze(0)
+            # [P.screen_size * P.screen_size]
+            input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
+            # [P.screen_size * P.screen_size + hidden_dim]
+            input = torch.cat([input, self.hidden], dim=0)
+            # [1, P.screen_size * P.screen_size + hidden_dim]
+            input = input.unsqueeze(0)
 
             # [1, projected_dim + hidden_dim]
             output = self.random_matrix(input)
@@ -104,7 +116,13 @@ class CNNProjector(Projector):
     def __init__(self, id) -> None:
         super().__init__(id)
 
-        with torch.no_grad():
+        if P.env_type == "atari":
+            self.conv1 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
+            self.conv2 = torch.nn.Conv2d(1, 1, kernel_size=(3, 3), stride=(5, 5), dilation=(2, 2)).to(self.device)
+        if P.env_type == "atari_ram":
+            self.conv1 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
+            self.conv2 = torch.nn.Conv2d(1, 1, kernel_size=(3, 3), stride=(5, 5), dilation=(2, 2)).to(self.device)
+        if P.env_type == "simple_scene":
             self.conv1 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
             self.conv2 = torch.nn.Conv2d(1, 1, kernel_size=(3, 3), stride=(5, 5), dilation=(2, 2)).to(self.device)
 
@@ -114,8 +132,9 @@ class CNNProjector(Projector):
             batch = np.vstack(obs_list)  
             input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
             input = input.unsqueeze(1)
-            # [2, 1, P.screen_size, P.screen_size]
-            input = input.reshape(input.shape[0], input.shape[1], P.screen_size, -1)
+            if P.env_type == "atari":
+                # [2, 1, P.screen_size, P.screen_size]
+                input = input.reshape(input.shape[0], input.shape[1], P.screen_size, -1)
 
             # [2, 1, 15, 15]
             output = self.conv1(input)

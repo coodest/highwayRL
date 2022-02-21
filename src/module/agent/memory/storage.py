@@ -59,11 +59,10 @@ class Storage:
         self._node[node_ind] = [obs, actions, reward, next, node_value]
         # add or update obs
         for ind, o in enumerate(obs):
-            if o in self._crossing_nodes:  # to solve obs-multi-node issue
+            if o in self._crossing_nodes:  # to check the existence of multi-node obs
                 if self._obs[o][Storage._obs_node_ind] != node_ind:
-                    # TODO: env may (near) stochastical OR obs cannot indicate corresponding state
-                    Logger.log("crossing_node conflict")
-                continue
+                    Logger.log("multi-node with same obs detected, crossing_node conflict")
+                    exit(0)
             # list object reduces a lot mem comsuption
             self._obs[o] = [node_ind, ind]
 
@@ -81,19 +80,6 @@ class Storage:
                         next_nodes.append(n)
         return next_nodes
 
-    def node_next_update_visit(self, last_obs, prev_action, obs):
-        from_node = self._obs[last_obs][Storage._obs_node_ind]
-        to_node = self._obs[obs][Storage._obs_node_ind]
-        try:
-            # index() raise ValueError
-            ind = self._node[from_node][Storage._node_action][0].index(prev_action)
-        except ValueError:  # onlu update exisint transition
-            return
-        # find the node_dict from last_obs with prev_action
-        node_dict = self._node[from_node][Storage._node_next][ind]
-        if to_node in node_dict:
-            node_dict[to_node] += 1
-
     def node_add(self, obs: list, action: list, reward: list, next: list):
         # exising node, return 
         if obs[0] in self._obs:
@@ -103,11 +89,17 @@ class Storage:
         self.node_update(node_ind, obs, action, reward, next)
         return node_ind
             
-    def node_split(self, crossing_obs: str) -> int:
+    def node_split(self, crossing_obs: str, reward=None) -> int:
         """
         split of the shrunk node
         """
-        # 1. collect node info
+        # 1. deal with non-exist crossing obs (traj. self loop), add empty crossing node
+        if not self.obs_exist(crossing_obs):
+            crossing_node_ind = self.node_add([crossing_obs], [[]], [reward], [])
+            self._crossing_nodes.add(crossing_node_ind)
+            return crossing_node_ind
+
+        # 2. collect node info
         node_ind = self._obs[crossing_obs][Storage._obs_node_ind]
         step = self._obs[crossing_obs][Storage._obs_step]
         node_obs_list = self._node[node_ind][Storage._node_obs]
@@ -116,11 +108,11 @@ class Storage:
         node_next_list = self._node[node_ind][Storage._node_next]
         node_length = len(node_obs_list)
 
-        # 2. existing crossing node, do nothing
+        # 3. existing crossing node, do nothing
         if node_length <= 1:  
             return node_ind
 
-        # 3. node split
+        # 4. node split
         if step <= 0:  # crossing node is the first obs
             new_node_ind = self.node_next_ind()
             self.node_update(
@@ -198,6 +190,8 @@ class Storage:
         GNN-based value propagation
         """
         total_nodes = len(self._node)
+        if total_nodes == 0:
+            return
         adj = np.zeros([total_nodes, total_nodes], dtype=np.int8)
         rew = np.zeros([total_nodes], dtype=np.float32)
         val_0 = np.zeros([total_nodes], dtype=np.float32)
@@ -221,7 +215,7 @@ class Storage:
             node_dict = self._node[node_ind][Storage._node_next][ind]
             if next_node_ind in node_dict:
                 # existing action and next node
-                return
+                node_dict[next_node_ind] += 1
             else:
                 # env may (near) stochastical OR conflict obs from different states exist
                 node_dict[next_node_ind] = 1
@@ -263,7 +257,7 @@ class Storage:
                 continue
             
             # make pointer to the lists
-            node_action_list = self._node[crossing_node_ind][Storage._node_action][0]  # crossing node only has one has list for one obs
+            node_action_list = self._node[crossing_node_ind][Storage._node_action][0]  # crossing node only has one list for one obs
             node_next_list = self._node[crossing_node_ind][Storage._node_next]
 
             target_action = node_action_list[target_ind]
