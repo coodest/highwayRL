@@ -2,6 +2,7 @@ from src.util.tools import IO, Logger
 from src.module.agent.memory.iterator import Iterator
 from src.module.context import Profile as P
 from src.util.imports.numpy import np
+from collections import defaultdict
 
 
 class Storage:
@@ -207,6 +208,15 @@ class Storage:
         val_n = self.iterator.iterate(adj, rew, val_0)
         for ind, val in enumerate(val_n):
             self._node[ind][Storage._node_value] = val
+
+    def node_connection_dict(self):
+        d = defaultdict(list)
+        for n in self._node:
+            node_dict_list = self._node[n][Storage._node_next]
+            for node_dict in node_dict_list:
+                d[n] += list(node_dict.keys())
+
+        return d
 
     def crossing_node_add_action(self, node_ind: int, action: int, next_node_ind: int) -> None:
         try:

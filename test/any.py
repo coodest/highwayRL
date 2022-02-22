@@ -203,9 +203,13 @@
 # -------------------------------------------------------------------
 # this section test the shrunk grpah building algorithm
 
-# from src.module.agent.memory.graph import Graph
+from src.module.agent.memory.graph import Graph
+from src.module.context import Profile as P
+from src.util.tools import IO
 
-# a = Graph(0, True)
+
+IO.renew_dir(P.result_dir)
+a = Graph(0, True)
 
 # traj1, traj1_tr = [
 #     ["a0", 1, "a1", 5],
@@ -225,32 +229,46 @@
 # ], 1
 # traj3, traj3_tr = [
 #     ["c0", 3, "c1", 0],
-#     ["c1", 3, "b", 1],
+#     ["c1", 3, "b5", 1],
 #     ["b5", 3, "c3", 0],
 #     ["c3", 3, "c4", 0],
 #     ["c4", 3, "a4", 0],
 #     ["a4", 3, "c6", 0],
 #     ["c6", 3, "c7", 1],
 # ], 2
-# traj4, traj4_tr = [
-#     ["d0", 4, "b5", 0],
-#     ["b5", 4, "d0", 0],
-# ], 0
+traj4, traj4_tr = [
+    ["d0", 4, "d1", 0],
+    ["d1", 4, "d2", 0],
+    ["d2", 4, "d3", 0],
+    ["d3", 4, "d4", 0],
+    ["d4", 4, "d5", 0],
+    ["d5", 4, "d6", 0],
+    ["d6", 4, "d7", 0],
+    ["d7", 4, "d8", 0],
+    ["d8", 4, "d9", 0],
+    ["d9", 4, "d10", 0],
+    ["d10", 4, "d5", 0],
+    ["d5", 4, "d2", 0],
+    ["d2", 4, "d11", 0],
+], 0
 # traj5, traj5_tr = [
-#     ["e0", 5, "b5", 0],
-#     ["b5", 5, "e0", 0],
+#     ["e0", 5, "e1", 0],
+#     ["e1", 5, "e2", 0],
+#     ["e2", 5, "e3", 0],
 # ], 0
 # traj6, traj6_tr = [
-#     ["c3", 6, "b3", 0],
+#     ["f0", 6, "d1", 0],
+#     ["d1", 6, "e1", 0],
+#     ["e1", 6, "f1", 0],
 # ], 0
 # a.store_inc(traj1, traj1_tr)
 # a.store_inc(traj2, traj2_tr)
 # a.store_inc(traj3, traj3_tr)
-# # a.store_inc(traj4, traj4_tr)  # loop
-# # a.store_inc(traj5, traj5_tr)  # loop
-# # a.store_inc(traj6, traj6_tr)  # loop
+a.store_inc(traj4, traj4_tr)  # loop
+# a.store_inc(traj5, traj5_tr)  # loop
+# a.store_inc(traj6, traj6_tr)  # loop
 
-# a.merge_inc(a.inc)
+a.merge_inc(a.inc)
 
 # nodes = a.main._node
 
@@ -270,6 +288,8 @@
 # print("------------------------")
 # for obs in ["a2", "b5", "a4"]:
 #     print(a.get_action(obs))
+
+a.draw_graph()
 
 # -------------------------------------------------------------------
 # this section test the hadmard product
@@ -533,13 +553,13 @@
 
 # -------------------------------------------------------------------
 
-from src.module.env.simple_scene import SimpleScene
+# from src.module.env.simple_scene import SimpleScene
 
-env = SimpleScene.make_env()
+# env = SimpleScene.make_env()
 
-print(env.reset())
-for _ in range(10):
-    obs, _, done, _ = env.step(0)
-    if done:
-        print(obs)
-        break
+# print(env.reset())
+# for _ in range(10):
+#     obs, _, done, _ = env.step(0)
+#     if done:
+#         print(obs)
+#         break

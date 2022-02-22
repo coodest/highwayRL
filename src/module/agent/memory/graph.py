@@ -4,6 +4,10 @@ from src.module.context import Profile as P
 from src.module.agent.memory.storage import Storage
 import operator
 from collections import defaultdict
+import networkx as nx
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import time
 
 
 class Graph:
@@ -87,10 +91,33 @@ class Graph:
             IO.renew_dir(P.sync_dir)
 
     def draw_graph(self):
-        pass
+        # fig_path = f"{P.result_dir}graph-{time.time()}.png"
+        fig_path = f"{P.result_dir}graph.png"
+
+        # 1. get all the node from the graph
+        connection_dict = self.main.node_connection_dict()
+
+        # 2. build networkx DiGraph
+        dg = nx.DiGraph()
+        node_to_ind = dict()
+        for ind, node in enumerate(connection_dict.keys()):
+            dg.add_node(ind, label=node)
+            node_to_ind[node] = ind
+
+        for ind, from_node in enumerate(connection_dict.keys()):
+            for to_node in connection_dict[from_node]:
+                if to_node is None:
+                    continue
+                dg.add_edge(node_to_ind[from_node], node_to_ind[to_node])
+
+        # 3. plot the graph with matplotlab
+        pos = nx.random_layout(dg)
+        nx.draw(dg, pos)
+
+        plt.savefig(fig_path, format="PNG")
+        plt.clf()
 
     def save_graph(self):
-        IO.delete_file(P.optimal_graph_path)
         IO.write_disk_dump(P.optimal_graph_path, self.main)
 
     def get_action(self, obs):

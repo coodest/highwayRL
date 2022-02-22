@@ -279,11 +279,6 @@ class IO:
         IO.make_dir(directory)
 
     @staticmethod
-    def delete_file(path):
-        if Path(path).exists():
-            os.remove(path)
-
-    @staticmethod
     def move_file(src, dst):
         shutil.move(src, dst)
 

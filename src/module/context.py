@@ -18,7 +18,7 @@ class Context:
     prio_gpu = gpus[0]  # first device in gpu list
 
     # env
-    total_frames = 1e6  # default 1e7
+    total_frames = 1e7  # default 1e7
     env_types = ["atari", "atari_ram", "simple_scene"]
     env_type = env_types[0]
     render = False  # whether test actor to render the env
