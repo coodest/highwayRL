@@ -9,6 +9,7 @@ import networkx as nx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import time
+import numpy as np
 
 
 class Graph:
@@ -92,7 +93,6 @@ class Graph:
             IO.renew_dir(P.sync_dir)
 
     def draw_graph(self):
-        # fig_path = f"{P.result_dir}graph-{time.time()}.png"
         fig_path = f"{P.result_dir}graph"
 
         # 1. get all the node from the graph
@@ -101,30 +101,89 @@ class Graph:
         # 2. build networkx DiGraph
         dg = nx.DiGraph()
         node_to_ind = dict()
+        node_size = []
+        node_color = []
+        edge_color = []
+        edge_list = []
+        pos = []
+        node_label = dict()
+        crossing_node_size = 100
+        normal_node_size = 10
         for ind, node in enumerate(connection_dict.keys()):
-            # weight = self.main.node_value(node)
+            color_weight = self.main.node_value(node)
             if node in self.main.crossing_nodes():
-                dg.add_node(ind, label=node, color="green", size=30)
+                dg.add_node(ind, label=node, color=color_weight, size=crossing_node_size)
+                node_size.append(crossing_node_size)
+                node_color.append(color_weight)
             else:
-                dg.add_node(ind, label=node, color="pink", size=10)
+                dg.add_node(ind, label=node, color=color_weight, size=normal_node_size)
+                node_size.append(normal_node_size)
+                node_color.append(color_weight)
+            pos.append(np.random.rand(2,))
             node_to_ind[node] = ind
+            node_label[ind] = node
 
         for ind, from_node in enumerate(connection_dict.keys()):
             for to_node in connection_dict[from_node]:
                 if to_node is None:
                     continue
                 dg.add_edge(node_to_ind[from_node], node_to_ind[to_node])
+                edge_list.append((node_to_ind[from_node], node_to_ind[to_node]))
+                color_weight = (self.main.node_value(from_node) + self.main.node_value(to_node)) / 2.0
+                edge_color.append(color_weight)
 
         # 3. plot the graph with matplotlab
         # save as GEXF file
-        nx.write_gexf(dg, fig_path + ".gexf")
+        # nx.write_gexf(dg, fig_path + ".gexf")
         # save as graphML file
         # nx.write_graphml(dg, fig_path + ".graphml")
-        # save as png
+        # save as pdf
         # pos = nx.random_layout(dg)
         # nx.draw(dg, pos)
-        # plt.savefig(fig_path + ".png", format="PNG")
-        # plt.clf()
+        vmax = max(node_color)
+        vmin = min(node_color)
+        cmap = plt.cm.cividis
+        nx.draw_networkx_labels(
+            dg, 
+            pos, 
+            labels=node_label,
+            font_color="grey",
+            font_size=6, 
+            font_family='sans-serif',
+            verticalalignment="bottom"
+        )
+        nx.draw_networkx_nodes(
+            dg, 
+            pos, 
+            node_size=node_size, 
+            node_color=node_color,
+            cmap=cmap,
+            vmin=vmin,
+            vmax=vmax,
+            alpha=0.9,
+        )
+        nx.draw_networkx_edges(
+            dg, 
+            pos, 
+            edgelist=edge_list,
+            edge_color=edge_color,
+            edge_cmap=cmap,
+            edge_vmin=vmin,
+            edge_vmax=vmax,
+            node_size=node_size, 
+            arrowstyle='->',
+            arrowsize=5, 
+            width=0.5,
+            style="solid",
+            connectionstyle="arc3,rad=0.1",
+            alpha=0.5
+        )
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
+        sm._A = []
+        cb = plt.colorbar(sm)
+        cb.set_label('Node Value')
+        plt.savefig(fig_path + ".pdf", format="PDF")
+        plt.clf()
 
     def save_graph(self):
         IO.write_disk_dump(P.optimal_graph_path, self.main)
