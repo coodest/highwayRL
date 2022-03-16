@@ -11,7 +11,7 @@ class Storage:
     _obs_step = 1  # position in the node
     # node element index
     _node_obs = 0  # node_obs_list[step<int>], obs hashing, needed for updating obs's node_ind and step
-    _node_action = 1  # node_action_list[action_list[action<int>]]  # fist actin in the action list will be the best action
+    _node_action = 1  # node_action_list[action_list[action<int>]]  # first action in the action list will be the best action
     _node_reward = 2  # node_reward_list[obs_reward<float>]
     _node_next = 3  # node_next_list[node_dict{node<int>: visit<int>}], corresponding to the next node for last obs's action(s)
     _node_value = 4  # node_value<float>, initialized as the sum of node reward
@@ -212,12 +212,15 @@ class Storage:
         for ind, val in enumerate(val_n):
             self._node[ind][Storage._node_value] = val
 
-    def node_connection_dict(self):
+    def node_connection_dict(self, deterministic=True):
         d = defaultdict(list)
         for n in self._node:
             node_dict_list = self._node[n][Storage._node_next]
             for node_dict in node_dict_list:
-                d[n] += list(node_dict.keys())
+                if deterministic:
+                    d[n] += [list(node_dict.keys())[0]]
+                else:
+                    d[n] += list(node_dict.keys())
 
         return d
 
