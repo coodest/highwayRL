@@ -1,4 +1,5 @@
 from types import prepare_class
+from typing import Sized
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 from src.module.agent.memory.storage import Storage
@@ -92,7 +93,7 @@ class Graph:
 
     def draw_graph(self):
         # fig_path = f"{P.result_dir}graph-{time.time()}.png"
-        fig_path = f"{P.result_dir}graph.png"
+        fig_path = f"{P.result_dir}graph"
 
         # 1. get all the node from the graph
         connection_dict = self.main.node_connection_dict()
@@ -101,7 +102,11 @@ class Graph:
         dg = nx.DiGraph()
         node_to_ind = dict()
         for ind, node in enumerate(connection_dict.keys()):
-            dg.add_node(ind, label=node)
+            # weight = self.main.node_value(node)
+            if node in self.main.crossing_nodes():
+                dg.add_node(ind, label=node, color="green", size=30)
+            else:
+                dg.add_node(ind, label=node, color="pink", size=10)
             node_to_ind[node] = ind
 
         for ind, from_node in enumerate(connection_dict.keys()):
@@ -111,11 +116,15 @@ class Graph:
                 dg.add_edge(node_to_ind[from_node], node_to_ind[to_node])
 
         # 3. plot the graph with matplotlab
-        pos = nx.random_layout(dg)
-        nx.draw(dg, pos)
-
-        plt.savefig(fig_path, format="PNG")
-        plt.clf()
+        # save as GEXF file
+        nx.write_gexf(dg, fig_path + ".gexf")
+        # save as graphML file
+        # nx.write_graphml(dg, fig_path + ".graphml")
+        # save as png
+        # pos = nx.random_layout(dg)
+        # nx.draw(dg, pos)
+        # plt.savefig(fig_path + ".png", format="PNG")
+        # plt.clf()
 
     def save_graph(self):
         IO.write_disk_dump(P.optimal_graph_path, self.main)
