@@ -20,7 +20,7 @@ class Context:
     # env
     total_frames = 1e7  # default 1e7
     env_types = ["atari", "atari_ram", "simple_scene"]
-    env_type = env_types[0]
+    env_type = env_types[1]
     render = False  # whether test actor to render the env
     render_every = 5
     # atari
@@ -44,7 +44,7 @@ class Context:
     sync_every = 10  # in second
     sync_mode = 0  # 0: sync by pipe, 1: sync by file
     projector_types = [None, "random", "cnn", "rnn"]
-    projector = projector_types[3]  # select None to disable random projection
+    projector = projector_types[1]  # select None to disable random projection
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True

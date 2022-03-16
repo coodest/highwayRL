@@ -41,8 +41,8 @@ class RandomProjector(Projector):
         self.random_matrix = None
         if P.env_type == "atari":
             self.random_matrix = RandomMatrix(P.screen_size * P.screen_size, P.projected_dim).to(self.device)
-        if P.env_type == "atari":
-            self.random_matrix = RandomMatrix(128, P.projected_dim).to(self.device)
+        if P.env_type == "atari_ram":
+            self.random_matrix = RandomMatrix(256, P.projected_dim).to(self.device)
         if P.env_type == "simple_scene":
             self.random_matrix = RandomMatrix(P.seq_len, P.projected_dim).to(self.device)
 
