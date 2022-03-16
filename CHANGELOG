@@ -1,3 +1,4 @@
+220316 add graph visualzation component
 220221 add traj. intersection detection
 220221 sync by pipe
 211206 auto propagation: (SOLVED) issue: fake stochastics and self loop: add truseness / confidence of transision 

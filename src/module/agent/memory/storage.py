@@ -55,6 +55,9 @@ class Storage:
     def trajs_add(self, traj):
         self._trajs.append(traj)
 
+    def node_value(self, node):
+        return self._node[node][Storage._node_value]
+
     def node_update(self, node_ind: int, obs: list, actions: list, reward: list, next: list):
         node_value = sum(reward)
         self._node[node_ind] = [obs, actions, reward, next, node_value]
@@ -217,6 +220,9 @@ class Storage:
                 d[n] += list(node_dict.keys())
 
         return d
+
+    def crossing_nodes(self):
+        return self._crossing_nodes
 
     def crossing_node_add_action(self, node_ind: int, action: int, next_node_ind: int) -> None:
         try:
