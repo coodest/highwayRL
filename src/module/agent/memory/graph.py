@@ -15,6 +15,12 @@ import numpy as np
 class Graph:
     """
     normal and shrunk observatin graphs
+
+    Assumptions:
+
+    1. one state can not be both a terminate state and a middle state
+    2. one state can have different obs
+    3. from the historical obs, algorithms have the chance to restore the current state
     """
     def __init__(self, id, is_head) -> None:
         self.id = id
@@ -237,13 +243,9 @@ class Graph:
         for traj in inc.trajs():
             # 1.1 find all crossing obs in current traj
             crossing_steps = dict()
-            crossing_obs_to_action = dict()
             obs_to_steps = defaultdict(list)
             past_obs = []
             for step, [last_obs, prev_action, obs, reward] in enumerate(traj[:-1]):
-                crossing_obs_to_action[last_obs] = prev_action
-                crossing_obs_to_action[obs] = None
-                
                 # 1.1.1 find corssing obs for existing graph
                 if not self.main.obs_exist(last_obs):
                     last_obs_in_graph = 0  # check the existence in the graph
@@ -284,6 +286,7 @@ class Graph:
                     obs_in_past = 0
                 else:
                     obs_in_past = 1
+                
                 # add new crossing obs
                 crossing = []
                 if last_obs_in_past + obs_in_past == 1:  # leave or enter the past traj.
@@ -316,19 +319,21 @@ class Graph:
                 crossing_obs = crossing_steps[step]
                 crossing_node_ind = self.main.node_split(crossing_obs, reward=traj[step][3])
                 o, a, r = self.get_traj_frag(traj, last_step, step)
-                shrunk_or_crossing_node_ind = crossing_node_ind
                 if len(o) > 0:
                     shrunk_or_crossing_node_ind = self.main.node_add(o, a, r, [{crossing_node_ind: 1}])
+                else:
+                    shrunk_or_crossing_node_ind = crossing_node_ind
                 if last_crossing_node_id is not None:
                     self.main.crossing_node_add_action(last_crossing_node_id, last_action, shrunk_or_crossing_node_ind)
                 last_crossing_node_id = crossing_node_ind
-                last_action = crossing_obs_to_action[crossing_obs]
+                last_action = traj[step][1]
                 last_step = step + 1  # step is for the crossing node, thus let it as step + 1
             # fragment after last crossing obs or the traj without crossing obs
             o, a, r = self.get_traj_frag(traj, last_step, len(traj))
-            shrunk_or_crossing_node_ind = None
             if len(o) > 0:
                 shrunk_or_crossing_node_ind = self.main.node_add(o, a, r, [{None: 1}])
+            else:
+                shrunk_or_crossing_node_ind = None
             if last_crossing_node_id is not None:
                 self.main.crossing_node_add_action(last_crossing_node_id, last_action, shrunk_or_crossing_node_ind)
 
