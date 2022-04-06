@@ -146,8 +146,12 @@ class Graph:
         # save as pdf
         # pos = nx.random_layout(dg)
         # nx.draw(dg, pos)
-        vmax = max(node_color)
-        vmin = min(node_color)
+        if len(node_color) > 0:
+            vmax = max(node_color)
+            vmin = min(node_color)
+        else:
+            vmax = 1
+            vmin = 0
         cmap = plt.cm.cividis
         nx.draw_networkx_labels(
             dg, 

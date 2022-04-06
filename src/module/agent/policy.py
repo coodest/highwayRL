@@ -1,7 +1,6 @@
 from src.module.context import Profile as P
 from src.util.tools import Logger, Funcs, IO
 import time
-from multiprocessing import Process, Value
 import os
 from multiprocessing import Process, Value, Queue
 
@@ -19,6 +18,9 @@ class Policy:
         for _ in range(P.num_actor):
             self.slave_head_queues.append(Queue())
 
+    def terminate(self):
+        self.frames.value = P.total_frames + 1
+
     def train(self):
         processes = []
         for id in range(P.num_actor):
@@ -35,10 +37,13 @@ class Policy:
             )
             p.start()
             processes.append(p)
+
         for p in processes:
             p.join()
+        
+        optimal_graph = IO.read_disk_dump(P.optimal_graph_path)
 
-        return IO.read_disk_dump(P.optimal_graph_path)
+        return optimal_graph
 
     @staticmethod
     def is_head(index):
@@ -69,10 +74,11 @@ class Policy:
             total_reward = 0
             proj_index_init_obs = None
             while True:
-                try:
+                try:  # sub-sub-process exception detection
                     # check to stop
                     if frames.value > P.total_frames:
-                        graph.save_graph()
+                        if P.draw_graph:
+                            graph.save_graph()
                         return
                     # sync graph
                     if time.time() - last_sync > P.sync_every:
@@ -80,7 +86,6 @@ class Policy:
                             graph.sync_by_pipe(head_slave_queues, slave_head_queues)
                         if P.sync_mode == 1:
                             graph.sync_by_file()
-                        graph.draw_graph()
                         last_sync = time.time()
                     # logging info
                     if Policy.is_head(id):
@@ -103,7 +108,9 @@ class Policy:
                     last_obs, pre_action, obs, reward, done, add = info
                     if P.projector is not None:
                         last_obs, obs = projector.batch_project([last_obs, obs])
-                    last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
+
+                    if P.indexer_enabled:
+                        last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
 
                     if proj_index_init_obs is None:
                         proj_index_init_obs = obs
@@ -123,6 +130,8 @@ class Policy:
                     else:
                         action = graph.get_action(obs)
                         learner_actor_queue.put(action)
+                except KeyboardInterrupt:
+                    pass
                 except Exception:
                     Funcs.trace_exception()
                     return

@@ -66,10 +66,7 @@ class AtariRamPreprocessing(object):
         obs_dims = self.environment.observation_space
         # Stores temporary observations used for pooling over two successive
         # frames.
-        self.ram_buffer = [
-            np.empty((obs_dims.shape[0]), dtype=np.uint8),
-            np.empty((obs_dims.shape[0]), dtype=np.uint8),
-        ]
+        self.ram_buffer = list()
 
         self.game_over = False
         self.lives = 0  # Will need to be set by reset().
@@ -126,9 +123,9 @@ class AtariRamPreprocessing(object):
             ram_snapshot = self.apply_random_noops()
 
         self.lives = self.environment.ale.lives()
-        self.ram_buffer[0] = ram_snapshot
-        self.ram_buffer[1].fill(0)
-        return self._combine()
+        self.ram_buffer = list()
+        self.ram_buffer.append(ram_snapshot)
+        return self._compute()
 
     def render(self, mode):
         """Renders the current screen, before preprocessing.
@@ -189,15 +186,14 @@ class AtariRamPreprocessing(object):
             if is_terminal:
                 break
             # We max-pool over the last two frames, in grayscale.
-            elif time_step >= self.frame_skip - 2:
-                t = time_step - (self.frame_skip - 2)
-                self.ram_buffer[t] = ram_snapshot
+            elif time_step >= self.frame_skip - 1:
+                self.ram_buffer.append(ram_snapshot)
 
         # Pool the last two observations.
-        observation = self._combine()
+        observation = self._compute()
 
         self.game_over = game_over
         return observation, accumulated_reward, is_terminal, info
 
-    def _combine(self):
-        return np.concatenate([self.ram_buffer[0], self.ram_buffer[1]], axis=0)
+    def _compute(self):
+        return Funcs.matrix_hashing(self.ram_buffer)

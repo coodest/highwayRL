@@ -19,7 +19,7 @@ class Atari:
         if render:
             env = Monitor(env, P.video_dir, force=True, video_callable=lambda episode_id: episode_id % P.render_every == 0)  # output every episode
 
-        env = AtariPreprocessing(
+        env = AtariHistoryHashPreprocessing(
             env,
             frame_skip=P.num_action_repeats,
             max_random_noops=P.max_random_noops
@@ -28,7 +28,7 @@ class Atari:
         return env
 
 
-class AtariPreprocessing(object):
+class AtariHistoryHashPreprocessing(object):
     """A class implementing image preprocessing for Atari 2600 agents.
 
     Specifically, this provides the following subset from the JAIR paper
@@ -88,13 +88,10 @@ class AtariPreprocessing(object):
         self.max_random_noops = max_random_noops
         self.environment.action_space.dtype = np.int32
 
-        obs_dims = self.environment.observation_space
+        self.obs_dims = self.environment.observation_space
         # Stores temporary observations used for pooling over two successive
         # frames.
-        self.screen_buffer = [
-            np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8),
-            np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8),
-        ]
+        self.screen_buffer = list()
 
         self.game_over = False
         self.lives = 0  # Will need to be set by reset().
@@ -148,8 +145,8 @@ class AtariPreprocessing(object):
         self.apply_random_noops()
 
         self.lives = self.environment.ale.lives()
-        self._fetch_grayscale_observation(self.screen_buffer[0])
-        self.screen_buffer[1].fill(0)
+        self.screen_buffer = list()
+        self._fetch_grayscale_observation(self.screen_buffer)
         return self._pool_and_resize()
 
     def render(self, mode):
@@ -211,9 +208,8 @@ class AtariPreprocessing(object):
             if is_terminal:
                 break
             # We max-pool over the last two frames, in grayscale.
-            elif time_step >= self.frame_skip - 2:
-                t = time_step - (self.frame_skip - 2)
-                self._fetch_grayscale_observation(self.screen_buffer[t])
+            elif time_step >= self.frame_skip - 1:
+                self._fetch_grayscale_observation(self.screen_buffer)
 
         # Pool the last two observations.
         observation = self._pool_and_resize()
@@ -232,29 +228,10 @@ class AtariPreprocessing(object):
         Returns:
           observation: numpy array, the current observation in grayscale.
         """
-        self.environment.ale.getScreenGrayscale(output)
-        return output
+        f = np.empty((self.obs_dims.shape[0], self.obs_dims.shape[1]), dtype=np.uint8)
+        self.environment.ale.getScreenGrayscale(f)
+        hash_str = Funcs.matrix_hashing(f)
+        output.append(hash_str)
 
     def _pool_and_resize(self):
-        """Transforms two frames into a Nature DQN observation.
-
-        For efficiency, the transformation is done in-place in self.screen_buffer.
-
-        Returns:
-          transformed_screen: numpy array, pooled, resized screen.
-        """
-        # Pool if there are enough screens to do so.
-        if self.frame_skip > 1:
-            np.maximum(
-                self.screen_buffer[0], self.screen_buffer[1], out=self.screen_buffer[0]
-            )
-
-        transformed_image = cv2.resize(
-            self.screen_buffer[0],
-            (self.screen_size, self.screen_size),
-            interpolation=cv2.INTER_LINEAR,
-        )
-
-        int_image = np.asarray(transformed_image, dtype=np.uint8)
-        # return np.expand_dims(int_image, axis=2)
-        return np.ndarray.flatten(int_image)
+        return Funcs.matrix_hashing(self.screen_buffer)

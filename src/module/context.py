@@ -19,8 +19,8 @@ class Context:
 
     # env
     total_frames = 1e7  # default 1e7
-    env_types = ["atari", "atari_ram", "simple_scene"]
-    env_type = env_types[1]
+    env_types = ["atari", "atari_alternative", "atari_history_hash", "atari_ram", "simple_scene"]
+    env_type = env_types[2]
     render = False  # whether test actor to render the env
     render_every = 5
     # atari
@@ -36,7 +36,8 @@ class Context:
     # agent
     num_actor = len(gpus) * 8
     head_actor = num_actor - 1  # the last actor
-    obs_min_dis = 0  # 0: turn  off associative memory, 1e-3: distance
+    indexer_enabled = False
+    obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
     projected_dim = 8
     projected_hidden_dim = 32
     use_hash_index = True
@@ -44,7 +45,7 @@ class Context:
     sync_every = 10  # in second
     sync_mode = 0  # 0: sync by pipe, 1: sync by file
     projector_types = [None, "random", "cnn", "rnn"]
-    projector = projector_types[1]  # select None to disable random projection
+    projector = projector_types[0]  # select None to disable random projection
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True
@@ -52,6 +53,7 @@ class Context:
     start_over = True  # break loop and start over for adj mat multification
     max_vp_iter = 500  # num or float("inf")
     accessable_rate = 0.2  # minimum rate to treat a state is accessable
+    draw_graph = False  # whether draw matplotlib figure for the graph
 
 
 class Profile(Context):
@@ -67,6 +69,6 @@ class Profile(Context):
         if current_profile == str(i):
             C.env_name = C.env_name_list[int(current_profile)]
 
-    C.clean = True
+    # C.clean = True
 
     C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'

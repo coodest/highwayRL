@@ -1,3 +1,6 @@
+220406 exception handler fix
+220406 config printer fix
+220401 add historical hashing env
 220322 bug fix: action override during graph construction
 220316 add graph visualization component
 220221 add traj. intersection detection
