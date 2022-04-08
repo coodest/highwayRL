@@ -18,11 +18,19 @@ class Policy:
         for _ in range(P.num_actor):
             self.slave_head_queues.append(Queue())
 
-    def terminate(self):
-        self.frames.value = P.total_frames + 1
+        self.processes = []
+
+    def wait_to_finish(self):
+        title_out = False
+        for ind, p in enumerate(self.processes):
+            p.join()
+            if not title_out:
+                Logger.log("learner worker ", new_line=False)
+                title_out = True
+            Logger.log(f"{ind} ", new_line=False, make_title=False)
+        Logger.log("returned", make_title=False)
 
     def train(self):
-        processes = []
         for id in range(P.num_actor):
             p = Process(
                 target=Policy.response_action,
@@ -36,10 +44,9 @@ class Policy:
                 ],
             )
             p.start()
-            processes.append(p)
+            self.processes.append(p)
 
-        for p in processes:
-            p.join()
+        self.wait_to_finish()
         
         optimal_graph = IO.read_disk_dump(P.optimal_graph_path)
 
@@ -75,23 +82,20 @@ class Policy:
             proj_index_init_obs = None
             while True:
                 try:  # sub-sub-process exception detection
-                    # check to stop
-                    if frames.value > P.total_frames:
-                        if P.draw_graph:
-                            graph.save_graph()
-                        return
                     # sync graph
-                    if time.time() - last_sync > P.sync_every:
+                    if time.time() - last_sync > P.sync_every or frames.value > P.total_frames:
                         if P.sync_mode == 0:
                             graph.sync_by_pipe(head_slave_queues, slave_head_queues)
                         if P.sync_mode == 1:
                             graph.sync_by_file()
+                        if P.sync_mode == 2:
+                            graph.sync_by_pipe_disk(head_slave_queues, slave_head_queues)
                         last_sync = time.time()
                     # logging info
                     if Policy.is_head(id):
                         cur_frame = frames.value
                         now = time.time()
-                        if now - last_report > P.log_every:
+                        if now - last_report > P.log_every or frames.value > P.total_frames:
                             Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{}({:.1f}%) V: {}/{}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
@@ -103,6 +107,12 @@ class Policy:
                             ), color="yellow")
                             last_report = now
                             last_frame = cur_frame
+                    # check to stop
+                    if frames.value > P.total_frames:
+                        if Policy.is_head(id):
+                            graph.save_graph()
+                            Logger.log("graph saved")
+                        return
                     
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
@@ -131,7 +141,7 @@ class Policy:
                         action = graph.get_action(obs)
                         learner_actor_queue.put(action)
                 except KeyboardInterrupt:
-                    pass
+                    return
                 except Exception:
                     Funcs.trace_exception()
                     return

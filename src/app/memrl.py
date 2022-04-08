@@ -1,3 +1,4 @@
+from bdb import Breakpoint
 from src.module.context import Profile as P
 from src.util.tools import Logger, Funcs, IO
 from multiprocessing import Process, Value, Queue
@@ -22,6 +23,7 @@ class MemRL:
             IO.renew_dir(P.result_dir)
             IO.renew_dir(P.video_dir)
             IO.renew_dir(P.sync_dir)
+        start_time = time.time()
 
         # 2. show args
         Funcs.print_obj(P.C)
@@ -57,19 +59,34 @@ class MemRL:
             p.start()
             processes.append(p)
 
-        try:  # process exception detection
-            for p in processes:
-                p.join()
-        except KeyboardInterrupt:
-            pass
-        except Exception:
-            Funcs.trace_exception()
+        while True:
+            try:  # process exception detection
+                title_out = False
+                for ind, p in enumerate(processes):
+                    p.join()
+                    if ind == 0:
+                        Logger.log("learner exit")
+                        continue  # skip the learner process
+                    if not title_out:
+                        Logger.log("actor ", new_line=False)
+                        title_out = True
+                    Logger.log(f"{ind - 1} ", new_line=False, make_title=False)
+                Logger.log("exit", make_title=False)
+                break
+            except KeyboardInterrupt:
+                pass
+            except Exception:
+                Funcs.trace_exception()
+                break
+
+        # 5. report time
+        minutes = (time.time() - start_time) / 60
+        Logger.log(f"up {minutes:.1f} min, exit")
 
     @staticmethod
     def learner_run(actor_learner_queues, learner_actor_queues, finish):
         # 1. init
         from src.module.agent.policy import Policy
-        start_time = time.time()
 
         # 2. train
         policy = Policy(actor_learner_queues, learner_actor_queues)
@@ -81,10 +98,10 @@ class MemRL:
 
             optimal_graph = policy.train()  # tain the policy
         except KeyboardInterrupt:
-            Logger.log("ctrl-c pressed")
-            policy.terminate()
+            Logger.error("ctrl-c pressed")
+            policy.wait_to_finish()
         except FileNotFoundError:
-            Logger.log("optimal graph not found, training failed")
+            Logger.error("optimal graph not found, training failed")
         except Exception:
             Funcs.trace_exception()
         finally:
@@ -102,10 +119,6 @@ class MemRL:
             Funcs.trace_exception()
         Logger.log("dnn model saved")
         
-        # 4. output time
-        minutes = (time.time() - start_time) / 60
-        Logger.log(f"up {minutes:.1f} min, learner exit")
-        
     @staticmethod
     def actor_run(id, actor_learner_queues, learner_actor_queues, finish):
         # 1. make env and actor
@@ -121,8 +134,7 @@ class MemRL:
                 pass
             except Exception:
                 if finish.value:
-                    Logger.log(f"actor{id} exit")
-                    return
+                    break
                 else:
                     Funcs.trace_exception()
 

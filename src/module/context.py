@@ -34,7 +34,7 @@ class Context:
     seq_len = 500
 
     # agent
-    num_actor = len(gpus) * 8
+    num_actor = len(gpus) * 24
     head_actor = num_actor - 1  # the last actor
     indexer_enabled = False
     obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
@@ -42,8 +42,8 @@ class Context:
     projected_hidden_dim = 32
     use_hash_index = True
     gamma = 0.99
-    sync_every = 10  # in second
-    sync_mode = 0  # 0: sync by pipe, 1: sync by file
+    sync_every = log_every  # in second
+    sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
     projector_types = [None, "random", "cnn", "rnn"]
     projector = projector_types[0]  # select None to disable random projection
     e_greedy = [0.1, 1]

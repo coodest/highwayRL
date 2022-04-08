@@ -72,7 +72,7 @@ class Iterator:
                 val = torch.max(adj * val, dim=1).values * P.gamma + rew
                 if torch.sum(last_val - val) == 0:
                     break
-            Logger.log(f"iters: {iters}", color="yellow")
+            Logger.log(f"learner value propagation iters: {iters}", color="yellow")
             result = val.cpu().detach().numpy().tolist()
 
             # release resorces

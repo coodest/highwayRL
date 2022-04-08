@@ -22,8 +22,11 @@ class Projector:
         ind = P.prio_gpu
         if len(P.gpus) > 1:
             ind = self.id % len(P.gpus)
-        torch.cuda.set_device(int(ind))
-        self.device = torch.device(f"cuda:{ind}" if torch.cuda.is_available() else "cpu")
+        if torch.cuda.is_available():
+            torch.cuda.set_device(int(ind))
+            self.device = torch.device(f"cuda:{ind}")
+        else:
+            self.device = torch.device("cpu")
 
     def project(self, obs):
         pass

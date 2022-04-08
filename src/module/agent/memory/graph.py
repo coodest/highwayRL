@@ -28,6 +28,38 @@ class Graph:
         self.main = Storage(self.id)  # main storage
         self.inc = Storage(self.id)  # incremental storage
 
+    def sync_by_pipe_disk(self, head_slave_queues, slave_head_queues):
+        if not self.is_head:
+            # write increments (slave)
+            slave_head_queues[self.id].put(self.inc)
+            self.inc = Storage(self.id)
+            head_slave_queues[self.id].get()
+            self.main = IO.read_disk_dump(P.sync_dir + "target.pkl")
+            slave_head_queues[self.id].put(["finish"])
+        else:
+            # read increments (head)
+            for i in range(P.num_actor):
+                if self.id == i:
+                    continue  # head has no increments stored
+                inc = slave_head_queues[i].get()
+                self.merge_inc(inc)
+            self.post_process()
+
+            # write target (head)
+            IO.write_disk_dump(P.sync_dir + "target.pkl", self.main)
+            for i in range(P.num_actor):
+                if self.id == i:
+                    continue
+                head_slave_queues[i].put(["ready"])
+
+            # wait for all slave finished (head)
+            for i in range(P.num_actor):
+                if self.id == i:
+                    continue
+                finished = slave_head_queues[i].get()
+            
+            IO.renew_dir(P.sync_dir)
+
     def sync_by_pipe(self, head_slave_queues, slave_head_queues):
         if not self.is_head:
             # write increments (slave)

@@ -43,7 +43,11 @@ class Logger:
     path = None
 
     @staticmethod
-    def log(msg, color=None, style=None, new_line=True):
+    def error(msg):
+        Logger.log(msg, color="cyan")
+
+    @staticmethod
+    def log(msg, color=None, style=None, new_line=True, make_title=True):
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
         if len(logger.handlers) == 0:
@@ -58,6 +62,8 @@ class Logger:
         handler = logger.handlers[0]
         if not new_line:
             handler.terminator = ""
+        else:
+            handler.terminator = "\n"
         formatter = logging.Formatter(
             datefmt="",
             fmt="%(message)s"
@@ -113,12 +119,16 @@ class Logger:
             msg = remove + msg + normal
         else:
             pass
-
-        title_str = Logger.make_msg_title()
-        title = cyan + title_str[0][0: 6] + yellow + title_str[0][6:] + blue + title_str[1] + green + title_str[2] + normal + " "
+        
+        if make_title:
+            title_str = Logger.make_msg_title()
+            title = cyan + title_str[0][0: 6] + yellow + title_str[0][6:] + blue + title_str[1] + green + title_str[2] + normal + " "
+        else:
+            title_str = ""
+            title = ""
         logger.info(title + msg)
         if Logger.path is not None:
-            Logger.write_log(msg=''.join(title_str) + " " + msg, path=Logger.path)
+            Logger.write_log(msg=f"{title_str} {msg}", path=Logger.path)
 
     @staticmethod
     def make_msg_title():
@@ -218,7 +228,7 @@ class Funcs:
     @staticmethod
     def trace_exception():
         exception_str = traceback.format_exc()
-        Logger.log("Error msg: " + str(exception_str))
+        Logger.error("Error msg: " + str(exception_str))
 
     @staticmethod
     def matrix_hashing(obs):

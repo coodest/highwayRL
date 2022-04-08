@@ -205,7 +205,7 @@ class Storage:
             for n in self.node_next_accessable(node):
                 adj[node][n] = 1
         
-        Logger.log("value propagation", color="yellow")
+        # value propagation
         if P.build_dag:
             adj = adj - self.iterator.build_dag(adj)
         val_n = self.iterator.iterate(adj, rew, val_0)
