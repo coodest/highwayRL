@@ -5,7 +5,7 @@ from gym.envs.registration import EnvSpec
 from src.module.context import Profile as P
 
 from src.util.tools import *
-import random
+from src.util.imports.random import random
 
 
 class SimpleScene:

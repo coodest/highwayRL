@@ -1,15 +1,15 @@
-from types import prepare_class
-from typing import Sized
+# from types import prepare_class
+# from typing import Sized
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 from src.module.agent.memory.storage import Storage
 import operator
 from collections import defaultdict
 import networkx as nx
-import matplotlib as mpl
+# import matplotlib as mpl
 import matplotlib.pyplot as plt
-import time
-import numpy as np
+# import time
+from src.util.imports.numpy import np
 
 
 class Graph:
@@ -175,9 +175,8 @@ class Graph:
         # nx.write_gexf(dg, fig_path + ".gexf")
         # save as graphML file
         # nx.write_graphml(dg, fig_path + ".graphml")
-        # save as pdf
-        # pos = nx.random_layout(dg)
-        # nx.draw(dg, pos)
+
+        # save as PDF file
         if len(node_color) > 0:
             vmax = max(node_color)
             vmin = min(node_color)

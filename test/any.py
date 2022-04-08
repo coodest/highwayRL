@@ -203,76 +203,76 @@
 # -------------------------------------------------------------------
 # this section test the shrunk grpah building algorithm
 
-from src.module.agent.memory.graph import Graph
-from src.module.context import Profile as P
-from src.util.tools import IO
+# from src.module.agent.memory.graph import Graph
+# from src.module.context import Profile as P
+# from src.util.tools import IO
 
 
-IO.renew_dir(P.result_dir)
-a = Graph(0, True)
+# IO.renew_dir(P.result_dir)
+# a = Graph(0, True)
 
-traj1, traj1_tr = [
-    ["a0", 1, "a1", 5],
-    ["a1", 1, "a2", 0],
-    ["a2", 1, "a3", 0],
-    ["a3", 1, "a4", 0],
-    ["a4", 1, "a5", 3],
-    ["a5", 1, "a6", 2],
-], 10
-traj2, traj2_tr = [
-    ["b0", 2, "b1", 0],
-    ["b1", 2, "a2", 0],
-    ["a2", 2, "b3", 0],
-    ["b3", 2, "b4", 0],
-    ["b4", 2, "b5", 1],
-    ["b5", 2, "b6", 0],
-], 1
-traj3, traj3_tr = [
-    ["c0", 3, "c1", 0],
-    ["c1", 3, "b5", 1],
-    ["b5", 3, "c3", 0],
-    ["c3", 3, "c4", 0],
-    ["c4", 3, "a4", 0],
-    ["a4", 3, "c6", 0],
-    ["c6", 3, "c7", 1],
-], 2
+# traj1, traj1_tr = [
+#     ["a0", 1, "a1", 5],
+#     ["a1", 1, "a2", 0],
+#     ["a2", 1, "a3", 0],
+#     ["a3", 1, "a4", 0],
+#     ["a4", 1, "a5", 3],
+#     ["a5", 1, "a6", 2],
+# ], 10
+# traj2, traj2_tr = [
+#     ["b0", 2, "b1", 0],
+#     ["b1", 2, "a2", 0],
+#     ["a2", 2, "b3", 0],
+#     ["b3", 2, "b4", 0],
+#     ["b4", 2, "b5", 1],
+#     ["b5", 2, "b6", 0],
+# ], 1
+# traj3, traj3_tr = [
+#     ["c0", 3, "c1", 0],
+#     ["c1", 3, "b5", 1],
+#     ["b5", 3, "c3", 0],
+#     ["c3", 3, "c4", 0],
+#     ["c4", 3, "a4", 0],
+#     ["a4", 3, "c6", 0],
+#     ["c6", 3, "c7", 1],
+# ], 2
 
-traj4, traj4_tr = [
-    ["d0", 4, "d1", 1],
-    ["d1", 4, "d2", 2],
-    ["d2", 4, "d3", 3],
-    ["d3", 4, "d4", 4],
-    ["d4", 4, "d5", 0],
-    ["d5", 6, "d6", 8],
-    ["d6", 3, "d7", 0],
-    ["d7", 4, "d8", 5],
-    ["d8", 4, "d9", 5],
-    ["d9", 4, "d10", 5],
-    ["d10", 4, "d5", 5],
-    ["d5", 2, "d11", 2],
-    # ["d2", 5, "d11", 0],
-], 33
-traj5, traj5_tr = [
-    ["e0", 5, "e1", 0],
-    ["e1", 5, "e2", 0],
-    ["e2", 5, "e3", 0],
-], 0
-traj6, traj6_tr = [
-    ["f0", 6, "d1", 0],
-    ["d1", 6, "e1", 0],
-    ["e1", 6, "f1", 0],
-], 0
+# traj4, traj4_tr = [
+#     ["d0", 4, "d1", 1],
+#     ["d1", 4, "d2", 2],
+#     ["d2", 4, "d3", 3],
+#     ["d3", 4, "d4", 4],
+#     ["d4", 4, "d5", 0],
+#     ["d5", 6, "d6", 8],
+#     ["d6", 3, "d7", 0],
+#     ["d7", 4, "d8", 5],
+#     ["d8", 4, "d9", 5],
+#     ["d9", 4, "d10", 5],
+#     ["d10", 4, "d5", 5],
+#     ["d5", 2, "d11", 2],
+#     # ["d2", 5, "d11", 0],
+# ], 33
+# traj5, traj5_tr = [
+#     ["e0", 5, "e1", 0],
+#     ["e1", 5, "e2", 0],
+#     ["e2", 5, "e3", 0],
+# ], 0
+# traj6, traj6_tr = [
+#     ["f0", 6, "d1", 0],
+#     ["d1", 6, "e1", 0],
+#     ["e1", 6, "f1", 0],
+# ], 0
 
 # a.store_inc(traj1, traj1_tr)
 # a.store_inc(traj2, traj2_tr)
 # a.store_inc(traj3, traj3_tr)
 
-a.store_inc(traj4, traj4_tr)  # loop
+# a.store_inc(traj4, traj4_tr)  # loop
 # a.store_inc(traj5, traj5_tr)  # loop
 # a.store_inc(traj6, traj6_tr)  # loop
 
-a.merge_inc(a.inc)
-print(a.main._node)
+# a.merge_inc(a.inc)
+# print(a.main._node)
 
 # nodes = a.main._node
 
@@ -293,7 +293,7 @@ print(a.main._node)
 # for obs in ["a2", "b5", "a4"]:
 #     print(a.get_action(obs))
 
-a.draw_graph()
+# a.draw_graph()
 
 # -------------------------------------------------------------------
 # this section test the hadmard product
@@ -567,3 +567,16 @@ a.draw_graph()
 #     if done:
 #         print(obs)
 #         break
+
+# -------------------------------------------------------------------
+# test wheter the entire Atari environment can be hasded or not
+# the anwser is yes
+from src.module.env.atari_history_hash import Atari
+
+
+a = Atari()
+
+env = a.make_env()
+
+breakpoint()
+env.reset()

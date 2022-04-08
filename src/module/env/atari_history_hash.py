@@ -234,4 +234,8 @@ class AtariHistoryHashPreprocessing(object):
         output.append(hash_str)
 
     def _pool_and_resize(self):
+        # use the current screen
         return Funcs.matrix_hashing(self.screen_buffer)
+
+        # use the current env memory obj (not working, graph node cannot be hitted)
+        # return Funcs.matrix_hashing(self.environment)
