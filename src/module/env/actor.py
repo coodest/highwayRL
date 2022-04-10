@@ -96,17 +96,17 @@ class Actor:
                     self.episodic_reward.append(total_reward)
                     hit_rate = 100 * (sum(self.hit) / len(self.hit))
                     if hit_rate < 100:
-                        lost_step = self.hit.index(0)
+                        last_step_before_loss = self.hit.index(0)
                     else:
-                        lost_step = len(self.hit)
+                        last_step_before_loss = len(self.hit)
                     if self.is_testing_actor():
                         Logger.log("evl_actor R: {:6.2f} AR:{:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
                             self.episodic_reward[-1],
                             np.mean(self.episodic_reward),
                             self.fps[-1],
                             hit_rate,
-                            lost_step,
-                            epi_step,
+                            last_step_before_loss,
+                            len(self.hit),
                             str(proj_index_init_obs)[-4:]
                         ))
                     else:

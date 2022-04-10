@@ -21,6 +21,7 @@ class Policy:
         self.processes = []
 
     def wait_to_finish(self):
+        Logger.log("leaner master wait for worker (head and slaves) to join")
         title_out = False
         for ind, p in enumerate(self.processes):
             p.join()
@@ -28,7 +29,7 @@ class Policy:
                 Logger.log("learner worker ", new_line=False)
                 title_out = True
             Logger.log(f"{ind} ", new_line=False, make_title=False)
-        Logger.log("returned", make_title=False)
+        Logger.log("joined", make_title=False)
 
     def train(self):
         for id in range(P.num_actor):
@@ -112,6 +113,7 @@ class Policy:
                         if Policy.is_head(id):
                             graph.save_graph()
                             Logger.log("graph saved")
+                        Logger.log(f"learner worker {id} {'(head)' if Policy.is_head(id) else '(slave)'} returned")
                         return
                     
                     info = actor_learner_queue.get()
@@ -141,6 +143,7 @@ class Policy:
                         action = graph.get_action(obs)
                         learner_actor_queue.put(action)
                 except KeyboardInterrupt:
+                    Logger.log(f"learner worker {id} {'(head)' if Policy.is_head(id) else '(slave)'} returned with KeyboardInterrupt")
                     return
                 except Exception:
                     Funcs.trace_exception()

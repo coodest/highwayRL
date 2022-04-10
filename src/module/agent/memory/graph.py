@@ -33,7 +33,7 @@ class Graph:
             # write increments (slave)
             slave_head_queues[self.id].put(self.inc)
             self.inc = Storage(self.id)
-            head_slave_queues[self.id].get()
+            ready = head_slave_queues[self.id].get()
             self.main = IO.read_disk_dump(P.sync_dir + "target.pkl")
             slave_head_queues[self.id].put(["finish"])
         else:
@@ -57,6 +57,7 @@ class Graph:
                 if self.id == i:
                     continue
                 finished = slave_head_queues[i].get()
+                assert finished == ["finish"], "sync error"
             
             IO.renew_dir(P.sync_dir)
 

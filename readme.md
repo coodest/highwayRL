@@ -5,9 +5,25 @@
     pip install -r requirements.txt
 
 
-## To run the code locally
+## start cuda multi-process server (mps)
+
+    nvidia-cuda-mps-control -d
+
+or with python code
+
+    os.popen("nvidia-cuda-mps-control -d").close()
+
+## run the code locally
 
     ./run.sh
+
+## stop cuda multi-process server (mps)
+
+    echo quit | nvidia-cuda-mps-control
+
+or with python code
+
+    os.popen("echo quit | nvidia-cuda-mps-control").close()
 
 ## log explains:
 

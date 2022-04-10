@@ -86,15 +86,11 @@ class MemRL:
     def learner_run(actor_learner_queues, learner_actor_queues, finish):
         # 1. init
         from src.module.agent.policy import Policy
+        os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
 
         # 2. train
         policy = Policy(actor_learner_queues, learner_actor_queues)
         try:  # sub-process exception detection
-            # start CUDA multi-process server 
-            os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
-            Logger.log("start cuda mps")
-            os.popen("nvidia-cuda-mps-control -d").close()
-
             optimal_graph = policy.train()  # tain the policy
         except KeyboardInterrupt:
             Logger.error("ctrl-c pressed")
@@ -104,11 +100,8 @@ class MemRL:
         except Exception:
             Funcs.trace_exception()
         finally:
-            # stop CUDA multi-process server 
-            Logger.log("stop cuda mps")
-            os.popen("echo quit | nvidia-cuda-mps-control").close()
-        Logger.log("training finished")
-        finish.value = True
+            Logger.log("training finished")
+            finish.value = True
 
         # 3. parameterization
         try:  # sub-process exception detection
