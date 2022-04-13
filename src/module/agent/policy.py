@@ -62,7 +62,16 @@ class Policy:
         return index == P.head_actor
 
     @staticmethod
-    def response_action(id, actor_learner_queue, learner_actor_queue, head_slave_queues, slave_head_queues, frames, sync, finish):
+    def response_action(
+        id, 
+        actor_learner_queue, 
+        learner_actor_queue, 
+        head_slave_queues, 
+        slave_head_queues, 
+        frames, 
+        sync, 
+        finish
+    ):
         from src.module.agent.memory.indexer import Indexer
         from src.module.agent.memory.graph import Graph
 
@@ -88,21 +97,35 @@ class Policy:
             while True:
                 try:  # sub-sub-process exception detection
                     # sync graph
-                    if Policy.is_head(id) and (time.time() - last_sync > P.sync_every or frames.value > P.total_frames):
+                    if Policy.is_head(id) and (
+                        time.time() - last_sync > P.sync_every or 
+                        frames.value > P.total_frames
+                    ):
                         sync.value = True
                     if sync.value:
                         if P.sync_mode == 0:
-                            graph.sync_by_pipe(head_slave_queues, slave_head_queues, sync)
+                            graph.sync_by_pipe(
+                                head_slave_queues, 
+                                slave_head_queues, 
+                                sync
+                            )
                         if P.sync_mode == 1:
                             graph.sync_by_file(sync)
                         if P.sync_mode == 2:
-                            graph.sync_by_pipe_disk(head_slave_queues, slave_head_queues, sync)
+                            graph.sync_by_pipe_disk(
+                                head_slave_queues, 
+                                slave_head_queues, 
+                                sync
+                            )
                         last_sync = time.time()
                     # logging info
                     if Policy.is_head(id):
                         cur_frame = frames.value
                         now = time.time()
-                        if now - last_report > P.log_every or frames.value > P.total_frames:
+                        if (
+                            now - last_report > P.log_every or 
+                            frames.value > P.total_frames
+                        ):
                             Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{}({:.1f}%) V: {}/{}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
@@ -139,7 +162,9 @@ class Policy:
                     if done:
                         if add:
                             with frames.get_lock():
-                                frames.value += (len(trajectory) * P.num_action_repeats)
+                                frames.value += (
+                                    len(trajectory) * P.num_action_repeats
+                                )
                             graph.store_inc(trajectory, total_reward)
                         learner_actor_queue.put(proj_index_init_obs)
                         if P.projector is not None:
