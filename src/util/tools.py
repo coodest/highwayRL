@@ -47,7 +47,7 @@ class Logger:
         Logger.log(msg, color="cyan")
 
     @staticmethod
-    def log(msg, color=None, style=None, new_line=True, make_title=True):
+    def log(raw_msg, color=None, style=None, new_line=True, make_title=True):
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
         if len(logger.handlers) == 0:
@@ -86,7 +86,7 @@ class Logger:
         invert = "\033[7m"
         remove = "\033[9m"
 
-        msg = str(msg)
+        msg = str(raw_msg)
 
         if color == "blue":
             msg = blue + msg + normal
@@ -123,12 +123,15 @@ class Logger:
         if make_title:
             title_str = Logger.make_msg_title()
             title = cyan + title_str[0][0: 6] + yellow + title_str[0][6:] + blue + title_str[1] + green + title_str[2] + normal + " "
+            raw_title = title_str[0][0: 6] + title_str[0][6:] + title_str[1] + title_str[2] + " "
         else:
             title_str = ""
             title = ""
+            raw_title = ""
+
         logger.info(title + msg)
         if Logger.path is not None:
-            Logger.write_log(msg=f"{title_str} {msg}", path=Logger.path)
+            Logger.write_log(msg=f"{raw_title} {raw_msg}", path=Logger.path)
 
     @staticmethod
     def make_msg_title():

@@ -6,8 +6,9 @@ from multiprocessing import Process, Value, Queue
 
 
 class Policy:
-    def __init__(self, actor_learner_queues, learner_actor_queues):
+    def __init__(self, actor_learner_queues, learner_actor_queues, finish):
         self.frames = Value("d", 0)
+        self.sync = Value("b", False)
         self.actor_learner_queues = actor_learner_queues
         self.learner_actor_queues = learner_actor_queues
 
@@ -19,6 +20,7 @@ class Policy:
             self.slave_head_queues.append(Queue())
 
         self.processes = []
+        self.finish = finish
 
     def wait_to_finish(self):
         Logger.log("leaner master wait for worker (head and slaves) to join")
@@ -41,7 +43,9 @@ class Policy:
                     self.learner_actor_queues[id],
                     self.head_slave_queues,
                     self.slave_head_queues,
-                    self.frames
+                    self.frames,
+                    self.sync,
+                    self.finish,
                 ],
             )
             p.start()
@@ -58,7 +62,7 @@ class Policy:
         return index == P.head_actor
 
     @staticmethod
-    def response_action(id, actor_learner_queue, learner_actor_queue, head_slave_queues, slave_head_queues, frames):
+    def response_action(id, actor_learner_queue, learner_actor_queue, head_slave_queues, slave_head_queues, frames, sync, finish):
         from src.module.agent.memory.indexer import Indexer
         from src.module.agent.memory.graph import Graph
 
@@ -84,13 +88,15 @@ class Policy:
             while True:
                 try:  # sub-sub-process exception detection
                     # sync graph
-                    if time.time() - last_sync > P.sync_every or frames.value > P.total_frames:
+                    if Policy.is_head(id) and (time.time() - last_sync > P.sync_every or frames.value > P.total_frames):
+                        sync.value = True
+                    if sync.value:
                         if P.sync_mode == 0:
-                            graph.sync_by_pipe(head_slave_queues, slave_head_queues)
+                            graph.sync_by_pipe(head_slave_queues, slave_head_queues, sync)
                         if P.sync_mode == 1:
-                            graph.sync_by_file()
+                            graph.sync_by_file(sync)
                         if P.sync_mode == 2:
-                            graph.sync_by_pipe_disk(head_slave_queues, slave_head_queues)
+                            graph.sync_by_pipe_disk(head_slave_queues, slave_head_queues, sync)
                         last_sync = time.time()
                     # logging info
                     if Policy.is_head(id):
@@ -109,11 +115,11 @@ class Policy:
                             last_report = now
                             last_frame = cur_frame
                     # check to stop
-                    if frames.value > P.total_frames:
-                        if Policy.is_head(id):
-                            graph.save_graph()
-                            Logger.log("graph saved")
-                        Logger.log(f"learner worker {id} {'(head)' if Policy.is_head(id) else '(slave)'} returned")
+                    if Policy.is_head(id) and frames.value > P.total_frames:
+                        graph.save_graph()
+                        Logger.log("graph saved")
+                        finish.value = True
+                    if finish.value:
                         return
                     
                     info = actor_learner_queue.get()

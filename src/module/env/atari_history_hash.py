@@ -5,6 +5,8 @@ from src.util.imports.numpy import np
 import cv2
 from src.module.context import Profile as P
 from src.util.tools import Funcs
+import pickle
+import zlib
 
 
 class Atari:
@@ -238,4 +240,6 @@ class AtariHistoryHashPreprocessing(object):
         return Funcs.matrix_hashing(self.screen_buffer)
 
         # use the current env memory obj (not working, graph node cannot be hitted)
-        # return Funcs.matrix_hashing(self.environment)
+        # compressed = zlib.compress(pickle.dumps(self.environment))
+        # return Funcs.matrix_hashing(compressed)
+        # return Funcs.matrix_hashing(pickle.dumps(self.environment))

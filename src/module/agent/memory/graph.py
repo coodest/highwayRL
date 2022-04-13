@@ -28,14 +28,13 @@ class Graph:
         self.main = Storage(self.id)  # main storage
         self.inc = Storage(self.id)  # incremental storage
 
-    def sync_by_pipe_disk(self, head_slave_queues, slave_head_queues):
+    def sync_by_pipe_disk(self, head_slave_queues, slave_head_queues, sync):
         if not self.is_head:
             # write increments (slave)
             slave_head_queues[self.id].put(self.inc)
             self.inc = Storage(self.id)
             ready = head_slave_queues[self.id].get()
             self.main = IO.read_disk_dump(P.sync_dir + "target.pkl")
-            slave_head_queues[self.id].put(["finish"])
         else:
             # read increments (head)
             for i in range(P.num_actor):
@@ -46,28 +45,20 @@ class Graph:
             self.post_process()
 
             # write target (head)
+            IO.renew_dir(P.sync_dir)
             IO.write_disk_dump(P.sync_dir + "target.pkl", self.main)
+            sync.value = False
             for i in range(P.num_actor):
                 if self.id == i:
                     continue
                 head_slave_queues[i].put(["ready"])
 
-            # wait for all slave finished (head)
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue
-                finished = slave_head_queues[i].get()
-                assert finished == ["finish"], "sync error"
-            
-            IO.renew_dir(P.sync_dir)
-
-    def sync_by_pipe(self, head_slave_queues, slave_head_queues):
+    def sync_by_pipe(self, head_slave_queues, slave_head_queues, sync):
         if not self.is_head:
             # write increments (slave)
             slave_head_queues[self.id].put(self.inc)
             self.inc = Storage(self.id)
             self.main = head_slave_queues[self.id].get()
-            slave_head_queues[self.id].put(["finish"])
         else:
             # read increments (head)
             for i in range(P.num_actor):
@@ -78,18 +69,13 @@ class Graph:
             self.post_process()
 
             # write target (head)
+            sync.value = False
             for i in range(P.num_actor):
                 if self.id == i:
                     continue
                 head_slave_queues[i].put(self.main)
 
-            # wait for all slave finished (head)
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue
-                finished = slave_head_queues[i].get()
-
-    def sync_by_file(self):
+    def sync_by_file(self, sync):
         """
         Synconize the mian and incremental stores that independent to their inner structure 
         and content. Only support small 'sync_every' (like 1)
@@ -118,6 +104,7 @@ class Graph:
             self.post_process()
 
             # write target (head)
+            sync.value = False
             IO.write_disk_dump(P.sync_dir + "target.pkl", self.main)
             IO.write_disk_dump(P.sync_dir + "target.ok", ["ok"])
 

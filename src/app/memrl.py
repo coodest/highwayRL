@@ -89,7 +89,7 @@ class MemRL:
         os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
 
         # 2. train
-        policy = Policy(actor_learner_queues, learner_actor_queues)
+        policy = Policy(actor_learner_queues, learner_actor_queues, finish)
         try:  # sub-process exception detection
             optimal_graph = policy.train()  # tain the policy
         except KeyboardInterrupt:
