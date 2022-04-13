@@ -35,6 +35,7 @@ class Graph:
             self.inc = Storage(self.id)
             ready = head_slave_queues[self.id].get()
             self.main = IO.read_disk_dump(P.sync_dir + "target.pkl")
+            slave_head_queues[self.id].put(["finish"])
         else:
             # read increments (head)
             for i in range(P.num_actor):
@@ -53,12 +54,20 @@ class Graph:
                     continue
                 head_slave_queues[i].put(["ready"])
 
+            # wait for all slave finished (head)
+            for i in range(P.num_actor):
+                if self.id == i:
+                    continue
+                finished = slave_head_queues[i].get()
+                assert finished == ["finish"], "sync error"
+
     def sync_by_pipe(self, head_slave_queues, slave_head_queues, sync):
         if not self.is_head:
             # write increments (slave)
             slave_head_queues[self.id].put(self.inc)
             self.inc = Storage(self.id)
             self.main = head_slave_queues[self.id].get()
+            slave_head_queues[self.id].put(["finish"])
         else:
             # read increments (head)
             for i in range(P.num_actor):
@@ -74,6 +83,13 @@ class Graph:
                 if self.id == i:
                     continue
                 head_slave_queues[i].put(self.main)
+
+            # wait for all slave finished (head)
+            for i in range(P.num_actor):
+                if self.id == i:
+                    continue
+                finished = slave_head_queues[i].get()
+                assert finished == ["finish"], "sync error"
 
     def sync_by_file(self, sync):
         """

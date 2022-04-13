@@ -118,8 +118,9 @@ class Policy:
                                 sync
                             )
                         last_sync = time.time()
-                    # logging info
+                    
                     if Policy.is_head(id):
+                        # logging info
                         cur_frame = frames.value
                         now = time.time()
                         if (
@@ -137,11 +138,11 @@ class Policy:
                             ), color="yellow")
                             last_report = now
                             last_frame = cur_frame
-                    # check to stop
-                    if Policy.is_head(id) and frames.value > P.total_frames:
-                        graph.save_graph()
-                        Logger.log("graph saved")
-                        finish.value = True
+                        # check to stop
+                        if frames.value > P.total_frames:
+                            graph.save_graph()
+                            Logger.log("graph saved")
+                            finish.value = True
                     if finish.value:
                         return
                     

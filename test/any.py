@@ -569,14 +569,13 @@
 #         break
 
 # -------------------------------------------------------------------
-# test wheter the entire Atari environment can be hasded or not
-# the anwser is yes
-from src.module.env.atari_history_hash import Atari
+# test if condition with and
 
 
-a = Atari()
+def ad():
+    print(123)
+    return True
 
-env = a.make_env()
 
-breakpoint()
-env.reset()
+if False and ad():
+    print("ok")
