@@ -76,8 +76,7 @@ class Actor:
             while True:  # step loop
                 # 1. get action
                 action = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
-                # last_obs = obs.copy()
-                last_obs = obs
+                last_obs = obs if isinstance(obs, str) or isinstance(obs, int) else obs.copy()
 
                 # 2. interact
                 obs, reward, done, info = self.env.step(action)

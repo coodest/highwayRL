@@ -7,3 +7,4 @@ torch==1.9.1
 gym==0.19.0
 gym[atari]
 opencv-python==4.5.3.56
+pygame==2.1.2

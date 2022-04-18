@@ -569,13 +569,8 @@
 #         break
 
 # -------------------------------------------------------------------
-# test if condition with and
+# 
 
-
-def ad():
-    print(123)
-    return True
-
-
-if False and ad():
-    print("ok")
+from src.module.env.maze import Maze
+env = Maze.make_env()
+breakpoint()

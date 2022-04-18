@@ -147,6 +147,9 @@ class MemRL:
         if P.env_type == P.env_types[4]:
             from src.module.env.simple_scene import SimpleScene
             return SimpleScene.make_env(render)
+        if P.env_type == P.env_types[5]:
+            from src.module.env.maze import Maze
+            return Maze.make_env(render)
 
 
 if __name__ == "__main__":

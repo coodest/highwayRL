@@ -19,8 +19,8 @@ class Context:
 
     # env
     total_frames = 1e7  # default 1e7
-    env_types = ["atari", "atari_alternative", "atari_history_hash", "atari_ram", "simple_scene"]
-    env_type = env_types[2]
+    env_types = ["atari", "atari_alternative", "atari_history_hash", "atari_ram", "simple_scene", "maze"]
+    env_type = env_types[5]
     render = False  # whether test actor to render the env
     render_every = 5
     # atari
