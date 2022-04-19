@@ -16,9 +16,16 @@ from src.util.tools import Funcs
 class Maze:
     @staticmethod
     def make_env(render=False):
-        env = MazeEnvSample10x10(enable_render=render)
-        env.seed(2022)
-        env.max_episode_steps = (P.max_episode_steps,)
+        # env = MazeEnvRandom100x100(enable_render=render)
+        env = MazeEnv(
+            # maze_file="assets/maze_files/maze2d_100x100.npy", 
+            maze_file=None, 
+            maze_size=(30, 30),
+            # maze_size=None,
+            enable_render=render
+        )
+        env.seed(2022)  # set seed to be deterministic
+        # env.max_episode_steps = (P.max_episode_steps,)
 
         return env
 
@@ -114,14 +121,14 @@ class MazeEnv(gym.Env):
 
         info = {}
 
-        return self.state, reward, done, info
+        return tuple(self.state), reward, done, info
 
     def reset(self):
         self.maze_view.reset_robot()
         self.state = np.zeros(2)
         self.steps_beyond_done = None
         self.done = False
-        return self.state
+        return tuple(self.state)
 
     def is_game_over(self):
         return self.maze_view.game_over

@@ -25,7 +25,7 @@ class Context:
     render_every = 5
     # atari
     env_name_list = IO.read_file(asset_dir + "Atari_game_list.txt")
-    env_name = None
+    env_name = env_type + "_"
     max_episode_steps = 108000
     max_random_noops = 0  # 30, to control wheter the env is random initialized
     num_action_repeats = 4
@@ -67,7 +67,10 @@ class Profile(Context):
     
     for i in range(1, 27):
         if current_profile == str(i):
-            C.env_name = C.env_name_list[int(current_profile)]
+            if C.env_type in C.env_types[0:4]:
+                C.env_name += C.env_name_list[int(current_profile)]
+            if C.env_type in C.env_types[4:6]:
+                C.env_name += "original"
 
     # C.clean = True
 
