@@ -20,12 +20,12 @@ class Context:
     # env
     total_frames = 1e7  # default 1e7
     env_types = ["atari", "atari_alternative", "atari_history_hash", "atari_ram", "simple_scene", "maze"]
-    env_type = env_types[5]
+    env_type = env_types[0]
     render = False  # whether test actor to render the env
     render_every = 5
     # atari
     env_name_list = IO.read_file(asset_dir + "Atari_game_list.txt")
-    env_name = env_type + "_"
+    env_name = None
     max_episode_steps = 108000
     max_random_noops = 0  # 30, to control wheter the env is random initialized
     num_action_repeats = 4
@@ -34,9 +34,9 @@ class Context:
     seq_len = 500
 
     # agent
-    num_actor = len(gpus) * 24
+    num_actor = len(gpus) * 16
     head_actor = num_actor - 1  # the last actor
-    indexer_enabled = False
+    indexer_enabled = True
     obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
     projected_dim = 8
     projected_hidden_dim = 32
@@ -68,9 +68,9 @@ class Profile(Context):
     for i in range(1, 27):
         if current_profile == str(i):
             if C.env_type in C.env_types[0:4]:
-                C.env_name += C.env_name_list[int(current_profile)]
+                C.env_name = C.env_name_list[int(current_profile)]
             if C.env_type in C.env_types[4:6]:
-                C.env_name += "original"
+                C.env_name = f"{C.env_type}_original"
 
     # C.clean = True
 

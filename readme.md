@@ -1,5 +1,12 @@
 # RL with graph memory
 
+
+## install conponents (note: install pytorch depends on your system)
+
+    conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+
+    conda install -c conda-forge gym-atari
+    
 ## install the dependencies
 
     pip install -r requirements.txt

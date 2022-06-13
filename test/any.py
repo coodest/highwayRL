@@ -571,6 +571,6 @@
 # -------------------------------------------------------------------
 # 
 
-from src.module.env.maze import Maze
+from src.module.env. import Maze
 env = Maze.make_env()
 breakpoint()

@@ -88,6 +88,8 @@ class AtariPreprocessing(object):
         self.max_random_noops = max_random_noops
         self.environment.action_space.dtype = np.int32
 
+        self.action_list = []
+
         obs_dims = self.environment.observation_space
         # Stores temporary observations used for pooling over two successive
         # frames.
@@ -150,7 +152,12 @@ class AtariPreprocessing(object):
         self.lives = self.environment.ale.lives()
         self._fetch_grayscale_observation(self.screen_buffer[0])
         self.screen_buffer[1].fill(0)
-        return self._pool_and_resize()
+        
+        self.action_list = []
+
+        # return self._pool_and_resize()
+
+        return self.action_list
 
     def render(self, mode):
         """Renders the current screen, before preprocessing.
@@ -216,7 +223,9 @@ class AtariPreprocessing(object):
                 self._fetch_grayscale_observation(self.screen_buffer[t])
 
         # Pool the last two observations.
-        observation = self._pool_and_resize()
+        # observation = self._pool_and_resize()
+        self.action_list.append(action)
+        observation = self.action_list
 
         self.game_over = game_over
         return observation, accumulated_reward, is_terminal, info
