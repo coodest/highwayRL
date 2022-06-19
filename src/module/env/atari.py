@@ -2,16 +2,22 @@ import gym
 from gym.spaces.box import Box
 from gym.wrappers import TimeLimit, Monitor
 from src.util.imports.numpy import np
-import cv2
 from src.module.context import Profile as P
 from src.util.tools import Funcs
+import cv2
 
 
 class Atari:
     @staticmethod
-    def make_env(render=False):
-        env = gym.make("{}Deterministic-v4".format(P.env_name), full_action_space=True)
-        # env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
+    def make_env(render=False, obs_type=None):
+        if obs_type == "classic":
+            env = gym.make("{}Deterministic-v4".format(P.env_name), full_action_space=True)
+            # env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
+        if obs_type == "historical_action":
+            env = gym.make("{}Deterministic-v4".format(P.env_name), full_action_space=True)
+        if obs_type == "ram":
+            env = gym.make("{}-ram-v4".format(P.env_name), full_action_space=True)
+
         env.seed(2022)
 
         env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
@@ -21,35 +27,19 @@ class Atari:
 
         env = AtariPreprocessing(
             env,
+            obs_type=obs_type,
             frame_skip=P.num_action_repeats,
-            max_random_noops=P.max_random_noops
+            max_random_noops=P.max_random_noops,
         )
 
         return env
 
 
 class AtariPreprocessing(object):
-    """A class implementing image preprocessing for Atari 2600 agents.
-
-    Specifically, this provides the following subset from the JAIR paper
-    (Bellemare et al., 2013) and Nature DQN paper (Mnih et al., 2015):
-
-      * Frame skipping (defaults to 4).
-      * Terminal signal when a life is lost (off by default).
-      * Grayscale and max-pooling of the last two frames.
-      * Downsample the screen to a square image (defaults to 84x84).
-
-    More generally, this class follows the preprocessing guidelines set down in
-    Machado et al. (2018), "Revisiting the Arcade Learning Environment:
-    Evaluation Protocols and Open Problems for General Agents".
-
-    It also provides random starting no-ops, which are used in the Rainbow, Apex
-    and R2D2 papers.
-    """
-
     def __init__(
         self,
         environment,
+        obs_type,
         frame_skip=4,
         terminal_on_life_loss=False,
         screen_size=P.screen_size,
@@ -88,15 +78,19 @@ class AtariPreprocessing(object):
         self.max_random_noops = max_random_noops
         self.environment.action_space.dtype = np.int32
 
-        self.action_list = []
-
         obs_dims = self.environment.observation_space
         # Stores temporary observations used for pooling over two successive
         # frames.
-        self.screen_buffer = [
-            np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8),
-            np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8),
-        ]
+        self.obs_type = obs_type
+        if obs_type == "classic":
+            self.screen_buffer = [
+                np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8),
+                np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8),
+            ]
+        if obs_type == "historical_action":
+            self.action_list = []
+        if obs_type == "ram":
+            self.ram_buffer = []
 
         self.game_over = False
         self.lives = 0  # Will need to be set by reset().
@@ -105,12 +99,17 @@ class AtariPreprocessing(object):
     def observation_space(self):
         # Return the observation space adjusted to match the shape of the processed
         # observations.
-        return Box(
-            low=0,
-            high=255,
-            shape=(self.screen_size, self.screen_size, 1),
-            dtype=np.uint8,
-        )
+        if self.obs_type == "classic":
+            return Box(
+                low=0,
+                high=255,
+                shape=(128,),
+                dtype=np.uint8,
+            )
+        if self.obs_type == "historical_action":
+            return None
+        if self.obs_type == "ram":
+            return None
 
     @property
     def action_space(self):
@@ -130,14 +129,15 @@ class AtariPreprocessing(object):
     def apply_random_noops(self):
         """Steps self.environment with random no-ops."""
         if self.max_random_noops <= 0:
-            return
+            return self.environment.reset()
         # Other no-ops implementations actually always do at least 1 no-op. We
         # follow them.
         no_ops = self.environment.np_random.randint(1, self.max_random_noops + 1)
         for _ in range(no_ops):
-            _, _, game_over, _ = self.environment.step(0)
+            obs, _, game_over, _ = self.environment.step(0)
             if game_over:
-                self.environment.reset()
+                obs = self.environment.reset()
+        return obs
 
     def reset(self):
         """Resets the environment.
@@ -147,17 +147,21 @@ class AtariPreprocessing(object):
             environment.
         """
         self.environment.reset()
-        self.apply_random_noops()
+        obs = self.apply_random_noops()
 
         self.lives = self.environment.ale.lives()
-        self._fetch_grayscale_observation(self.screen_buffer[0])
-        self.screen_buffer[1].fill(0)
-        
-        self.action_list = []
 
-        # return self._pool_and_resize()
-
-        return self.action_list
+        if self.obs_type == "classic":
+            self._fetch_grayscale_observation(self.screen_buffer[0])
+            self.screen_buffer[1].fill(0)
+            return self._pool_and_resize()
+        if self.obs_type == "historical_action":
+            self.action_list = []
+            return self.action_list.copy()
+        if self.obs_type == "ram":
+            self.ram_buffer = []
+            self.ram_buffer.append(obs)
+            return self._compute()
 
     def render(self, mode):
         """Renders the current screen, before preprocessing.
@@ -205,7 +209,7 @@ class AtariPreprocessing(object):
         for time_step in range(self.frame_skip):
             # We bypass the Gym observation altogether and directly fetch the
             # grayscale image from the ALE. This is a little faster.
-            screen_snapshot, reward, game_over, info = self.environment.step(action)
+            snapshot, reward, game_over, info = self.environment.step(action)
             accumulated_reward += reward
 
             if self.terminal_on_life_loss:
@@ -219,16 +223,28 @@ class AtariPreprocessing(object):
                 break
             # We max-pool over the last two frames, in grayscale.
             elif time_step >= self.frame_skip - 2:
-                t = time_step - (self.frame_skip - 2)
-                self._fetch_grayscale_observation(self.screen_buffer[t])
+                if self.obs_type == "classic":
+                    t = time_step - (self.frame_skip - 2)
+                    self._fetch_grayscale_observation(self.screen_buffer[t])
+                if self.obs_type == "ram":
+                    if time_step >= self.frame_skip - 1:
+                        self.ram_buffer.append(snapshot)
 
         # Pool the last two observations.
-        # observation = self._pool_and_resize()
-        self.action_list.append(action)
-        observation = self.action_list
+        if self.obs_type == "classic":
+            observation = self._pool_and_resize()
+        if self.obs_type == "historical_action":
+            self.action_list.append(action)
+            observation = self.action_list.copy()
+        if self.obs_type == "ram":
+            observation = self._compute()
 
         self.game_over = game_over
         return observation, accumulated_reward, is_terminal, info
+
+    def _compute(self):
+        # return Funcs.matrix_hashing(self.ram_buffer)
+        return np.array(self.ram_buffer[-1])  # shape (128,)
 
     def _fetch_grayscale_observation(self, output):
         """Returns the current observation in grayscale.

@@ -12,6 +12,11 @@
     pip install -r requirements.txt
 
 
+## set GPU to EXCLUSIVE_PROCESS compute mode (optinal)
+
+    sudo nvidia-smi -i 0 -c EXCLUSIVE_PROCESS
+
+
 ## start cuda multi-process server (mps)
 
     nvidia-cuda-mps-control -d
@@ -31,6 +36,10 @@ or with python code
 or with python code
 
     os.popen("echo quit | nvidia-cuda-mps-control").close()
+
+## set GPU to DEFAULT compute mode (optinal)
+
+    sudo nvidia-smi -i 0 -c DEFAULT
 
 ## log explains:
 

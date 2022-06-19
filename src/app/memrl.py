@@ -87,6 +87,7 @@ class MemRL:
         # 1. init
         from src.module.agent.policy import Policy
         os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
+        os.popen("nvidia-cuda-mps-control -d").close()
 
         # 2. train
         policy = Policy(actor_learner_queues, learner_actor_queues, finish)
@@ -101,6 +102,7 @@ class MemRL:
             Funcs.trace_exception()
         finally:
             Logger.log("training finished")
+            os.popen("echo quit | nvidia-cuda-mps-control").close()
             finish.value = True
 
         # 3. parameterization
@@ -134,16 +136,16 @@ class MemRL:
     def create_env(render=False):
         if P.env_type == P.env_types[0]:
             from src.module.env.atari import Atari
-            return Atari.make_env(render)
+            return Atari.make_env(render, obs_type="classic")
         if P.env_type == P.env_types[1]:
+            from src.module.env.atari import Atari
+            return Atari.make_env(render, obs_type="historical_action")
+        if P.env_type == P.env_types[2]:
+            from src.module.env.atari import Atari
+            return Atari.make_env(render, obs_type="ram")
+        if P.env_type == P.env_types[3]:
             from src.module.env.atari_alternative import Atari
             return Atari.make_env(render)
-        if P.env_type == P.env_types[2]:
-            from src.module.env.atari_history_hash import Atari
-            return Atari.make_env(render)
-        if P.env_type == P.env_types[3]:
-            from src.module.env.atari_ram import AtariRam
-            return AtariRam.make_env(render)
         if P.env_type == P.env_types[4]:
             from src.module.env.simple_scene import SimpleScene
             return SimpleScene.make_env(render)
