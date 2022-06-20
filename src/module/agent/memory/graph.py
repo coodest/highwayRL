@@ -394,4 +394,5 @@ class Graph:
         self.main.crossing_node_action_update()
 
         # 3. draw graph (optinal)
-        self.draw_graph()
+        if P.draw_graph:
+            self.draw_graph()
