@@ -221,7 +221,6 @@ class Storage:
                     d[n] += [list(node_dict.keys())[0]]
                 else:
                     d[n] += list(node_dict.keys())
-
         return d
 
     def crossing_nodes(self):

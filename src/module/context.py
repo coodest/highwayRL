@@ -64,7 +64,7 @@ class Context:
     build_dag = False
     start_over = True  # break loop and start over for adj mat multification
     max_vp_iter = 500  # num or float("inf")
-    accessable_rate = 0.2  # minimum rate to treat a state is accessable
+    accessable_rate = 0  # minimum rate to treat a state is accessable
     draw_graph = True  # whether draw matplotlib figure for the graph
 
 
