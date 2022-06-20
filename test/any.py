@@ -1,3 +1,22 @@
+from src.module.context import Profile as P
+from src.util.tools import Logger, Funcs, IO
+
+
+class Test:
+    @staticmethod
+    def run_1():
+        from src.module.env.maze import Maze
+        env = Maze.make_env(True)
+        env.reset()
+        env.render()  # plot the maze
+        input()
+
+
+if __name__ == "__main__":
+    t = Test()
+    # table of content for testing
+    t.run_1()  # test graph gen. for maze env.
+
 # from ctypes import sizeof
 # from src.util.imports.numpy import np
 # from src.module.agent.memory.indexer import Indexer
@@ -571,6 +590,6 @@
 # -------------------------------------------------------------------
 # 
 
-from src.module.env. import Maze
-env = Maze.make_env()
-breakpoint()
+# from src.module.env. import Maze
+# env = Maze.make_env()
+# breakpoint()

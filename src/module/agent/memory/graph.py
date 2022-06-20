@@ -392,3 +392,6 @@ class Graph:
         
         # 2. update action of crossing obs
         self.main.crossing_node_action_update()
+
+        # 3. draw graph (optinal)
+        self.draw_graph()
