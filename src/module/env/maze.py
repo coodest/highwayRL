@@ -16,16 +16,22 @@ from src.util.tools import Funcs
 class Maze:
     @staticmethod
     def make_env(render=False):
-        # env = MazeEnvRandom100x100(enable_render=render)
         env = MazeEnv(
+            # for fixed mazes
+            # maze_file="assets/maze_files/maze2d_3x3.npy", 
+            # maze_file="assets/maze_files/maze2d_5x5.npy", 
+            maze_file="assets/maze_files/maze2d_10x10.npy", 
             # maze_file="assets/maze_files/maze2d_100x100.npy", 
-            maze_file=None, 
-            maze_size=(30, 30),
-            # maze_size=None,
-            enable_render=render
+            # for random mazes
+            # maze_file=None, 
+            # maze_size=(30, 30),
+            # modes
+            # mode="plus",
+            mode=None,
+            enable_render=render,
         )
         env.seed(2022)  # set seed to be deterministic
-        # env.max_episode_steps = (P.max_episode_steps,)
+        env.max_episode_steps = (P.max_episode_steps,)
 
         return env
 
@@ -84,7 +90,7 @@ class MazeEnv(gym.Env):
 
         # initial condition
         self.state = None
-        self.steps_beyond_done = None
+        self.steps = 0
 
         # Simulation related variables.
         self.seed()
@@ -118,6 +124,9 @@ class MazeEnv(gym.Env):
             done = False
 
         self.state = self.maze_view.robot
+        self.steps += 1
+        if self.steps > P.max_episode_steps:
+            done = True
 
         info = {}
 
@@ -126,7 +135,7 @@ class MazeEnv(gym.Env):
     def reset(self):
         self.maze_view.reset_robot()
         self.state = np.zeros(2)
-        self.steps_beyond_done = None
+        self.steps = 0
         self.done = False
         return tuple(self.state)
 

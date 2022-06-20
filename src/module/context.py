@@ -20,14 +20,14 @@ class Context:
     # env
     total_frames = 1e7  # default 1e7
     env_types = [
-        "atari_classic", 
-        "atari_historical_action",  # not support projectors
-        "atari_ram", 
-        "atari_alternative", 
-        "simple_scene", 
-        "maze"
+        "atari_classic",  # 0
+        "atari_historical_action",  # 1, not support projectors
+        "atari_ram",  # 2
+        "atari_alternative",  # 3
+        "simple_scene",  # 4
+        "maze"  # 5
     ]
-    env_type = env_types[2]
+    env_type = env_types[5]
     render = False  # whether test actor to render the env
     render_every = 5
     # atari
@@ -47,12 +47,17 @@ class Context:
     obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
     projected_dim = 8
     projected_hidden_dim = 32
-    use_hash_index = True
+    use_hash_index = False
     gamma = 0.99
     sync_every = log_every  # in second
     sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
-    projector_types = [None, "random", "cnn", "rnn"]
-    projector = projector_types[1]  # select None to disable random projection
+    projector_types = [
+        None,  # 0
+        "random",  # 1
+        "cnn",  # 2
+        "rnn",  # 3
+    ]
+    projector = projector_types[0]  # select None to disable random projection
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True
