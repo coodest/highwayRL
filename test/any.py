@@ -1,5 +1,5 @@
 from src.module.context import Profile as P
-from src.util.tools import Logger, Funcs, IO
+from src.util.tools import IO
 
 
 class Test:
@@ -12,14 +12,72 @@ class Test:
         input()
 
     @staticmethod
-    def build_graph():
+    def build_graph_test_auto(a=2, n=5, s=1, e=1, m=3):
         """
-        this section test the shrunk grpah building algorithm
+        this section test the shrunk grpah building algorithm:
+        1. auto gen traj.
+        1.1 assign n states (s start, and e end states, a actions)
+        1.2 random the list of the set
+        1.3 select the valid sub-sequence
+
+        2. sanity check of the built shrunk graph
+        2.1 build the graph using m traj.s
+        2.2 test the connectivities in the traj.s on the graph
         """
+        from src.module.agent.memory.graph import Graph
+        import random
+        random.seed(16)
+
+        IO.renew_dir(P.result_dir)
+
+        graph = Graph(id=0, is_head=True)
+        states = list(range(n))
+        actions = list(range(a))
+
+        starting_states = set()
+        while True:
+            if len(starting_states) < s:
+                starting_states.add(random.choice(states))
+            else:
+                break
+
+        ending_states = set()
+        while True:
+            if len(ending_states) < e:
+                end_state = random.choice(states)
+                if end_state not in starting_states:
+                    ending_states.add(end_state)
+            else:
+                break
+
+        for _ in range(m):
+            traj = []
+            cur_state = random.choice(list(starting_states))
+            cur_reward = 0
+            total_reward = 0
+            while True:
+                # cur_action = random.choice(actions)
+                next_state = random.choice(states)  # could be any state but ending_states
+                cur_action = next_state - cur_state 
+                traj.append([cur_state, cur_action, next_state, cur_reward])
+                cur_state = next_state
+                cur_reward = 0  # set all states zero-reward
+                total_reward += cur_reward
+
+                if next_state in ending_states:
+                    break
+            graph.store_inc(traj, total_reward)
+            print(traj)
+        
+        graph.merge_inc(graph.inc)
+        graph.post_process()
+        graph.draw_graph()
+
+
+    @staticmethod
+    def build_graph_test_manual():
 
         from src.module.agent.memory.graph import Graph
-        from src.module.context import Profile as P
-        from src.util.tools import IO
 
 
         IO.renew_dir(P.result_dir)
@@ -114,7 +172,8 @@ if __name__ == "__main__":
     test = Test()
     # testable of content for testing
     # test.plot_maze()  # test graph gen. for maze env.
-    test.build_graph()
+    # test.build_graph_test_manual()
+    test.build_graph_test_auto()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np
