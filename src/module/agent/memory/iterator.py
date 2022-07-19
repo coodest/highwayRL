@@ -62,7 +62,7 @@ class Iterator:
     def iterate(self, np_adj, np_rew, np_val_0):
         with torch.no_grad():
             # debug: limit the VRam size
-            torch.cuda.set_per_process_memory_fraction(0.5)
+            # torch.cuda.set_per_process_memory_fraction(0.5)
 
             adj = torch.from_numpy(np_adj).to(self.device)
             rew = torch.from_numpy(np_rew).to(self.device)
@@ -75,7 +75,7 @@ class Iterator:
 
                 mul = None
                 pro = None
-                divider = 3
+                divider = 1
                 while True:
                     try:
                         last_position = 0
