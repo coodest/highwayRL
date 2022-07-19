@@ -178,13 +178,16 @@ class Test:
 
         a.draw_graph()
         
+    def atari_test():
+        pass
 
 if __name__ == "__main__":
     test = Test()
     # testable of content for testing
     # test.plot_maze()  # test graph gen. for maze env.
     # test.build_graph_test_manual()
-    test.build_graph_test_auto()
+    # test.build_graph_test_auto()
+    test.atari_test()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

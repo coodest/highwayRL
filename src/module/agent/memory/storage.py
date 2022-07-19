@@ -177,13 +177,6 @@ class Storage:
                 node_reward_list[: step], 
                 [{crossing_node_ind: 1}]
             )
-
-        if not str(crossing_obs).startswith(str(self._node[crossing_node_ind][Storage._node_obs][0])):
-            raise Exception(f"obs not match, {crossing_obs} - {self._node[crossing_node_ind][Storage._node_obs][0]}")
-        if not str(crossing_obs).startswith(str(self._node[self._obs[crossing_obs][Storage._obs_node_ind]][Storage._node_obs][0])):
-            raise Exception(f"obs not match, {crossing_obs} - {self._node[crossing_node_ind][Storage._node_obs][0]}")
-        if not crossing_node_ind == self._obs[crossing_obs][Storage._obs_node_ind]:
-            raise Exception(f"_obs update failed, new {crossing_node_ind} - queue {self._obs[crossing_obs][Storage._obs_node_ind]} - origin {node_ind}")
         
         return crossing_node_ind
 
