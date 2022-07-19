@@ -96,30 +96,30 @@ class Test:
         a = Graph(0, True)
 
         traj1, traj1_tr = [
-            ["a0", 1, "a1", 5],
+            ["a0", 1, "a1", 0],
             ["a1", 1, "a2", 0],
             ["a2", 1, "a3", 0],
-            ["a3", 1, "a4", 0],
-            ["a4", 1, "a5", 3],
-            ["a5", 1, "a0", 2],
-        ], 10
-        # traj2, traj2_tr = [
-        #     ["b0", 2, "b1", 0],
-        #     ["b1", 2, "a2", 0],
-        #     ["a2", 2, "b3", 0],
-        #     ["b3", 2, "b4", 0],
-        #     ["b4", 2, "b5", 1],
-        #     ["b5", 2, "b6", 0],
-        # ], 1
-        # traj3, traj3_tr = [
-        #     ["c0", 3, "c1", 0],
-        #     ["c1", 3, "b5", 1],
-        #     ["b5", 3, "c3", 0],
-        #     ["c3", 3, "c4", 0],
-        #     ["c4", 3, "a4", 0],
-        #     ["a4", 3, "c6", 0],
-        #     ["c6", 3, "c7", 1],
-        # ], 2
+            ["a3", 1, "a4", 4],
+            ["a4", 1, "a5", 0],
+            ["a5", 1, "a6", 5],
+        ], 9
+        traj2, traj2_tr = [
+            ["b0", 2, "b1", 0],
+            ["b1", 2, "a2", 0],
+            ["a2", 2, "b3", 0],
+            ["b3", 2, "b4", 2],
+            ["b4", 2, "b5", 0],
+            ["b5", 2, "b6", 0],
+        ], 2
+        traj3, traj3_tr = [
+            ["c0", 3, "c1", 0],
+            ["c1", 3, "b5", 0],
+            ["b5", 3, "c3", 0],
+            ["c3", 3, "c4", 0],
+            ["c4", 3, "a4", 0],
+            ["a4", 3, "c6", 0],
+            ["c6", 3, "c7", 3],
+        ], 3
 
         # traj4, traj4_tr = [
         #     ["d0", 4, "d1", 1],
@@ -148,8 +148,8 @@ class Test:
         # ], 0
 
         a.store_inc(traj1, traj1_tr)
-        # a.store_inc(traj2, traj2_tr)
-        # a.store_inc(traj3, traj3_tr)
+        a.store_inc(traj2, traj2_tr)
+        a.store_inc(traj3, traj3_tr)
 
         # a.store_inc(traj4, traj4_tr)  # loop
         # a.store_inc(traj5, traj5_tr)  # loop
@@ -161,21 +161,19 @@ class Test:
         nodes = a.main._node
 
         for i in nodes:
-            ind = i
             obs, action, reward, next, value = nodes[i]
-            print(f"node:{ind} obs:{obs} action:{action} reward:{reward} next:{next} value:{value}")
+            print(f"node:{i} obs:{obs} action:{action} reward:{reward} next:{next} value:{value}")
 
         a.post_process()
         print("------------------------")
 
         for i in nodes:
-            ind = i
             obs, action, reward, next, value = nodes[i]
-            print(f"node:{ind} obs:{obs} action:{action} reward:{reward} next:{next} value:{value}")
+            print(f"node:{i} obs:{obs} action:{action} reward:{reward} next:{next} value:{value}")
 
         print("------------------------")
         for obs in ["a2", "b5", "a4"]:
-            print(a.get_action(obs))
+            print(a.get_action(obs))  # should be 2, 3, 1
 
         a.draw_graph()
 
@@ -185,10 +183,19 @@ class Test:
         import numpy as np
 
         iterator = Iterator(0)
-        n = 10000
-        np_adj = np.ones([n, n], dtype=np.int8)
-        np_rew = np.random.random([1, n], dtype=np.float32)
-        np_val_0 = np.random.random([1, n], dtype=np.float32)
+        n = 10
+
+        np.random.seed(1)
+        np_adj = np.random.random([n, n])
+        np.random.seed(2)
+        np_rew = np.random.random([n])
+        np.random.seed(3)
+        np_val_0 = np.random.random([n])
+
+        np_adj = np.int8(np.round(np_adj))
+        np_rew = np.float32(np_rew)
+        np_val_0 = np.float32(np_val_0)
+
         iterator.iterate(np_adj, np_rew, np_val_0)
         
 

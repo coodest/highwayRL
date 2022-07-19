@@ -61,6 +61,9 @@ class Iterator:
     
     def iterate(self, np_adj, np_rew, np_val_0):
         with torch.no_grad():
+            # debug: limit the VRam size
+            torch.cuda.set_per_process_memory_fraction(0.5)
+
             adj = torch.from_numpy(np_adj).to(self.device)
             rew = torch.from_numpy(np_rew).to(self.device)
             val = torch.from_numpy(np_val_0).to(self.device)
@@ -70,32 +73,38 @@ class Iterator:
                 iters += 1
                 last_val = val
 
-                divide = 2
+                mul = None
+                pro = None
+                divider = 3
                 while True:
                     try:
                         last_position = 0
-                        divided_len = int(len(adj) / divide)
+                        divided_len = int(len(adj) / divider)
                         mul = torch.tensor([], dtype=val.dtype, device=val.device)
                         while True:
-                            breakpoint()
-                            mul = torch.concat([mul, adj[last_position:last_position + divided_len] * val])
+                            pro = torch.max(adj[last_position:last_position + divided_len] * val, dim=1).values
+                            mul = torch.concat([mul, pro])
                             last_position += divided_len
                             if last_position + divided_len > len(adj):
-                                mul = torch.concat([mul, adj[last_position:] * val])
+                                if last_position < len(adj):
+                                    pro = torch.max(adj[last_position:] * val, dim=1).values
+                                    mul = torch.concat([mul, pro])
                                 break
                         break
                     except RuntimeError:
-                        divide *= 2
+                        mul = None
+                        pro = None
+                        divider *= 2
 
-                exit(0)
-                val = torch.max(mul, dim=1).values * P.gamma + rew
+                val = mul * P.gamma + rew
                 if torch.sum(last_val - val) == 0:
                     break
-            Logger.log(f"learner value propagation iters: {iters}", color="yellow")
+            
+            Logger.log(f"learner value propagation: {iters} iters * {divider} batch", color="yellow")
             result = val.cpu().detach().numpy().tolist()
 
             # release resorces
-            del adj, rew, val, last_val
+            del adj, rew, val, last_val, mul
             torch.cuda.empty_cache()
 
         return result

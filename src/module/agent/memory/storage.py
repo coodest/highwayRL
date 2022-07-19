@@ -59,7 +59,7 @@ class Storage:
         return self._node[node][Storage._node_value]
 
     def node_update(self, node_ind: int, obs: list, actions: list, reward: list, next: list):
-        node_value = sum(reward)
+        node_value = sum(reward)  # TODO: do we need to consider the discount factor within the sequence
         self._node[node_ind] = [obs, actions, reward, next, node_value]
         # add or update obs
         for ind, o in enumerate(obs):
