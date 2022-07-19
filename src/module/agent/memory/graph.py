@@ -233,6 +233,16 @@ class Graph:
     def save_graph(self):
         IO.write_disk_dump(P.optimal_graph_path, self.main)
 
+    def sanity_check(self):
+        visited = dict()
+        for obs in self.main._obs.keys():
+            if obs in visited:
+                if self.main._obs[obs][Storage._obs_node_ind] != visited[obs]:
+                    raise Exception("single obs belongs to multiple nodes")
+            else:
+                visited[obs] = self.main._obs[obs][Storage._obs_node_ind]  # node id
+        Logger.log("graph sanity check passed.", color="yellow")
+
     def get_action(self, obs):
         if self.main.obs_exist(obs):
             return self.main.obs_action(obs)
@@ -396,3 +406,6 @@ class Graph:
         # 3. draw graph (optinal)
         if P.draw_graph:
             self.draw_graph()
+
+        if P.graph_sanity_check:
+            self.sanity_check()

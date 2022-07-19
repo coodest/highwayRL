@@ -27,7 +27,7 @@ class Context:
         "simple_scene",  # 4
         "maze"  # 5
     ]
-    env_type = env_types[5]
+    env_type = env_types[0]
     render = False  # whether test actor to render the env
     render_every = 5
     # atari
@@ -47,7 +47,7 @@ class Context:
     obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
     projected_dim = 8
     projected_hidden_dim = 32
-    use_hash_index = False
+    use_hash_index = True
     gamma = 0.99
     sync_every = log_every  # in second
     sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
@@ -65,7 +65,8 @@ class Context:
     start_over = True  # break loop and start over for adj mat multification
     max_vp_iter = 500  # num or float("inf")
     accessable_rate = 0  # minimum rate to treat a state is accessable
-    draw_graph = True  # whether draw matplotlib figure for the graph
+    draw_graph = False  # whether draw matplotlib figure for the graph
+    graph_sanity_check = True
 
 
 class Profile(Context):

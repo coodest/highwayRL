@@ -63,10 +63,6 @@ class Storage:
         self._node[node_ind] = [obs, actions, reward, next, node_value]
         # add or update obs
         for ind, o in enumerate(obs):
-            if o in self._crossing_nodes:  # to check the existence of multi-node obs
-                if self._obs[o][Storage._obs_node_ind] != node_ind:
-                    Logger.log("multi-node with same obs detected, crossing_node conflict")
-                    exit(0)
             # list object reduces a lot mem comsuption
             self._obs[o] = [node_ind, ind]
 
@@ -93,7 +89,7 @@ class Storage:
         self.node_update(node_ind, obs, action, reward, next)
         return node_ind
             
-    def node_split(self, crossing_obs: str, reward=None) -> int:
+    def node_split(self, crossing_obs, reward=None) -> int:
         """
         split of the shrunk node
         """
@@ -182,10 +178,12 @@ class Storage:
                 [{crossing_node_ind: 1}]
             )
 
-        # NOTE: obs of different shrunk nodes may have the same obs in any crossing node, one obs may stored in many different nodes.
-        # assert str(crossing_obs).startswith(self._node[crossing_node_ind][Storage._node_obs][0]), f"obs not match, {crossing_obs} - {self._node[crossing_node_ind][Storage._node_obs][0]}"
-        # assert str(crossing_obs).startswith(self._node[self._obs[crossing_obs][Storage._obs_node_ind]][Storage._node_obs][0]), f"obs not match, {crossing_obs} - {self._node[crossing_node_ind][Storage._node_obs][0]}"
-        # assert crossing_node_ind == self._obs[crossing_obs][Storage._obs_node_ind], f"_obs update failed, new {crossing_node_ind} - queue {self._obs[crossing_obs][Storage._obs_node_ind]} - origin {node_ind}"
+        if not str(crossing_obs).startswith(str(self._node[crossing_node_ind][Storage._node_obs][0])):
+            raise Exception(f"obs not match, {crossing_obs} - {self._node[crossing_node_ind][Storage._node_obs][0]}")
+        if not str(crossing_obs).startswith(str(self._node[self._obs[crossing_obs][Storage._obs_node_ind]][Storage._node_obs][0])):
+            raise Exception(f"obs not match, {crossing_obs} - {self._node[crossing_node_ind][Storage._node_obs][0]}")
+        if not crossing_node_ind == self._obs[crossing_obs][Storage._obs_node_ind]:
+            raise Exception(f"_obs update failed, new {crossing_node_ind} - queue {self._obs[crossing_obs][Storage._obs_node_ind]} - origin {node_ind}")
         
         return crossing_node_ind
 

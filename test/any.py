@@ -12,7 +12,7 @@ class Test:
         input()
 
     @staticmethod
-    def build_graph_test_auto(a=2, n=5, s=1, e=1, m=3):
+    def build_graph_test_auto(a=2, n=5, s=1, e=1, m=3, seed_range=[0, 20]):
         """
         this section test the shrunk grpah building algorithm:
         1. auto gen traj.
@@ -26,52 +26,56 @@ class Test:
         """
         from src.module.agent.memory.graph import Graph
         import random
-        random.seed(16)
 
-        IO.renew_dir(P.result_dir)
+        for seed in range(seed_range[0], seed_range[1]):
+            random.seed(seed)
+            print(f"seed: {seed}")
 
-        graph = Graph(id=0, is_head=True)
-        states = list(range(n))
-        actions = list(range(a))
+            IO.renew_dir(P.result_dir)
 
-        starting_states = set()
-        while True:
-            if len(starting_states) < s:
-                starting_states.add(random.choice(states))
-            else:
-                break
+            graph = Graph(id=0, is_head=True)
+            states = list(range(n))
+            actions = list(range(a))
 
-        ending_states = set()
-        while True:
-            if len(ending_states) < e:
-                end_state = random.choice(states)
-                if end_state not in starting_states:
-                    ending_states.add(end_state)
-            else:
-                break
-
-        for _ in range(m):
-            traj = []
-            cur_state = random.choice(list(starting_states))
-            cur_reward = 0
-            total_reward = 0
+            starting_states = set()
             while True:
-                # cur_action = random.choice(actions)
-                next_state = random.choice(states)  # could be any state but ending_states
-                cur_action = next_state - cur_state 
-                traj.append([cur_state, cur_action, next_state, cur_reward])
-                cur_state = next_state
-                cur_reward = 0  # set all states zero-reward
-                total_reward += cur_reward
-
-                if next_state in ending_states:
+                if len(starting_states) < s:
+                    starting_states.add(random.choice(states))
+                else:
                     break
-            graph.store_inc(traj, total_reward)
-            print(traj)
+
+            ending_states = set()
+            while True:
+                if len(ending_states) < e:
+                    end_state = random.choice(states)
+                    if end_state not in starting_states:
+                        ending_states.add(end_state)
+                else:
+                    break
+
+            for _ in range(m):
+                traj = []
+                cur_state = random.choice(list(starting_states))
+                cur_reward = 0
+                total_reward = 0
+                while True:
+                    # cur_action = random.choice(actions)
+                    next_state = random.choice(states)  # could be any state but ending_states
+                    cur_action = next_state - cur_state 
+                    traj.append([cur_state, cur_action, next_state, cur_reward])
+                    cur_state = next_state
+                    cur_reward = 0  # set all states zero-reward
+                    total_reward += cur_reward
+
+                    if next_state in ending_states:
+                        break
+                graph.store_inc(traj, total_reward)
+                # print(traj)
         
-        graph.merge_inc(graph.inc)
-        graph.post_process()
-        graph.draw_graph()
+            graph.merge_inc(graph.inc)
+            graph.post_process()
+            graph.draw_graph()
+            graph.sanity_check()
 
 
     @staticmethod
