@@ -63,7 +63,7 @@ class Context:
     statistic_crossing_obs = True
     build_dag = False
     start_over = True  # break loop and start over for adj mat multification
-    max_vp_iter = 3  # num or float("inf")
+    max_vp_iter = 100  # num or float("inf")
     accessable_rate = 0  # minimum rate to treat a state is accessable
     draw_graph = False  # whether draw matplotlib figure for the graph
     graph_sanity_check = True
