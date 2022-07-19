@@ -1,3 +1,4 @@
+from re import I
 from src.module.context import Profile as P
 from src.util.tools import IO
 
@@ -177,10 +178,19 @@ class Test:
             print(a.get_action(obs))
 
         a.draw_graph()
+
+    @staticmethod 
+    def vp_test():
+        from src.module.agent.memory.iterator import Iterator
+        import numpy as np
+
+        iterator = Iterator(0)
+        n = 10000
+        np_adj = np.ones([n, n], dtype=np.int8)
+        np_rew = np.random.random([1, n], dtype=np.float32)
+        np_val_0 = np.random.random([1, n], dtype=np.float32)
+        iterator.iterate(np_adj, np_rew, np_val_0)
         
-    def atari_test():
-        from src.module.env.atari import Atari
-        env = Atari.make_env(False, obs_type="classic")
 
 
 if __name__ == "__main__":
@@ -188,8 +198,8 @@ if __name__ == "__main__":
     # testable of content for testing
     # test.plot_maze()  # test graph gen. for maze env.
     # test.build_graph_test_manual()
-    test.build_graph_test_auto()
-    # test.atari_test()
+    # test.build_graph_test_auto()
+    test.vp_test()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

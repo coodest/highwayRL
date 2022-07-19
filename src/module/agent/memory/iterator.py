@@ -69,7 +69,26 @@ class Iterator:
             while iters < P.max_vp_iter:
                 iters += 1
                 last_val = val
-                val = torch.max(adj * val, dim=1).values * P.gamma + rew
+
+                divide = 2
+                while True:
+                    try:
+                        last_position = 0
+                        divided_len = int(len(adj) / divide)
+                        mul = torch.tensor([], dtype=val.dtype, device=val.device)
+                        while True:
+                            breakpoint()
+                            mul = torch.concat([mul, adj[last_position:last_position + divided_len] * val])
+                            last_position += divided_len
+                            if last_position + divided_len > len(adj):
+                                mul = torch.concat([mul, adj[last_position:] * val])
+                                break
+                        break
+                    except RuntimeError:
+                        divide *= 2
+
+                exit(0)
+                val = torch.max(mul, dim=1).values * P.gamma + rew
                 if torch.sum(last_val - val) == 0:
                     break
             Logger.log(f"learner value propagation iters: {iters}", color="yellow")
