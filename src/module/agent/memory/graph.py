@@ -240,7 +240,19 @@ class Graph:
                 if self.main._obs[obs][Storage._obs_node_ind] != visited[obs]:
                     raise Exception("single obs belongs to multiple nodes")
             else:
-                visited[obs] = self.main._obs[obs][Storage._obs_node_ind]  # node id
+                visited[obs] = self.main._obs[obs][Storage._obs_node_ind]  # node idrandom.choice(list(starting_states))
+        
+        stochastic_states = defaultdict(list)  # state single action forks
+        for node in self.main._node:
+            for action, next in enumerate(self.main._node[node][Storage._node_next]):
+                forks = len(next)
+                if forks > 1:
+                    stochastic_states[forks].append([action, next])
+        num_stochastic_states = len(stochastic_states.keys())
+        if len(stochastic_states.keys()) > 0:
+            Logger.log(f"number of stochastic states: {num_stochastic_states}", color="yellow")
+            return
+            
         Logger.log("graph sanity check passed.", color="yellow")
 
     def get_action(self, obs):

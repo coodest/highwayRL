@@ -87,9 +87,9 @@ class MemRL:
         # 1. init
         from src.module.agent.policy import Policy
         os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
-        os.popen("nvidia-cuda-mps-control -d").close()
 
         # 2. train
+        Funcs.run_cmd("nvidia-cuda-mps-control -d", 2)
         policy = Policy(actor_learner_queues, learner_actor_queues, finish)
         try:  # sub-process exception detection
             optimal_graph = policy.train()  # tain the policy
@@ -101,9 +101,9 @@ class MemRL:
         except Exception:
             Funcs.trace_exception()
         finally:
-            Logger.log("training finished")
-            os.popen("echo quit | nvidia-cuda-mps-control").close()
             finish.value = True
+            Logger.log("training finished")
+        Funcs.run_cmd("echo quit | nvidia-cuda-mps-control", 2)
 
         # 3. parameterization
         try:  # sub-process exception detection

@@ -21,10 +21,6 @@
 
     nvidia-cuda-mps-control -d
 
-or with python code
-
-    os.popen("nvidia-cuda-mps-control -d").close()
-
 ## run the code locally
 
     ./run.sh
@@ -32,10 +28,6 @@ or with python code
 ## stop cuda multi-process server (mps)
 
     echo quit | nvidia-cuda-mps-control
-
-or with python code
-
-    os.popen("echo quit | nvidia-cuda-mps-control").close()
 
 ## set GPU to DEFAULT compute mode (optinal)
 

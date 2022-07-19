@@ -10,6 +10,8 @@ from src.util.imports.numpy import np
 import psutil
 import pytz
 from pathlib import Path
+import subprocess
+import signal 
 # import rich
 
 
@@ -241,6 +243,21 @@ class Funcs:
         :return: the hashed str
         """
         return hashlib.sha256(np.array(obs)).hexdigest()
+    
+    @staticmethod
+    def run_cmd(command, timeout=60):
+        cmd = command.split(" ") 
+        start = datetime.datetime.now() 
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+        while process.poll() is None: 
+            time.sleep(0.2) 
+            now = datetime.datetime.now() 
+            if (now - start).seconds > timeout: 
+                os.kill(process.pid, signal.SIGKILL) 
+                os.waitpid(-1, os.WNOHANG) 
+                return None 
+        return process.stdout.readlines() 
+
 
 
 class IO:
