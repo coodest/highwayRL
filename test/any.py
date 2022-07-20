@@ -13,8 +13,8 @@ class Test:
         input()
 
     @staticmethod
-    # def build_graph_test_auto(a=2, n=5, s=1, e=1, m=3, seed_range=[0, 20]):
-    def build_graph_test_auto(a=5, n=50, s=5, e=7, m=30, seed_range=[0, 300]):
+    def build_graph_test_auto(a=2, n=5, s=1, e=1, m=3, seed_range=[0, 20]):
+    # def build_graph_test_auto(a=5, n=50, s=5, e=7, m=30, seed_range=[0, 300]):
         """
         a: num actions
         n: total sates
@@ -205,8 +205,8 @@ if __name__ == "__main__":
     # testable of content for testing
     # test.plot_maze()  # test graph gen. for maze env.
     # test.build_graph_test_manual()
-    # test.build_graph_test_auto()
-    test.vp_test()
+    test.build_graph_test_auto()
+    # test.vp_test()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

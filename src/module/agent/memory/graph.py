@@ -249,11 +249,7 @@ class Graph:
                 if forks > 1:
                     stochastic_states[forks].append([action, next])
         num_stochastic_states = len(stochastic_states.keys())
-        if len(stochastic_states.keys()) > 0:
-            Logger.log(f"number of stochastic states: {num_stochastic_states}", color="yellow")
-            return
-            
-        Logger.log("graph sanity check passed.", color="yellow")
+        Logger.log(f"number of stochastic states: {num_stochastic_states}", color="yellow")
 
     def get_action(self, obs):
         if self.main.obs_exist(obs):

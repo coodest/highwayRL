@@ -99,12 +99,10 @@ class Iterator:
                 val = mul * P.gamma + rew
                 if torch.sum(last_val - val) == 0:
                     break
-            
-            Logger.log(f"learner value propagation: {iters} iters * {divider} batch", color="yellow")
             result = val.cpu().detach().numpy().tolist()
 
             # release resorces
             del adj, rew, val, last_val, mul
             torch.cuda.empty_cache()
 
-        return result
+        return result, iters, divider

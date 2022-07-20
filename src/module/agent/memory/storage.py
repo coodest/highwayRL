@@ -190,16 +190,25 @@ class Storage:
         adj = np.zeros([total_nodes, total_nodes], dtype=np.int8)
         rew = np.zeros([total_nodes], dtype=np.float32)
         val_0 = np.zeros([total_nodes], dtype=np.float32)
+        colume_sum = np.zeros([total_nodes], dtype=np.int8)
         for node in self._node:
             rew[node] = sum(self._node[node][Storage._node_reward])
             val_0[node] = self._node[node][Storage._node_value]
             for n in self.node_next_accessable(node):
                 adj[node][n] = 1
+                colume_sum[n] += 1
+        m1 = (np.sum(np.where(colume_sum > 1, 1, 0)) / total_nodes) * 100
+        m5 = (np.sum(np.where(colume_sum > 5, 1, 0)) / total_nodes) * 100
+        m10 = (np.sum(np.where(colume_sum > 10, 1, 0)) / total_nodes) * 100
+        # to dertermine the graph memory is more like a graph or more like a tree
+        # all 0% means it is a tree
+        Logger.log(f"{m1:>4.1f}%|{m5:>4.1f}%|{m10:>4.1f}% nodes with >1|>5|>10 merging trails", color="yellow")  
         
         # value propagation
         if P.build_dag:
             adj = adj - self.iterator.build_dag(adj)
-        val_n = self.iterator.iterate(adj, rew, val_0)
+        val_n, iters, divider = self.iterator.iterate(adj, rew, val_0)
+        Logger.log(f"learner value propagation: {iters} iters * {divider} batch", color="yellow")
         for ind, val in enumerate(val_n):
             self._node[ind][Storage._node_value] = val
 
