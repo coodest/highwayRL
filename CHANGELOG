@@ -1,3 +1,4 @@
+220721 fix graph building: new edge in the same node; current traj. crossing step correction; remove dynamic e-greedy
 220720 add graph-shape statistic
 220719 add auto batch division for vp on very large graphs
 220719 graph sanity check and cmd block fixed

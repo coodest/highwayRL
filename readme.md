@@ -43,6 +43,8 @@
     210627103619 6896 9987 evl_actor R: 1100.00 Fps: 2126.5 H: 100.0% L: 1296/1296
     210627103621 6896 9987 evl_actor R: 1100.00 Fps: 2061.7 H: 100.0% L: 1296/1296
 
-## To remove __pycache__
+each result of the testing actor just after the graph update should be ignored since the graph used for action generation is altered during this episode.
+
+## To remove `__pycache__`
 
     find . -type d -name __pycache__ -exec rm -r {} \+

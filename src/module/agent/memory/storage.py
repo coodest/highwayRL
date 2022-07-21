@@ -59,7 +59,7 @@ class Storage:
         return self._node[node][Storage._node_value]
 
     def node_update(self, node_ind: int, obs: list, actions: list, reward: list, next: list):
-        node_value = sum(reward)  # TODO: do we need to consider the discount factor within the sequence
+        node_value = sum(reward)  # node is treated as a whole and discount factor is not considerred within the node
         self._node[node_ind] = [obs, actions, reward, next, node_value]
         # add or update obs
         for ind, o in enumerate(obs):
@@ -88,6 +88,11 @@ class Storage:
         node_ind = self.node_next_ind()
         self.node_update(node_ind, obs, action, reward, next)
         return node_ind
+
+    def node_print(self):
+        for i in self._node:
+            obs, action, reward, next, value = self._node[i]
+            Logger.log(f"{'Cnode' if i in self._crossing_nodes else 'Rnode'}:{i} obs:{obs} action:{action} reward:{reward} next:{next} value:{value}")
             
     def node_split(self, crossing_obs, reward=None) -> int:
         """
@@ -108,8 +113,11 @@ class Storage:
         node_next_list = self._node[node_ind][Storage._node_next]
         node_length = len(node_obs_list)
 
-        # 3. existing crossing node, do nothing
-        if node_length <= 1:  
+        # 3. existing node
+        if node_length <= 1:
+            if node_ind not in self._crossing_nodes:
+                # convert non-splittable road node to crossing node
+                self._crossing_nodes.add(node_ind)
             return node_ind
 
         # 4. node split
@@ -212,7 +220,7 @@ class Storage:
         for ind, val in enumerate(val_n):
             self._node[ind][Storage._node_value] = val
 
-    def node_connection_dict(self, deterministic=True):
+    def node_connection_dict(self, deterministic=False):
         d = defaultdict(list)
         for n in self._node:
             node_dict_list = self._node[n][Storage._node_next]
@@ -227,9 +235,10 @@ class Storage:
         return self._crossing_nodes
 
     def crossing_node_add_action(self, node_ind: int, action: int, next_node_ind: int) -> None:
-        try:
-            # index() may raise ValueError if action is not in the list
-            ind = self._node[node_ind][Storage._node_action][0].index(action)  # corssing node only has one obs and one action list
+        # corssing node only has one obs and one action list
+        crossing_node_action_list = self._node[node_ind][Storage._node_action][0]
+        if action in crossing_node_action_list:
+            ind = crossing_node_action_list.index(action)  
             node_dict = self._node[node_ind][Storage._node_next][ind]
             if next_node_ind in node_dict:
                 # existing action and next node
@@ -237,7 +246,7 @@ class Storage:
             else:
                 # env may (near) stochastical OR conflict obs from different states exist
                 node_dict[next_node_ind] = 1
-        except ValueError:
+        else:
             # add action if not exist
             self._node[node_ind][Storage._node_action][0].append(action)
             self._node[node_ind][Storage._node_next].append({next_node_ind: 1})

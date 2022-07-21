@@ -17,7 +17,7 @@ class Actor:
         self.actor_learner_queue = actor_learner_queue
         self.learner_actor_queues = learner_actor_queues
         self.episodic_reward = deque(maxlen=10)
-        self.p = 1
+        self.p = (P.e_greedy[1] - P.e_greedy[0]) / (P.num_actor - 1) * self.id + P.e_greedy[0]
         self.hit = None
             
     def is_testing_actor(self):
@@ -108,9 +108,5 @@ class Actor:
                             len(self.hit),
                             str(proj_index_init_obs)[-4:]
                         ))
-                    else:
-                        # update e_greed prob for training actors
-                        self.p = Funcs.rand_prob() * (P.e_greedy[1] - P.e_greedy[0]) + P.e_greedy[0]
-
                     break
             self.num_episode += 1

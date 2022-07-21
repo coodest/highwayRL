@@ -242,14 +242,24 @@ class Graph:
             else:
                 visited[obs] = self.main._obs[obs][Storage._obs_node_ind]  # node idrandom.choice(list(starting_states))
         
-        stochastic_states = defaultdict(list)  # state single action forks
+        stochastic_nodes = defaultdict(list)  # state single action forks
         for node in self.main._node:
-            for action, next in enumerate(self.main._node[node][Storage._node_next]):
+            action_list = self.main._node[node][Storage._node_action][-1]
+            for action_iond, next in enumerate(self.main._node[node][Storage._node_next]):
                 forks = len(next)
                 if forks > 1:
-                    stochastic_states[forks].append([action, next])
-        num_stochastic_states = len(stochastic_states.keys())
-        Logger.log(f"number of stochastic states: {num_stochastic_states}", color="yellow")
+                    assert node in self.main.crossing_nodes(), "road node with crossing states did not convert to crossing node"
+                    stochastic_nodes[node].append([action_list[action_iond], next])
+        num_stochastic_nodes = len(stochastic_nodes.keys())
+        Logger.log(f"number of stochastic nodes: {num_stochastic_nodes}", color="yellow")
+        count = 0
+        for sn in stochastic_nodes:
+            Logger.log(f"sto. node {sn}: {stochastic_nodes[sn]}", color="yellow")
+            count += 1
+            if count > 4:
+                if len(stochastic_nodes) > 5:
+                    Logger.log("...", color="yellow")
+                break
 
     def get_action(self, obs):
         if self.main.obs_exist(obs):
@@ -297,7 +307,7 @@ class Graph:
         merger increments to main store by the head process
         """
         # 1. build graph structure
-        for traj in inc.trajs():
+        for traj_ind, traj in enumerate(inc.trajs()):
             # 1.1 find all crossing obs in current traj
             crossing_steps = dict()
             obs_to_steps = defaultdict(list)
@@ -318,13 +328,31 @@ class Graph:
                         crossing_steps[step] = last_obs
                     if obs_in_graph == 1:
                         crossing_steps[step + 1] = obs
-                if last_obs_in_graph + obs_in_graph == 2:  # between two existing traj.
+                if last_obs_in_graph + obs_in_graph == 2:  # between two existing non-adjacent states.
+                    # between two node
                     from_node = self.main.obs_node_ind(last_obs)
                     to_node = self.main.obs_node_ind(obs)
+                    from_node_pos = self.main._node[from_node][Storage._node_obs].index(last_obs)
+                    to_node_pos = self.main._node[to_node][Storage._node_obs].index(obs)
                     if from_node != to_node:
-                        crossing_steps[step] = last_obs
-                        crossing_steps[step + 1] = obs
-                
+                        to_node_in_next = False
+                        for n in self.main._node[from_node][Storage._node_next]:
+                            if to_node in n:
+                                to_node_in_next = True
+                        # if traj_ind == 2 and step > 4:
+                        #     breakpoint()
+                        if not to_node_in_next:
+                            crossing_steps[step] = last_obs
+                            crossing_steps[step + 1] = obs
+                        elif from_node_pos < len(self.main._node[from_node][Storage._node_obs]) - 1:  # not the last state
+                            crossing_steps[step] = last_obs
+                            crossing_steps[step + 1] = obs
+                    # within one node
+                    else:
+                        if from_node_pos != to_node_pos - 1:  # self-loop of existing crossing node will also be added
+                            crossing_steps[step] = last_obs
+                            crossing_steps[step + 1] = obs
+
                 # 1.2.2 add exising crossing obs, new traj. need to consider previously detected crossing_obs
                 if self.main.obs_is_crossing(last_obs):
                     crossing_steps[step] = last_obs
@@ -333,7 +361,10 @@ class Graph:
 
                 # 1.1.3 find crossing obs for self loops in current traj.
                 # map obs to list of steps
-                obs_to_steps[last_obs].append(step)
+                if step not in obs_to_steps[last_obs]:
+                    obs_to_steps[last_obs].append(step)
+                if step + 1 not in obs_to_steps[obs]:
+                    obs_to_steps[obs].append(step + 1)
 
                 if last_obs not in past_obs:
                     last_obs_in_past = 0
@@ -346,7 +377,7 @@ class Graph:
                 
                 # add new crossing obs
                 crossing = []
-                if last_obs_in_past + obs_in_past == 1:  # leave or enter the past traj.
+                if last_obs_in_past + obs_in_past == 1:  # leave or enter the past traj, self-loop included.
                     if last_obs_in_past == 1:
                         crossing.append(last_obs)
                     if obs_in_past == 1:
@@ -358,6 +389,7 @@ class Graph:
                         crossing.append(last_obs)
                         crossing.append(obs)
 
+                # add/update all corssing steps of all crossing states
                 for o in crossing:
                     for cs in obs_to_steps[o]:
                         if cs not in crossing_steps:
