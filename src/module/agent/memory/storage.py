@@ -75,7 +75,7 @@ class Storage:
         for node_dict in node_dict_list:
             total_visit = sum(node_dict.values())
             for n in node_dict:
-                if node_dict[n] / total_visit > P.accessable_rate:
+                if node_dict[n] / total_visit > P.min_accessable_prob:
                     if n is not None:  # remove the end of the traj.
                         next_nodes.append(n)
         return next_nodes
@@ -262,7 +262,7 @@ class Storage:
                 for node in node_dict:
                     if node is not None:  # filter traj. end
                         prob = node_dict[node] / total_visit
-                        if prob <= P.accessable_rate:  # filter low prob trail and fake trail (conflict obs)
+                        if prob <= P.min_accessable_prob:  # filter low prob trail and fake trail (conflict obs)
                             continue
                         node_value = self._node[node][Storage._node_value]
                         if np.isnan(node_value):
@@ -283,7 +283,7 @@ class Storage:
             if target_ind is None:  
                 continue
             
-            # make pointer to the lists
+            # move the best action to the head of the lists
             node_action_list = self._node[crossing_node_ind][Storage._node_action][0]  # crossing node only has one list for one obs
             node_next_list = self._node[crossing_node_ind][Storage._node_next]
 

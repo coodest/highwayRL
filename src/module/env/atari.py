@@ -10,11 +10,9 @@ import cv2
 class Atari:
     @staticmethod
     def make_env(render=False, obs_type=None):
-        if obs_type == "classic":
-            env = gym.make("{}Deterministic-v4".format(P.env_name), full_action_space=True)
-            # env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
-        if obs_type == "historical_action":
-            env = gym.make("{}Deterministic-v4".format(P.env_name), full_action_space=True)
+        if obs_type in ["classic", "historical_action"]:
+            # env = gym.make("{}Deterministic-v4".format(P.env_name), full_action_space=True)
+            env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
         if obs_type == "ram":
             env = gym.make("{}-ram-v4".format(P.env_name), full_action_space=True)
 
