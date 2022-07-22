@@ -27,7 +27,7 @@ class Context:
         "simple_scene",  # 4
         "maze"  # 5
     ]
-    env_type = env_types[0]
+    env_type = env_types[3]
     render = False  # whether test actor to render the env
     render_every = 5
     # atari
@@ -36,7 +36,9 @@ class Context:
     max_episode_steps = 108000
     max_random_noops = 0  # 30, to control wheter the env is random initialized
     num_action_repeats = 4
+    stack_frames = num_action_repeats
     screen_size = 84
+    sticky_action = False
     # simple_scene
     seq_len = 500
 
@@ -57,7 +59,7 @@ class Context:
         "cnn",  # 2
         "rnn",  # 3
     ]
-    projector = projector_types[3]  # select None to disable random projection
+    projector = projector_types[2]  # select None to disable random projection
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True

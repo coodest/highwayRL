@@ -228,15 +228,29 @@ class Test:
         print(a[0, -1])
         print(Funcs.matrix_hashing(a))
 
+    @staticmethod
+    def make_atari_alternative_env():
+        from src.module.env.atari_alternative import Atari
+
+        env = Atari.make_env()
+        env.reset()
+        for i in range(10):
+            obs, reward, done, info = env.step(i)
+            print(f"{obs.shape} {obs.dtype}")
+            print(reward)
+            if done:
+                break
+
 
 if __name__ == "__main__":
     test = Test()
     # testable of content for testing
     # test.plot_maze()  # test graph gen. for maze env.
-    test.build_graph_test_manual()
+    # test.build_graph_test_manual()
     # test.build_graph_test_auto()
     # test.vp_test()
     # test.hashing_test()
+    test.make_atari_alternative_env()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

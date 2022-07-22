@@ -46,6 +46,8 @@ class RandomProjector(Projector):
             self.random_matrix = RandomMatrix(P.screen_size * P.screen_size, P.projected_dim).to(self.device)
         if P.env_type == "atari_ram":
             self.random_matrix = RandomMatrix(128, P.projected_dim).to(self.device)
+        if P.env_type == "atari_alternative":
+            self.random_matrix = RandomMatrix(P.screen_size * P.screen_size * P.stack_frames, P.projected_dim).to(self.device)
         if P.env_type == "simple_scene":
             self.random_matrix = RandomMatrix(P.seq_len, P.projected_dim).to(self.device)
 
@@ -74,6 +76,8 @@ class RNNProjector(Projector):
             self.random_matrix = RandomMatrix(P.screen_size * P.screen_size + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         if P.env_type == "atari_ram":
             self.random_matrix = RandomMatrix(128 + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+        if P.env_type == "atari_alternative":
+            self.random_matrix = RandomMatrix(P.screen_size * P.screen_size * P.stack_frames + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         if P.env_type == "simple_scene":
             self.random_matrix = RandomMatrix(P.seq_len + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         self.last_result = np.zeros(P.projected_dim)
@@ -82,6 +86,8 @@ class RNNProjector(Projector):
         if P.env_type == "atari_classic":
             self.hidden = self.hidden_0
         if P.env_type == "atari_ram":
+            self.hidden = self.hidden_0
+        if P.env_type == "atari_alternative":
             self.hidden = self.hidden_0
         if P.env_type == "simple_scene":
             self.hidden = self.hidden_0
@@ -124,6 +130,9 @@ class CNNProjector(Projector):
         if P.env_type == "atari_ram":
             self.conv1 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
             self.conv2 = torch.nn.Conv2d(1, 1, kernel_size=(3, 3), stride=(5, 5), dilation=(2, 2)).to(self.device)
+        if P.env_type == "atari_alternative":
+            self.conv1 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
+            self.conv2 = torch.nn.Conv2d(1, 1, kernel_size=(3, 3), stride=(5, 5), dilation=(2, 2)).to(self.device)
         if P.env_type == "simple_scene":
             self.conv1 = torch.nn.Conv2d(1, 1, kernel_size=(6, 6), stride=(5, 5), dilation=(2, 2)).to(self.device)
             self.conv2 = torch.nn.Conv2d(1, 1, kernel_size=(3, 3), stride=(5, 5), dilation=(2, 2)).to(self.device)
@@ -135,6 +144,9 @@ class CNNProjector(Projector):
             input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
             input = input.unsqueeze(1)
             if P.env_type == "atari_classic":
+                # [2, 1, P.screen_size, P.screen_size]
+                input = input.reshape(input.shape[0], input.shape[1], P.screen_size, -1)
+            if P.env_type == "atari_alternative":
                 # [2, 1, P.screen_size, P.screen_size]
                 input = input.reshape(input.shape[0], input.shape[1], P.screen_size, -1)
 

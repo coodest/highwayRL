@@ -10,8 +10,13 @@ from src.util.tools import Funcs
 class Atari:
     @staticmethod
     def make_env(render=False):
-        env = gym.make("{}Deterministic-v4".format(P.env_name), full_action_space=True)
-        # env = gym.make("{}NoFrameskip-v4".format(P.env_name), full_action_space=True)
+        if P.sticky_action:
+            ver = "v0"
+        else:
+            ver = "v4"
+
+        env = gym.make(f"{P.env_name}Deterministic-{ver}", full_action_space=True)
+        # env = gym.make(f"{P.env_name}NoFrameskip-{ver}", full_action_space=True)
         env.seed(2022)
 
         env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
@@ -19,26 +24,17 @@ class Atari:
         if render:
             env = Monitor(env, P.video_dir, force=True, video_callable=lambda episode_id: episode_id % P.render_every == 0)  # output every episode
 
-        env = VanillaEnv(
-            env,
-            frame_skip=P.num_action_repeats,
-            max_random_noops=P.max_random_noops
-        )  # TODO: make code connection
+        env = VanillaEnv(env)
 
         return env
 
 
 class VanillaEnv():
-    def __init__(self, args):
-        self.args = args
-        if args.sticky:
-            # frameskip is deterministic
-            self.env = gym.make(args.env + 'Deterministic-v0').env
-        else:
-            self.env = gym.make(args.env + 'Deterministic-v4').env
+    def __init__(self, env):
+        self.env = env.env
 
         self.action_space = self.env.action_space
-        self.observation_space = gym.spaces.Box(low=0.0, high=1.0, shape=(84, 84, args.frames), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=0.0, high=1.0, shape=(84, 84, P.stack_frames), dtype=np.float32)
         assert type(self.action_space) is gym.spaces.discrete.Discrete
         self.acts_dims = [self.action_space.n]
         self.obs_dims = list(self.observation_space.shape)
@@ -60,7 +56,8 @@ class VanillaEnv():
         return frame
 
     def get_obs(self):
-        return self.last_obs.copy()
+        obs = np.ndarray.flatten(self.last_obs.copy())
+        return obs
 
     def get_frame(self):
         return self.last_frame.copy()
@@ -79,7 +76,7 @@ class VanillaEnv():
             for key, value_func in self.env_info.items()
         }
 
-    def remove_color(key):
+    def remove_color(self, key):
         for i in range(len(key)):
             if key[i] == '@':
                 return key[:i]
@@ -90,8 +87,10 @@ class VanillaEnv():
         info = self.process_info(obs, reward, info)
         self.frames_stack = self.frames_stack[1:] + [self.get_new_frame()]
         self.last_obs = np.stack(self.frames_stack, axis=-1)
-        if self.steps == self.args.test_timesteps: done = True
-        return self.last_obs.copy(), reward, done, info
+        if self.steps == P.max_episode_steps: 
+            done = True
+        obs = np.ndarray.flatten(self.last_obs.copy())
+        return obs, reward, done, info
 
     def reset_ep(self):
         self.steps = 0
@@ -102,17 +101,19 @@ class VanillaEnv():
         while True:
             flag = True
             self.env.reset()
-            for _ in range(max(self.args.noop - self.args.frames, 0)):
+            for _ in range(max(P.max_random_noops - P.stack_frames, 0)):
                 _, _, done, _ = self.env.step(0)
                 if done:
                     flag = False
                     break
-            if flag: break
+            if flag: 
+                break
 
         self.frames_stack = []
-        for _ in range(self.args.frames):
+        for _ in range(P.stack_frames):
             self.env.step(0)
             self.frames_stack.append(self.get_new_frame())
 
         self.last_obs = np.stack(self.frames_stack, axis=-1)
-        return self.last_obs.copy()
+        obs = obs = np.ndarray.flatten(self.last_obs.copy())
+        return obs
