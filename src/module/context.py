@@ -27,7 +27,7 @@ class Context:
         "simple_scene",  # 4
         "maze"  # 5
     ]
-    env_type = env_types[3]
+    env_type = env_types[0]
     render = False  # whether test actor to render the env
     render_every = 5
     # atari
@@ -59,7 +59,7 @@ class Context:
         "cnn",  # 2
         "rnn",  # 3
     ]
-    projector = projector_types[2]  # select None to disable random projection
+    projector = projector_types[0]  # select None to disable random projection
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True

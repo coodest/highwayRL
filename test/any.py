@@ -240,6 +240,23 @@ class Test:
             print(reward)
             if done:
                 break
+    
+    @staticmethod
+    def atari_play():
+        import gym
+        from gym.utils.play import play
+        
+        env_name = P.env_name_list[24]
+        Logger.log(f"env name: {env_name}")
+        env = gym.make(f"{env_name}NoFrameskip-v4")
+        if hasattr(env, "get_keys_to_action"):
+            keys_to_action = env.get_keys_to_action()
+        elif hasattr(env.unwrapped, "get_keys_to_action"):
+            keys_to_action = env.unwrapped.get_keys_to_action()
+        for item in keys_to_action:
+            Logger.log(f"key map: {[chr(key) for key in item]} -> {keys_to_action[item]}")
+
+        play(env, zoom=4)
 
 
 if __name__ == "__main__":
@@ -250,7 +267,8 @@ if __name__ == "__main__":
     # test.build_graph_test_auto()
     # test.vp_test()
     # test.hashing_test()
-    test.make_atari_alternative_env()
+    # test.make_atari_alternative_env()
+    test.atari_play()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

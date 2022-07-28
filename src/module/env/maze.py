@@ -18,9 +18,9 @@ class Maze:
     def make_env(render=False):
         env = MazeEnv(
             # for fixed mazes
-            maze_file="assets/maze_files/maze2d_3x3.npy", 
+            # maze_file="assets/maze_files/maze2d_3x3.npy", 
             # maze_file="assets/maze_files/maze2d_5x5.npy", 
-            # maze_file="assets/maze_files/maze2d_10x10.npy", 
+            maze_file="assets/maze_files/maze2d_10x10.npy", 
             # maze_file="assets/maze_files/maze2d_100x100.npy", 
             # for random mazes
             # maze_file=None, 
