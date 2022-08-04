@@ -89,6 +89,9 @@ class Policy:
         if P.projector == P.projector_types[3]:
             from src.module.agent.memory.projector import RNNProjector
             projector = RNNProjector(id)
+        if P.projector == P.projector_types[4]:
+            from src.module.agent.memory.projector import NRNNProjector
+            projector = NRNNProjector(id)
 
         while True:
             trajectory = []

@@ -36,7 +36,7 @@ class Context:
     max_episode_steps = 108000
     max_random_noops = 0  # 30, to control wheter the env is random initialized
     num_action_repeats = 4
-    stack_frames = num_action_repeats
+    stack_frames = 1
     screen_size = 84
     sticky_action = False
     # simple_scene
@@ -58,8 +58,9 @@ class Context:
         "random",  # 1
         "cnn",  # 2
         "rnn",  # 3
+        "n-rnn",  # 4
     ]
-    projector = projector_types[0]  # select None to disable random projection
+    projector = projector_types[4]  # select None to disable random projection
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True
@@ -88,5 +89,6 @@ class Profile(Context):
                 C.env_name = f"{C.env_type}_original"
 
     # C.clean = True
+    C.render = False
 
     C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'

@@ -85,7 +85,6 @@ class Test:
             graph.draw_graph()
             graph.sanity_check()
 
-
     @staticmethod
     def build_graph_test_manual():
 
@@ -258,6 +257,19 @@ class Test:
 
         play(env, zoom=4)
 
+    @staticmethod
+    def nrnn():
+        from src.module.agent.memory.projector import NRNNProjector
+        projector = NRNNProjector(id)
+
+        last_obs = obs = [0, 1, 0]
+        a, b = projector.batch_project([last_obs, obs])
+
+        obs = [0, 0, 2]
+        c, d = projector.batch_project([last_obs, obs])
+
+        print(f"{a}\n{b}\n{c}\n{d}")
+
 
 if __name__ == "__main__":
     test = Test()
@@ -268,7 +280,8 @@ if __name__ == "__main__":
     # test.vp_test()
     # test.hashing_test()
     # test.make_atari_alternative_env()
-    test.atari_play()
+    # test.atari_play()
+    test.nrnn()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

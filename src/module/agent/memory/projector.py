@@ -4,7 +4,7 @@ from src.module.context import Profile as P
 from src.util.tools import Logger, Funcs
 
 
-class RandomMatrix(torch.nn.Module):
+class RandomMatrixLayer(torch.nn.Module):
     def __init__(self, inf, outf):
         super().__init__()
         with torch.no_grad():
@@ -43,13 +43,13 @@ class RandomProjector(Projector):
         super().__init__(id)
         self.random_matrix = None
         if P.env_type == "atari_classic":
-            self.random_matrix = RandomMatrix(P.screen_size * P.screen_size, P.projected_dim).to(self.device)
+            self.random_matrix = RandomMatrixLayer(P.screen_size * P.screen_size, P.projected_dim).to(self.device)
         if P.env_type == "atari_ram":
-            self.random_matrix = RandomMatrix(128, P.projected_dim).to(self.device)
+            self.random_matrix = RandomMatrixLayer(128, P.projected_dim).to(self.device)
         if P.env_type == "atari_alternative":
-            self.random_matrix = RandomMatrix(P.screen_size * P.screen_size * P.stack_frames, P.projected_dim).to(self.device)
+            self.random_matrix = RandomMatrixLayer(P.screen_size * P.screen_size * P.stack_frames, P.projected_dim).to(self.device)
         if P.env_type == "simple_scene":
-            self.random_matrix = RandomMatrix(P.seq_len, P.projected_dim).to(self.device)
+            self.random_matrix = RandomMatrixLayer(P.seq_len, P.projected_dim).to(self.device)
 
     def batch_project(self, obs_list):     
         batch = np.vstack(obs_list)  
@@ -73,13 +73,13 @@ class RNNProjector(Projector):
             self.hidden = None
             self.reset()
         if P.env_type == "atari_classic":
-            self.random_matrix = RandomMatrix(P.screen_size * P.screen_size + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+            self.random_matrix = RandomMatrixLayer(P.screen_size * P.screen_size + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         if P.env_type == "atari_ram":
-            self.random_matrix = RandomMatrix(128 + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+            self.random_matrix = RandomMatrixLayer(128 + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         if P.env_type == "atari_alternative":
-            self.random_matrix = RandomMatrix(P.screen_size * P.screen_size * P.stack_frames + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+            self.random_matrix = RandomMatrixLayer(P.screen_size * P.screen_size * P.stack_frames + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         if P.env_type == "simple_scene":
-            self.random_matrix = RandomMatrix(P.seq_len + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+            self.random_matrix = RandomMatrixLayer(P.seq_len + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         self.last_result = np.zeros(P.projected_dim)
 
     def reset(self):
@@ -111,6 +111,65 @@ class RNNProjector(Projector):
             result = output.cpu().detach().numpy().tolist()
         self.last_result = result.copy()
 
+        return result
+
+    def batch_project(self, obs_list):   
+        results = []
+        results.append(self.last_result)
+        results.append(self.project(obs_list[-1]))
+        return results
+
+
+class NRNNProjector(Projector):
+    def __init__(self, id, steps=5) -> None:
+        super().__init__(id)
+        self.steps = steps
+        with torch.no_grad():
+            self.hidden_share = torch.rand(P.projected_hidden_dim, requires_grad=False).to(self.device)
+            self.hidden = None
+            self.reset()
+        self.random_matrix = None
+        if P.env_type == "atari_classic":
+            self.unit_weight = torch.rand([
+                P.projected_dim + P.projected_hidden_dim,  # number nerons (output dim)
+                P.screen_size * P.screen_size * P.stack_frames + P.projected_hidden_dim  # weight of neurons (input dim)
+            ], requires_grad=False)
+            self.random_matrix = torch.tile(self.unit_weight, (self.steps, 1, 1)).to(self.device)
+                
+        self.step_status = torch.arange(steps).to(self.device)  # indicate current step
+        self.last_result = np.zeros(P.projected_dim)
+
+    def reset(self):
+        self.hidden = torch.tile(self.hidden_share, (self.steps, 1))
+
+    def project(self, obs):
+        with torch.no_grad():  # no grad calculation
+            # [P.screen_size * P.screen_size [* P.stack_frames]]
+            raw = torch.tensor(obs, dtype=torch.float32, requires_grad=False).to(self.device)
+            # [self.steps, P.screen_size * P.screen_size [* P.stack_frames]]
+            input = torch.tile(raw, (self.steps, 1))
+            # [self.steps, P.screen_size * P.screen_size [* P.stack_frames] + P.projected_hidden_dimP.projected_hidden_dim]
+            input = torch.cat([input, self.hidden], dim=1)
+            # [self.steps, 1, P.screen_size * P.screen_size [* P.stack_frames] + P.projected_hidden_dimP.projected_hidden_dim]
+            input = input.unsqueeze(dim=1)
+
+            output = torch.mul(self.random_matrix, input) 
+            output = torch.sum(output, dim=2)
+            self.hidden = output[:, P.projected_dim:]
+            output = output[:, :P.projected_dim]
+
+            # find the index of full steps result
+            self.step_status += 1
+            self.step_status %= self.steps
+            output_index = torch.argmin(self.step_status)
+            
+            # select the result with full steps and reset its hidden
+            output = output[output_index]
+            self.hidden[output_index] = self.hidden_share
+
+            result = output.cpu().detach().numpy().tolist()
+        
+        self.last_result = result.copy()
         return result
 
     def batch_project(self, obs_list):   
