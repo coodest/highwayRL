@@ -151,6 +151,7 @@ class Policy:
                     
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
+                    
                     if P.projector is not None:
                         last_obs, obs = projector.batch_project([last_obs, obs])
 

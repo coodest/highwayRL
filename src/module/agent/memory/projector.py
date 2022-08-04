@@ -73,9 +73,11 @@ class RNNProjector(Projector):
             self.hidden = None
             self.reset()
         if P.env_type == "atari_classic":
-            self.random_matrix = RandomMatrixLayer(P.screen_size * P.screen_size + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+            obs_dim = P.screen_size * P.screen_size
+            self.random_matrix = RandomMatrixLayer(obs_dim + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         if P.env_type == "atari_ram":
-            self.random_matrix = RandomMatrixLayer(128 + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
+            obs_dim = 128
+            self.random_matrix = RandomMatrixLayer(obs_dim + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         if P.env_type == "atari_alternative":
             self.random_matrix = RandomMatrixLayer(P.screen_size * P.screen_size * P.stack_frames + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         if P.env_type == "simple_scene":
