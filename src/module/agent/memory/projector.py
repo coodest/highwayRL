@@ -81,6 +81,7 @@ class RNNProjector(Projector):
         if P.env_type == "simple_scene":
             self.random_matrix = RandomMatrixLayer(P.seq_len + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim).to(self.device)
         self.last_result = np.zeros(P.projected_dim)
+        self.step = 0
 
     def reset(self):
         if P.env_type == "atari_classic":
@@ -91,6 +92,7 @@ class RNNProjector(Projector):
             self.hidden = self.hidden_0
         if P.env_type == "simple_scene":
             self.hidden = self.hidden_0
+        self.step = 0
 
     def project(self, obs):
         batch = obs
@@ -109,7 +111,9 @@ class RNNProjector(Projector):
             output = output[0, :P.projected_dim]
 
             result = output.cpu().detach().numpy().tolist()
+            result = np.concatenate([result, [self.step]])
         self.last_result = result.copy()
+        self.step += 1
 
         return result
 

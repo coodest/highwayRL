@@ -270,6 +270,20 @@ class Test:
 
         print(f"{a}\n{b}\n{c}\n{d}")
 
+    @staticmethod
+    def rnn():
+        from src.module.agent.memory.projector import RNNProjector
+        import numpy as np
+        projector = RNNProjector(id)
+
+        last_obs = obs = np.full(shape=[84 * 84], fill_value=7.)
+        a, b = projector.batch_project([last_obs, obs])
+
+        obs = np.full(shape=[84 * 84], fill_value=10.)
+        c, d = projector.batch_project([last_obs, obs])
+
+        print(f"{a}\n{b}\n{c}\n{d}")
+
 
 if __name__ == "__main__":
     test = Test()
@@ -281,7 +295,8 @@ if __name__ == "__main__":
     # test.hashing_test()
     # test.make_atari_alternative_env()
     # test.atari_play()
-    test.nrnn()
+    # test.nrnn()
+    test.rnn()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

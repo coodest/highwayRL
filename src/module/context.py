@@ -60,7 +60,7 @@ class Context:
         "rnn",  # 3
         "n-rnn",  # 4
     ]
-    projector = projector_types[4]  # select None to disable random projection
+    projector = projector_types[3]  # select None to disable random projection
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True

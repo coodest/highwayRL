@@ -17,6 +17,7 @@ class Actor:
         self.actor_learner_queue = actor_learner_queue
         self.learner_actor_queues = learner_actor_queues
         self.episodic_reward = deque(maxlen=10)
+        self.max_episodic_reward = None
         self.p = (P.e_greedy[1] - P.e_greedy[0]) / (P.num_actor - 1) * self.id + P.e_greedy[0]
         self.hit = None
             
@@ -93,15 +94,20 @@ class Actor:
                         epi_step * P.num_action_repeats / (time.time() - start_time)
                     )
                     self.episodic_reward.append(total_reward)
+                    if self.max_episodic_reward is None:
+                        self.max_episodic_reward = total_reward
+                    elif self.max_episodic_reward < total_reward:
+                        self.max_episodic_reward = total_reward
                     hit_rate = 100 * (sum(self.hit) / len(self.hit))
                     if hit_rate < 100:
                         last_step_before_loss = self.hit.index(0)
                     else:
                         last_step_before_loss = len(self.hit)
                     if self.is_testing_actor():
-                        Logger.log("evl_actor R: {:6.2f} AR:{:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
+                        Logger.log("evl_actor R: {:6.2f} MR:{:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
                             self.episodic_reward[-1],
-                            np.mean(self.episodic_reward),
+                            # np.mean(self.episodic_reward),
+                            self.max_episodic_reward,
                             self.fps[-1],
                             hit_rate,
                             last_step_before_loss,

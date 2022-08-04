@@ -1,3 +1,4 @@
+220804 RNN add step; add MR (Max Reward report)
 220804 add n-steps RNN
 220728 add atari env play test
 220721 fix graph building: new edge in the same node; current traj. crossing step correction; remove dynamic e-greedy
