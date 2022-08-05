@@ -34,15 +34,7 @@ class Actor:
         else:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, not self.is_testing_actor()])
         
-        while True:
-            try:  # sub-process exception detection
-                action = self.learner_actor_queues.get(timeout=0.1)
-                break
-            except KeyboardInterrupt:
-                pass
-            except Exception:
-                if self.finish.value:
-                    raise Exception()
+        action = self.learner_actor_queues.get(timeout=5)
 
         if type(action) is str:  # the projected and indexed init obs
             return action

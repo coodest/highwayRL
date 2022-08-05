@@ -72,33 +72,33 @@ class Policy:
         sync, 
         finish
     ):
-        from src.module.agent.memory.indexer import Indexer
-        from src.module.agent.memory.graph import Graph
+        try:  # sub-sub-process exception
+            from src.module.agent.memory.indexer import Indexer
+            from src.module.agent.memory.graph import Graph
 
-        last_report = time.time()
-        last_frame = frames.value
-        last_sync = time.time()
-        graph = Graph(id, Policy.is_head(id))
+            last_report = time.time()
+            last_frame = frames.value
+            last_sync = time.time()
+            graph = Graph(id, Policy.is_head(id))
 
-        if P.projector == P.projector_types[1]:
-            from src.module.agent.memory.projector import RandomProjector
-            projector = RandomProjector(id)
-        if P.projector == P.projector_types[2]:
-            from src.module.agent.memory.projector import CNNProjector
-            projector = CNNProjector(id)
-        if P.projector == P.projector_types[3]:
-            from src.module.agent.memory.projector import RNNProjector
-            projector = RNNProjector(id)
-        if P.projector == P.projector_types[4]:
-            from src.module.agent.memory.projector import NRNNProjector
-            projector = NRNNProjector(id)
+            if P.projector == P.projector_types[1]:
+                from src.module.agent.memory.projector import RandomProjector
+                projector = RandomProjector(id)
+            if P.projector == P.projector_types[2]:
+                from src.module.agent.memory.projector import CNNProjector
+                projector = CNNProjector(id)
+            if P.projector == P.projector_types[3]:
+                from src.module.agent.memory.projector import RNNProjector
+                projector = RNNProjector(id)
+            if P.projector == P.projector_types[4]:
+                from src.module.agent.memory.projector import NRNNProjector
+                projector = NRNNProjector(id)
 
-        while True:
-            trajectory = []
-            total_reward = 0
-            proj_index_init_obs = None
             while True:
-                try:  # sub-sub-process exception detection
+                trajectory = []
+                total_reward = 0
+                proj_index_init_obs = None
+                while True:
                     # sync graph
                     if Policy.is_head(id) and (
                         time.time() - last_sync > P.sync_every or 
@@ -145,7 +145,8 @@ class Policy:
                         if frames.value > P.total_frames:
                             graph.save_graph()
                             Logger.log("graph saved")
-                            finish.value = True
+                            with finish.get_lock():
+                                finish.value = True
                     if finish.value:
                         return
                     
@@ -178,9 +179,7 @@ class Policy:
                     else:
                         action = graph.get_action(obs)
                         learner_actor_queue.put(action)
-                except KeyboardInterrupt:
-                    Logger.log(f"learner worker {id} {'(head)' if Policy.is_head(id) else '(slave)'} returned with KeyboardInterrupt")
-                    return
-                except Exception:
-                    Funcs.trace_exception()
-                    return
+        except KeyboardInterrupt:
+            Logger.log(f"learner worker {id} {'(head)' if Policy.is_head(id) else '(slave)'} returned with KeyboardInterrupt")
+        except Exception:
+            Funcs.trace_exception()

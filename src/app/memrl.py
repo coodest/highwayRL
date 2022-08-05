@@ -101,7 +101,8 @@ class MemRL:
         except Exception:
             Funcs.trace_exception()
         finally:
-            finish.value = True
+            with finish.get_lock():
+                finish.value = True
             Logger.log("training finished")
         Funcs.run_cmd("echo quit | nvidia-cuda-mps-control", 2)
 
