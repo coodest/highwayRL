@@ -88,6 +88,6 @@ class Profile(Context):
             if C.env_type in C.env_types[4:6]:
                 C.env_name = f"{C.env_type}_original"
 
-    C.render = False
+    C.render = True
 
     C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'

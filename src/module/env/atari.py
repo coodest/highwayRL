@@ -1,6 +1,6 @@
 import gym
 from gym.spaces.box import Box
-from gym.wrappers import TimeLimit, Monitor
+from gym.wrappers import TimeLimit, RecordVideo
 from src.util.imports.numpy import np
 from src.module.context import Profile as P
 from src.util.tools import Funcs, Logger
@@ -25,7 +25,7 @@ class Atari:
         env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
 
         if render:
-            env = Monitor(env, P.video_dir, force=True, video_callable=lambda episode_id: episode_id % P.render_every == 0)  # output every episode
+            env = RecordVideo(env, f"{P.video_dir}{P.env_name}/", episode_trigger=lambda episode_id: episode_id % P.render_every == 0)  # output every episode
 
         env = AtariPreprocessing(
             env,

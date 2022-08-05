@@ -120,20 +120,20 @@ class MemRL:
             from src.module.env.actor import Actor
 
             actor = Actor(id, MemRL.create_env, actor_learner_queues, learner_actor_queues, finish)
+
+            # 2. start interaction loop (actor loop)
+            while True:
+                try:  # sub-process exception detection
+                    actor.interact()
+                except KeyboardInterrupt:
+                    break
+                except Exception:
+                    if finish.value:
+                        break
+                    else:
+                        Funcs.trace_exception()
         except Exception:
             Funcs.trace_exception()
-
-        # 2. start interaction loop (actor loop)
-        while True:
-            try:  # sub-process exception detection
-                actor.interact()
-            except KeyboardInterrupt:
-                break
-            except Exception:
-                if finish.value:
-                    break
-                else:
-                    Funcs.trace_exception()
 
     @staticmethod
     def create_env(render=False):

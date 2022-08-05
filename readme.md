@@ -1,35 +1,32 @@
 # RL with graph memory
 
+## make a env of conda called rl
 
-## install conponents (note: install pytorch depends on your system)
+    conda create -n rl python=3.9 -y
 
-    conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+## install components (note: install pytorch depends on your system)
 
-    conda install -c conda-forge gym-atari
+    conda install pytorch cudatoolkit=11.6 -c pytorch -c conda-forge -y
     
 ## install the dependencies
 
     pip install -r requirements.txt
 
+## install roms for Atari games
 
-## set GPU to EXCLUSIVE_PROCESS compute mode (optinal)
+    AutoROM
+
+
+## set GPU to EXCLUSIVE_PROCESS compute mode (optional)
 
     sudo nvidia-smi -i 0 -c EXCLUSIVE_PROCESS
 
-
-## start cuda multi-process server (mps)
-
-    nvidia-cuda-mps-control -d
 
 ## run the code locally
 
     ./run.sh
 
-## stop cuda multi-process server (mps)
-
-    echo quit | nvidia-cuda-mps-control
-
-## set GPU to DEFAULT compute mode (optinal)
+## set GPU to DEFAULT compute mode (optional)
 
     sudo nvidia-smi -i 0 -c DEFAULT
 
