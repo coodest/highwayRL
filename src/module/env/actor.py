@@ -33,11 +33,13 @@ class Actor:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, False])
         else:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, not self.is_testing_actor()])
-        
+
         while True:
             try:  # sub-process exception
                 action = self.learner_actor_queues.get(timeout=0.1)
                 break
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt()
             except Exception:
                 if self.finish.value:
                     raise Exception()

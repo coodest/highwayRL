@@ -84,49 +84,51 @@ class MemRL:
 
     @staticmethod
     def learner_run(actor_learner_queues, learner_actor_queues, finish):
-        # 1. init
-        from src.module.agent.policy import Policy
-        os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
+        try:
+            # 1. init
+            from src.module.agent.policy import Policy
+            os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
 
-        # 2. train
-        Funcs.run_cmd("nvidia-cuda-mps-control -d", 2)
-        policy = Policy(actor_learner_queues, learner_actor_queues, finish)
-        try:  # sub-process exception detection
-            optimal_graph = policy.train()  # tain the policy
-        except KeyboardInterrupt:
-            Logger.error("ctrl-c pressed")
-            policy.wait_to_finish()
-        except FileNotFoundError:
-            Logger.error("optimal graph not found, training failed")
-        except Exception:
-            Funcs.trace_exception()
-        finally:
-            with finish.get_lock():
-                finish.value = True
-            Logger.log("training finished")
-        Funcs.run_cmd("echo quit | nvidia-cuda-mps-control", 2)
+            # 2. train
+            Funcs.run_cmd("nvidia-cuda-mps-control -d", 2)
+            policy = Policy(actor_learner_queues, learner_actor_queues, finish)
+            try:  # sub-process exception detection
+                optimal_graph = policy.train()  # tain the policy
+            except KeyboardInterrupt:
+                Logger.error("ctrl-c pressed")
+                policy.wait_to_finish()
+            except FileNotFoundError:
+                Logger.error("optimal graph not found, training failed")
+            except Exception:
+                Funcs.trace_exception()
+            finally:
+                with finish.get_lock():
+                    finish.value = True
+                Logger.log("training finished")
+            Funcs.run_cmd("echo quit | nvidia-cuda-mps-control", 2)
 
-        # 3. parameterization
-        try:  # sub-process exception detection
+            # 3. parameterization
             # TODO: Q-table parameterization
-            pass
+            Logger.log("dnn model saved")
         except Exception:
             Funcs.trace_exception()
-        Logger.log("dnn model saved")
         
     @staticmethod
     def actor_run(id, actor_learner_queues, learner_actor_queues, finish):
-        # 1. make env and actor
-        from src.module.env.actor import Actor
+        try:
+            # 1. make env and actor
+            from src.module.env.actor import Actor
 
-        actor = Actor(id, MemRL.create_env, actor_learner_queues, learner_actor_queues, finish)
+            actor = Actor(id, MemRL.create_env, actor_learner_queues, learner_actor_queues, finish)
+        except Exception:
+            Funcs.trace_exception()
 
         # 2. start interaction loop (actor loop)
         while True:
             try:  # sub-process exception detection
                 actor.interact()
             except KeyboardInterrupt:
-                pass
+                break
             except Exception:
                 if finish.value:
                     break

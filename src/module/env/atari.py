@@ -3,7 +3,7 @@ from gym.spaces.box import Box
 from gym.wrappers import TimeLimit, Monitor
 from src.util.imports.numpy import np
 from src.module.context import Profile as P
-from src.util.tools import Funcs
+from src.util.tools import Funcs, Logger
 import cv2
 
 
