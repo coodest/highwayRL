@@ -94,81 +94,87 @@ class Test:
         IO.renew_dir(P.result_dir)
         a = Graph(0, True)
 
+        classic_case = "classic"
+        special_case = "special"
+        case = classic_case
+
         # classic case: three traj. meet
-        # traj1, traj1_tr = [
-        #     ["a0", 1, "a1", 0],
-        #     ["a1", 1, "a2", 0],
-        #     ["a2", 1, "a3", 0],
-        #     ["a3", 1, "a4", 4],
-        #     ["a4", 1, "a5", 0],
-        #     ["a5", 1, "a6", 5],
-        # ], 9
-        # traj2, traj2_tr = [
-        #     ["b0", 2, "b1", 0],
-        #     ["b1", 2, "a2", 0],
-        #     ["a2", 2, "b3", 0],
-        #     ["b3", 2, "b4", 2],
-        #     ["b4", 2, "b5", 0],
-        #     ["b5", 2, "b6", 0],
-        # ], 2
-        # traj3, traj3_tr = [
-        #     ["c0", 3, "c1", 0],
-        #     ["c1", 3, "b5", 0],
-        #     ["b5", 3, "c3", 0],
-        #     ["c3", 3, "c4", 0],
-        #     ["c4", 3, "a4", 0],
-        #     ["a4", 3, "c6", 0],
-        #     ["c6", 3, "c7", 3],
-        # ], 3
+        if case == classic_case:
+            traj1, traj1_tr = [
+                ["a0", 1, "a1", 0],
+                ["a1", 1, "a2", 0],
+                ["a2", 1, "a3", 0],
+                ["a3", 1, "a4", 4],
+                ["a4", 1, "a5", 0],
+                ["a5", 1, "a6", 5],
+            ], 9
+            traj2, traj2_tr = [
+                ["b0", 2, "b1", 0],
+                ["b1", 2, "a2", 0],
+                ["a2", 2, "b3", 0],
+                ["b3", 2, "b4", 2],
+                ["b4", 2, "b5", 0],
+                ["b5", 2, "b6", 0],
+            ], 2
+            traj3, traj3_tr = [
+                ["c0", 3, "c1", 0],
+                ["c1", 3, "b5", 0],
+                ["b5", 3, "c3", 0],
+                ["c3", 3, "c4", 0],
+                ["c4", 3, "a4", 0],
+                ["a4", 3, "c6", 0],
+                ["c6", 3, "c7", 3],
+            ], 3
 
-        # a.store_inc(traj1, traj1_tr)
-        # a.store_inc(traj2, traj2_tr)
-        # a.store_inc(traj3, traj3_tr)
+            a.store_inc(traj1, traj1_tr)
+            a.store_inc(traj2, traj2_tr)
+            a.store_inc(traj3, traj3_tr)
 
-        # important_obs = ["a2", "b5", "a4"]
+            important_obs = ["a2", "b5", "a4"]
 
         # special cases
-        traj4, traj4_tr = [
-            ["d0", 4, "d1", 1],
-            ["d1", 4, "d2", 1],
-            ["d2", 4, "d3", 1],
-            ["d3", 4, "d4", 1],
-            ["d4", 4, "d5", 1],
-            ["d5", 4, "d6", 1],
-            ["d6", 4, "d7", 1],
-            ["d7", 4, "d8", 1],
-            ["d8", 4, "d9", 1],
-            ["d9", 4, "d10", 5],
-        ], 14
-        traj5, traj5_tr = [
-            ["d0", 4, "d1", 1],
-            ["d1", 4, "d2", 1],
-            ["d2", 4, "d3", 1],
-            ["d3", 4, "d4", 1],
-            ["d4", 4, "d5", 1],
-            ["d5", 4, "d6", 1],
-            ["d6", 4, "d7", 1],
-            ["d7", 6, "d11", 1],
-            ["d11", 6, "d12", 1],
-            ["d12", 6, "d13", 20],
-        ], 14
-        traj6, traj6_tr = [
-            ["d0", 4, "d1", 1],
-            ["d1", 4, "d3", 1],
-            ["d3", 4, "d4", 1],
-            ["d4", 4, "d5", 1],
-            ["d5", 4, "d6", 1],
-            ["d6", 4, "d7", 1],
-            ["d7", 4, "d8", 1],
-            ["d8", 4, "d9", 1],
-            ["d9", 4, "d10", 5],
-        ], 14
+        if case == special_case:
+            traj4, traj4_tr = [
+                ["d0", 4, "d1", 1],
+                ["d1", 4, "d2", 1],
+                ["d2", 4, "d3", 1],
+                ["d3", 4, "d4", 1],
+                ["d4", 4, "d5", 1],
+                ["d5", 4, "d6", 1],
+                ["d6", 4, "d7", 1],
+                ["d7", 4, "d8", 1],
+                ["d8", 4, "d9", 1],
+                ["d9", 4, "d10", 5],
+            ], 14
+            traj5, traj5_tr = [
+                ["d0", 4, "d1", 1],
+                ["d1", 4, "d2", 1],
+                ["d2", 4, "d3", 1],
+                ["d3", 4, "d4", 1],
+                ["d4", 4, "d5", 1],
+                ["d5", 4, "d6", 1],
+                ["d6", 4, "d7", 1],
+                ["d7", 6, "d11", 1],
+                ["d11", 6, "d12", 1],
+                ["d12", 6, "d13", 20],
+            ], 14
+            traj6, traj6_tr = [
+                ["d0", 4, "d1", 1],
+                ["d1", 4, "d3", 1],
+                ["d3", 4, "d4", 1],
+                ["d4", 4, "d5", 1],
+                ["d5", 4, "d6", 1],
+                ["d6", 4, "d7", 1],
+                ["d7", 4, "d8", 1],
+                ["d8", 4, "d9", 1],
+                ["d9", 4, "d10", 5],
+            ], 14
 
-        a.store_inc(traj4, traj4_tr)  # loop
-        a.store_inc(traj5, traj5_tr)  # loop
-        a.store_inc(traj6, traj6_tr)  # loop
+            a.store_inc(traj4, traj4_tr)  # loop
+            a.store_inc(traj5, traj5_tr)  # loop
+            a.store_inc(traj6, traj6_tr)  # loop
 
-        important_obs = ["d7"]
+            important_obs = ["d7"]
 
         # merge
         a.merge_inc(a.inc)
@@ -182,7 +188,7 @@ class Test:
 
         print("------------------------")
         for obs in important_obs:
-            print(a.get_action(obs))  # should be 2, 3, 1
+            print(a.get_action(obs))  # should be 2, 3, 1 for classic case
 
         a.draw_graph()
 
@@ -289,14 +295,14 @@ if __name__ == "__main__":
     test = Test()
     # testable of content for testing
     # test.plot_maze()  # test graph gen. for maze env.
-    # test.build_graph_test_manual()
+    test.build_graph_test_manual()
     # test.build_graph_test_auto()
     # test.vp_test()
     # test.hashing_test()
     # test.make_atari_alternative_env()
     # test.atari_play()
     # test.nrnn()
-    test.rnn()
+    # test.rnn()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np
