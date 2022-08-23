@@ -1,37 +1,34 @@
 import gym
-from gym import error, spaces, utils
+from gym import spaces
 from gym.utils import seeding
 import pygame
 import os
 import gym
-from gym.spaces.box import Box
-from gym.wrappers import TimeLimit, Monitor
 from src.util.imports.random import random
 from src.util.imports.numpy import np
-import cv2
 from src.module.context import Profile as P
 from src.util.tools import Funcs
 
 
 class Maze:
     @staticmethod
-    def make_env(render=False):
+    def make_env(render=False, is_head=False):
         env = MazeEnv(
             # for fixed mazes
             # maze_file="assets/maze_files/maze2d_3x3.npy", 
             # maze_file="assets/maze_files/maze2d_5x5.npy", 
-            maze_file="assets/maze_files/maze2d_10x10.npy", 
+            # maze_file="assets/maze_files/maze2d_10x10.npy", 
             # maze_file="assets/maze_files/maze2d_100x100.npy", 
             # for random mazes
             # maze_file=None, 
-            # maze_size=(30, 30),
+            maze_size=(20, 20),
             # modes
             # mode="plus",
             mode=None,
             enable_render=render,
+            max_episode_steps=P.max_episode_steps,
         )
         env.seed(2022)  # set seed to be deterministic
-        env.max_episode_steps = (P.max_episode_steps,)
 
         return env
 
@@ -43,9 +40,10 @@ class MazeEnv(gym.Env):
 
     ACTION = ["N", "S", "E", "W"]
 
-    def __init__(self, maze_file=None, maze_size=None, mode=None, enable_render=True):
+    def __init__(self, maze_file=None, maze_size=None, mode=None, enable_render=True, max_episode_steps=10000):
 
         self.viewer = None
+        self.max_episode_steps = max_episode_steps
         self.enable_render = enable_render
 
         if maze_file:
@@ -125,7 +123,7 @@ class MazeEnv(gym.Env):
 
         self.state = self.maze_view.robot
         self.steps += 1
-        if self.steps > P.max_episode_steps:
+        if self.steps > self.max_episode_steps:
             done = True
 
         info = {}

@@ -9,16 +9,28 @@ import cv2
 
 class Atari:
     @staticmethod
-    def make_env(render=False, obs_type=None):
+    def make_env(render=False, obs_type=None, is_head=False):
         if P.sticky_action:
+            repeat_action_probability = 0.25
             ver = "v0"
-        else:
+        else:  # Deterministic
+            repeat_action_probability = 0.0
             ver = "v4"
         if obs_type in ["classic", "historical_action"]:
             # env = gym.make(f"{P.env_name}Deterministic-{ver}", full_action_space=True)
-            env = gym.make(f"{P.env_name}NoFrameskip-{ver}", full_action_space=True)
+            env = gym.make(
+                f"{P.env_name}NoFrameskip-{ver}", 
+                frameskip=1,
+                repeat_action_probability=repeat_action_probability,
+                full_action_space=True
+            )
         if obs_type == "ram":
-            env = gym.make(f"{P.env_name}-ram-{ver}", full_action_space=True)
+            env = gym.make(
+                f"{P.env_name}-ramNoframeskip-{ver}", 
+                frameskip=1,
+                repeat_action_probability=repeat_action_probability,
+                full_action_space=True
+            )
 
         env.seed(2022)
 
@@ -134,7 +146,7 @@ class AtariPreprocessing(object):
             return self.environment.reset()
         # Other no-ops implementations actually always do at least 1 no-op. We
         # follow them.
-        no_ops = self.environment.np_random.randint(1, self.max_random_noops + 1)
+        no_ops = self.environment.np_random.integers(1, self.max_random_noops + 1)
         for _ in range(no_ops):
             obs, _, game_over, _ = self.environment.step(0)
             if game_over:

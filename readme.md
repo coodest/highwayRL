@@ -14,7 +14,7 @@
 
 ## install roms for Atari games
 
-    AutoROM
+    AutoROM -y
 
 
 ## set GPU to EXCLUSIVE_PROCESS compute mode (optional)

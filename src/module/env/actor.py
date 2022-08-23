@@ -11,7 +11,7 @@ class Actor:
     def __init__(self, id, env_func, actor_learner_queue: Queue, learner_actor_queues: Queue, finish):
         self.id = id  # actor identifier
         self.num_episode = 0
-        self.env = env_func(render=self.is_testing_actor() and P.render)
+        self.env = env_func(render=self.is_testing_actor() and P.render, is_head=self.is_testing_actor())
         self.finish = finish
         self.fps = deque(maxlen=10)
         self.actor_learner_queue = actor_learner_queue
@@ -104,9 +104,9 @@ class Actor:
                     else:
                         last_step_before_loss = len(self.hit)
                     if self.is_testing_actor():
-                        Logger.log("evl_actor R: {:6.2f} MR:{:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
+                        Logger.log("evl_actor R: {:6.2f} AR: {:6.2f} MR: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
                             self.episodic_reward[-1],
-                            # np.mean(self.episodic_reward),
+                            np.mean(self.episodic_reward),
                             self.max_episodic_reward,
                             self.fps[-1],
                             hit_rate,

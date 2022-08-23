@@ -25,16 +25,18 @@ class Context:
         "atari_ram",  # 2
         "atari_alternative",  # 3
         "simple_scene",  # 4
-        "maze"  # 5
+        "maze",  # 5
+        "toy_text",  # 6
+        "box_2d",  # 7
+        "sokoban",  # 8
     ]
-    env_type = env_types[0]
+    env_type = env_types[8]
     render = False  # whether test actor to render the env
     render_every = 5
     # atari
-    env_name_list = IO.read_file(asset_dir + "Atari_game_list.txt")
     env_name = None
     max_episode_steps = 108000
-    max_random_noops = 0  # 30, to control wheter the env is random initialized
+    max_random_noops = 30  # 30, to control wheter the env is random initialized
     num_action_repeats = 4
     stack_frames = 1
     screen_size = 84
@@ -43,7 +45,7 @@ class Context:
     seq_len = 500
 
     # agent
-    num_actor = len(gpus) * 8
+    num_actor = len(gpus) * 16
     head_actor = num_actor - 1  # the last actor
     indexer_enabled = True
     obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
@@ -60,7 +62,7 @@ class Context:
         "rnn",  # 3
         "n-rnn",  # 4
     ]
-    projector = projector_types[3]  # select None to disable random projection
+    projector = projector_types[0]  # select None to disable random projection
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True
@@ -81,13 +83,22 @@ class Profile(Context):
     
     current_profile = sys.argv[1] if len(sys.argv) > 1 else "1"
     
-    for i in range(1, 27):
-        if current_profile == str(i):
-            if C.env_type in C.env_types[0:4]:
-                C.env_name = C.env_name_list[int(current_profile)]
-            if C.env_type in C.env_types[4:6]:
-                C.env_name = f"{C.env_type}_original"
+    if C.env_type in C.env_types[0:4]:
+        C.env_name_list = IO.read_file(f"{C.asset_dir}atari.txt")
+        C.env_name = C.env_name_list[int(current_profile)]
+    if C.env_type in C.env_types[4:6]:
+        C.env_name = f"{C.env_type}_original"
+    if C.env_type in C.env_types[6]:
+        C.env_name_list = IO.read_file(f"{C.asset_dir}toy_text.txt")
+        C.env_name = C.env_name_list[int(current_profile)]
+    if C.env_type in C.env_types[7]:
+        C.env_name_list = IO.read_file(f"{C.asset_dir}box_2d.txt")
+        C.env_name = C.env_name_list[int(current_profile)]
+    if C.env_type in C.env_types[8]:
+        C.env_name_list = IO.read_file(f"{C.asset_dir}sokoban.txt")
+        C.env_name = C.env_name_list[int(current_profile)]
 
-    C.render = True
+    C.render = False
+    C.sync_every = C.log_every = 10
 
     C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'

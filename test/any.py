@@ -290,12 +290,122 @@ class Test:
 
         print(f"{a}\n{b}\n{c}\n{d}")
 
+    @staticmethod
+    def football():
+        from src.module.env.football import Football
+
+        env = Football.make_env()
+
+        env .reset()
+
+        breakpoint()
+
+    @staticmethod
+    def test_pypullet():
+        import pybullet as p
+        import time
+        import pybullet_data
+        physicsClient = p.connect(p.GUI)  # or p.DIRECT for non-graphical version
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())  # optionally
+        p.setGravity(0, 0, -10)
+        planeId = p.loadURDF("plane.urdf")
+        startPos = [0, 0, 1]
+        startOrientation = p.getQuaternionFromEuler([0, 0, 0])
+        boxId = p.loadURDF("r2d2.urdf", startPos, startOrientation)
+        # set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
+        for i in range(10000):
+            p.stepSimulation()
+            time.sleep(1. / 240.)
+        cubePos, cubeOrn = p.getBasePositionAndOrientation(boxId)
+        print(cubePos, cubeOrn)
+        p.disconnect()
+
+    @staticmethod
+    def test_sokoban():
+        import gym
+        import gym_sokoban
+
+        env = gym.make("Sokoban-v0")
+        env.reset()
+        print({
+            "no op": 0,
+            "push ^": 1,
+            "push v": 2,
+            "push <": 3,
+            "push >": 4,
+            "^": 5,
+            "v": 6,
+            "<": 7,
+            ">": 8,
+        })
+        done = False
+        reward = 0
+        total_reward = 0
+        while not done:
+            env.render(mode="human")
+            action = env.action_space.sample()
+            # while True:
+            #     try:
+            #         action = int(input(f"total reward: {total_reward} action: "))
+            #         if action not in range(9):
+            #             raise Exception()
+            #         break
+            #     except Exception:
+            #         pass
+            obs, reward, done, info = env.step(action)
+            breakpoint()
+            total_reward += reward
+        Logger.log(f"total reward: {total_reward}")
+
+    @staticmethod
+    def test_tiny_sokoban():
+        from src.module.env.sokoban import Sokoban
+
+        env = Sokoban.make_env()
+        env.reset()
+        done = False
+        print({
+            "no op": 0,
+            "push ^": 1,
+            "push v": 2,
+            "push <": 3,
+            "push >": 4,
+            "^": 5,
+            "v": 6,
+            "<": 7,
+            ">": 8,
+        })
+        while not done:
+            env.render(mode="human")
+            # action = env.action_space.sample()
+            # while True:
+            #     try:
+            #         action = int(input("action: "))
+            #         if action not in range(9):
+            #             raise Exception()
+            #         break
+            #     except Exception:
+            #         print({
+            #             "no op": 0,
+            #             "push ^": 1,
+            #             "push v": 2,
+            #             "push <": 3,
+            #             "push >": 4,
+            #             "^": 5,
+            #             "v": 6,
+            #             "<": 7,
+            #             ">": 8,
+            #         })
+            # obs, reward, done, info = env.step(action)
+            env.reset()
+            breakpoint()
+
 
 if __name__ == "__main__":
     test = Test()
     # testable of content for testing
     # test.plot_maze()  # test graph gen. for maze env.
-    test.build_graph_test_manual()
+    # test.build_graph_test_manual()
     # test.build_graph_test_auto()
     # test.vp_test()
     # test.hashing_test()
@@ -303,6 +413,10 @@ if __name__ == "__main__":
     # test.atari_play()
     # test.nrnn()
     # test.rnn()
+    # test.football()
+    # test.test_pypullet()
+    # test.test_sokoban()
+    test.test_tiny_sokoban()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

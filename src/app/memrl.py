@@ -136,25 +136,34 @@ class MemRL:
             Funcs.trace_exception()
 
     @staticmethod
-    def create_env(render=False):
+    def create_env(render=False, is_head=False):
         if P.env_type == P.env_types[0]:
             from src.module.env.atari import Atari
-            return Atari.make_env(render, obs_type="classic")
+            return Atari.make_env(render, obs_type="classic", is_head=is_head)
         if P.env_type == P.env_types[1]:
             from src.module.env.atari import Atari
-            return Atari.make_env(render, obs_type="historical_action")
+            return Atari.make_env(render, obs_type="historical_action", is_head=is_head)
         if P.env_type == P.env_types[2]:
             from src.module.env.atari import Atari
-            return Atari.make_env(render, obs_type="ram")
+            return Atari.make_env(render, obs_type="ram", is_head=is_head)
         if P.env_type == P.env_types[3]:
             from src.module.env.atari_alternative import Atari
-            return Atari.make_env(render)
+            return Atari.make_env(render, is_head=is_head)
         if P.env_type == P.env_types[4]:
             from src.module.env.simple_scene import SimpleScene
-            return SimpleScene.make_env(render)
+            return SimpleScene.make_env(render, is_head=is_head)
         if P.env_type == P.env_types[5]:
             from src.module.env.maze import Maze
-            return Maze.make_env(render)
+            return Maze.make_env(render, is_head=is_head)
+        if P.env_type == P.env_types[6]:
+            from src.module.env.toy_text import ToyText
+            return ToyText.make_env(render, is_head=is_head)
+        if P.env_type == P.env_types[7]:
+            from src.module.env.box_2d import Box2D
+            return Box2D.make_env(render, is_head=is_head)
+        if P.env_type == P.env_types[8]:
+            from src.module.env.sokoban import Sokoban
+            return Sokoban.make_env(render, is_head=is_head)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ from src.util.imports.random import random
 
 class SimpleScene:
     @staticmethod
-    def make_env(render=False):
+    def make_env(render=False, is_head=False):
         env = SimpleSceneEnv()
 
         return env

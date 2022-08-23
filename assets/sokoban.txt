@@ -1,0 +1,25 @@
+--sokoban tasks--
+Sokoban-v0
+Sokoban-v1
+Sokoban-v2
+Sokoban-small-v0
+Sokoban-small-v1
+Sokoban-large-v0
+Sokoban-large-v1
+Sokoban-large-v2
+Sokoban-huge-v0
+FixedTarget-Sokoban-v0
+FixedTarget-Sokoban-v1
+FixedTarget-Sokoban-v2
+FixedTarget-Sokoban-v3
+PushAndPull-Sokoban-v0
+PushAndPull-Sokoban-v1
+PushAndPull-Sokoban-v2
+PushAndPull-Sokoban-v3
+PushAndPull-Sokoban-v4
+PushAndPull-Sokoban-v5
+Boxoban-Train-v0
+Boxoban-Test-v0
+Boxoban-Val-v0
+Boxoban-Train-v1
+Boxoban-Val-v1

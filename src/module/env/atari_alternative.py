@@ -9,7 +9,7 @@ from src.util.tools import Funcs
 
 class Atari:
     @staticmethod
-    def make_env(render=False):
+    def make_env(render=False, is_head=False):
         if P.sticky_action:
             ver = "v0"
         else:
