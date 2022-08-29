@@ -245,16 +245,19 @@ class Graph:
         stochastic_nodes = defaultdict(list)  # state single action forks
         for node in self.main._node:
             action_list = self.main._node[node][Storage._node_action][-1]
-            for action_iond, next in enumerate(self.main._node[node][Storage._node_next]):
+            for action_ind, next in enumerate(self.main._node[node][Storage._node_next]):
                 forks = len(next)
                 if forks > 1:
                     assert node in self.main.crossing_nodes(), "road node with crossing states did not convert to crossing node"
-                    stochastic_nodes[node].append([action_list[action_iond], next])
+                    stochastic_nodes[node].append([action_list[action_ind], next])
         num_stochastic_nodes = len(stochastic_nodes.keys())
         Logger.log(f"number of stochastic nodes: {num_stochastic_nodes}", color="yellow")
         count = 0
         for sn in stochastic_nodes:
-            Logger.log(f"sto. node {sn}: {stochastic_nodes[sn]}", color="yellow")
+            Logger.log(f"sto. node: {sn} -- action_dict: {stochastic_nodes[sn]} -- obs: {self.main._node[sn][Storage._node_obs][0]}", color="yellow")
+            for action, next_nodes in stochastic_nodes[sn]:
+                for next_node in next_nodes:
+                    Logger.log(f"node: {next_node} -- obs: {self.main._node[next_node][Storage._node_obs][0]}", color="yellow")
             count += 1
             if count > 4:
                 if len(stochastic_nodes) > 5:

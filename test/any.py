@@ -365,40 +365,25 @@ class Test:
         env.reset()
         done = False
         print({
-            "no op": 0,
-            "push ^": 1,
-            "push v": 2,
-            "push <": 3,
-            "push >": 4,
-            "^": 5,
-            "v": 6,
-            "<": 7,
-            ">": 8,
+            "^": 0,
+            "v": 1,
+            "<": 2,
+            ">": 3,
         })
         while not done:
             env.render(mode="human")
-            # action = env.action_space.sample()
-            # while True:
-            #     try:
-            #         action = int(input("action: "))
-            #         if action not in range(9):
-            #             raise Exception()
-            #         break
-            #     except Exception:
-            #         print({
-            #             "no op": 0,
-            #             "push ^": 1,
-            #             "push v": 2,
-            #             "push <": 3,
-            #             "push >": 4,
-            #             "^": 5,
-            #             "v": 6,
-            #             "<": 7,
-            #             ">": 8,
-            #         })
-            # obs, reward, done, info = env.step(action)
-            env.reset()
-            breakpoint()
+            action = env.action_space.sample()
+            while True:
+                try:
+                    action = int(input("action: "))
+                    if action not in range(9):
+                        raise Exception()
+                    break
+                except Exception:
+                    pass
+            obs, reward, done, info = env.step(action)
+            # env.reset()
+            
 
 
 if __name__ == "__main__":

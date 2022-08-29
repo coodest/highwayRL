@@ -51,7 +51,7 @@ class Context:
     obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
     projected_dim = 8
     projected_hidden_dim = 32
-    use_hash_index = True
+    use_hash_index = False
     gamma = 0.99
     sync_every = log_every  # in second
     sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
