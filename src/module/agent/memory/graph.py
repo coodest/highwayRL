@@ -342,8 +342,6 @@ class Graph:
                         for n in self.main._node[from_node][Storage._node_next]:
                             if to_node in n:
                                 to_node_in_next = True
-                        # if traj_ind == 2 and step > 4:
-                        #     breakpoint()
                         if not to_node_in_next:
                             crossing_steps[step] = last_obs
                             crossing_steps[step + 1] = obs

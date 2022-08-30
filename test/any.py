@@ -383,8 +383,89 @@ class Test:
                     pass
             obs, reward, done, info = env.step(action)
             # env.reset()
-            
 
+
+    @staticmethod
+    def read_highway_graph():
+        from src.module.agent.memory.storage import Storage
+        import numpy as np
+
+        ms = IO.read_disk_dump(f"{P.model_dir}Boxoban-Test-v0-optimal.pkl")
+        print(len(ms._node))
+
+        def po(nid):
+            print("\n")
+            if nid in ms._crossing_nodes:
+                print(f"crossing_node {nid}:")
+            else:
+                print(f"shrunk_node {nid}:")
+
+            o = ms._node[nid][Storage._node_obs][0]
+            s = ""
+            for i in range(len(o)):
+                if i > 0 and i % 10 == 0:
+                    s += "\n"
+                s += o[i]
+            print(s)
+            print("\n")
+
+        def same_obs(a, b):
+            ao = ms._node[a][Storage._node_obs][0]
+            bo = ms._node[b][Storage._node_obs][0]
+            print(ao == bo)
+
+        def find_p5(obs):
+            a = np.where(np.array(obs, dtype=np.int8).reshape(10, -1) == 5)
+            return [a[0][0], a[1][0]]
+
+        error = 0
+
+        for node in ms._crossing_nodes:
+            obs = ms._node[node][Storage._node_obs][0]
+            next_action = ms._node[node][Storage._node_action][0]
+            next_nodes = ms._node[node][Storage._node_next]
+
+            base_p5 = find_p5(obs)
+
+            for na, nnd in zip(next_action, next_nodes):
+                for nn in nnd:
+                    if nn is not None:
+                        next_p5 = find_p5(ms._node[nn][Storage._node_obs][0])
+                    else:
+                        break
+
+                    if na == 0:
+                        if next_p5[1] == base_p5[1] and (next_p5[0] == base_p5[0] or next_p5[0] == base_p5[0] - 1):
+                            pass
+                        else:
+                            print(0)
+                            print(f"{node} -{na}-> {nnd}")
+                            error += 1
+                    if na == 1:
+                        if next_p5[1] == base_p5[1] and (next_p5[0] == base_p5[0] or next_p5[0] == base_p5[0] + 1):
+                            pass
+                        else:
+                            print(1)
+                            print(f"{node} -{na}-> {nnd}")
+                            error += 1
+                    if na == 2:
+                        if next_p5[0] == base_p5[0] and (next_p5[1] == base_p5[1] or next_p5[1] == base_p5[1] - 1):
+                            pass
+                        else:
+                            print(2)
+                            print(f"{node} -{na}-> {nnd}")
+                            error += 1
+                    if na == 3:
+                        if next_p5[0] == base_p5[0] and (next_p5[1] == base_p5[1] or next_p5[1] == base_p5[1] + 1):
+                            pass
+                        else:
+                            print(3)
+                            print(f"{node} -{na}-> {nnd}")
+                            error += 1
+
+        print(f"error: {error}")
+        breakpoint()
+            
 
 if __name__ == "__main__":
     test = Test()
@@ -401,7 +482,8 @@ if __name__ == "__main__":
     # test.football()
     # test.test_pypullet()
     # test.test_sokoban()
-    test.test_tiny_sokoban()
+    # test.test_tiny_sokoban()
+    test.read_highway_graph()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np
