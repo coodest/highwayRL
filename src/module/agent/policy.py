@@ -130,7 +130,7 @@ class Policy:
                             now - last_report > P.log_every or 
                             frames.value > P.total_frames
                         ):
-                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{}({:.1f}%) V: {}/{}".format(
+                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{}({:.1f}%) V: {:.1f}/{}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
                                 graph.main.obs_size(),

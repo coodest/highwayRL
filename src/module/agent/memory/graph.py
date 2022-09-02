@@ -234,13 +234,14 @@ class Graph:
         IO.write_disk_dump(P.optimal_graph_path, self.main)
 
     def sanity_check(self):
-        visited = dict()
-        for obs in self.main._obs.keys():
+        # check obs <--1:1--> node
+        visited = set()
+        for node in self.main._node.keys():
+            obs = self.main._node[node][Storage._node_obs][0]
             if obs in visited:
-                if self.main._obs[obs][Storage._obs_node_ind] != visited[obs]:
-                    raise Exception("single obs belongs to multiple nodes")
+                raise Exception("same obs mapped to multiple nodes")
             else:
-                visited[obs] = self.main._obs[obs][Storage._obs_node_ind]  # node idrandom.choice(list(starting_states))
+                visited.add(obs)
         
         stochastic_nodes = defaultdict(list)  # state single action forks
         for node in self.main._node:
@@ -254,10 +255,7 @@ class Graph:
         Logger.log(f"number of stochastic nodes: {num_stochastic_nodes}", color="yellow")
         count = 0
         for sn in stochastic_nodes:
-            Logger.log(f"sto. node: {sn} -- action_dict: {stochastic_nodes[sn]} -- obs: {self.main._node[sn][Storage._node_obs][0]}", color="yellow")
-            for action, next_nodes in stochastic_nodes[sn]:
-                for next_node in next_nodes:
-                    Logger.log(f"node: {next_node} -- obs: {self.main._node[next_node][Storage._node_obs][0]}", color="yellow")
+            Logger.log(f"sto. node: {sn} -- action_dict: {stochastic_nodes[sn]}", color="yellow")
             count += 1
             if count > 4:
                 if len(stochastic_nodes) > 5:
@@ -360,7 +358,7 @@ class Graph:
                 if self.main.obs_is_crossing(obs):
                     crossing_steps[step + 1] = obs
 
-                # 1.1.3 find crossing obs for self loops in current traj.
+                # 1.1.3 find crossing obs in current traj.
                 # map obs to list of steps
                 if step not in obs_to_steps[last_obs]:
                     obs_to_steps[last_obs].append(step)

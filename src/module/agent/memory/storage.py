@@ -250,6 +250,56 @@ class Storage:
             # add action if not exist
             self._node[node_ind][Storage._node_action][0].append(action)
             self._node[node_ind][Storage._node_next].append({next_node_ind: 1})
+        
+        # TEMP: sanity check: state-action integrety
+        self.sanity_crossing(node_ind, action, next_node_ind)
+
+    def sanity_crossing(self, node, action, next_node):
+        ms = self
+
+        def find_p5(obs):
+            a = np.where(np.array(obs, dtype=np.int8).reshape(10, -1) == 5)
+            return [a[0][0], a[1][0]]
+
+        error = False
+
+        obs = ms._node[node][Storage._node_obs][0]
+        if next_node is not None:
+            next_obs = ms._node[next_node][Storage._node_obs][0]
+        else:
+            # print("node is none")
+            next_obs = obs
+
+        base_p5 = find_p5(obs)
+        next_p5 = find_p5(next_obs)
+
+        if action == 0:
+            if next_p5[1] == base_p5[1] and (next_p5[0] == base_p5[0] or next_p5[0] == base_p5[0] - 1):
+                pass
+            else:
+                print(f"{node} -{action}-> {next_node}")
+                error = True
+        if action == 1:
+            if next_p5[1] == base_p5[1] and (next_p5[0] == base_p5[0] or next_p5[0] == base_p5[0] + 1):
+                pass
+            else:
+                print(f"{node} -{action}-> {next_node}")
+                error = True
+        if action == 2:
+            if next_p5[0] == base_p5[0] and (next_p5[1] == base_p5[1] or next_p5[1] == base_p5[1] - 1):
+                pass
+            else:
+                print(f"{node} -{action}-> {next_node}")
+                error = True
+        if action == 3:
+            if next_p5[0] == base_p5[0] and (next_p5[1] == base_p5[1] or next_p5[1] == base_p5[1] + 1):
+                pass
+            else:
+                print(f"{node} -{action}-> {next_node}")
+                error = True
+
+        if error:
+            Logger.log(f"error: {error}")
 
     def crossing_node_action_update(self):
         for crossing_node_ind in self._crossing_nodes:

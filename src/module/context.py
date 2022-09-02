@@ -13,7 +13,7 @@ class Context:
     video_dir = out_dir + "video/"
     sync_dir = out_dir + "sync/"
     clean = False
-    log_every = 10
+    log_every = 5
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
 
@@ -45,7 +45,7 @@ class Context:
     seq_len = 500
 
     # agent
-    num_actor = len(gpus) * 16
+    num_actor = len(gpus) * 8
     head_actor = num_actor - 1  # the last actor
     indexer_enabled = True
     obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
