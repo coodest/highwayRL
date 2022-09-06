@@ -32,7 +32,7 @@ class Test:
         2.1 build the graph using m traj.s
         2.2 test the connectivities in the traj.s on the graph
         """
-        from src.module.agent.memory.graph import Graph
+        from memrl.src.module.agent.memory.memory import Memory
         import random
 
         for seed in range(seed_range[0], seed_range[1]):
@@ -41,7 +41,7 @@ class Test:
 
             IO.renew_dir(P.result_dir)
 
-            graph = Graph(id=0, is_head=True)
+            memory = Memory(id=0, is_head=True)
             states = list(range(n))
             actions = list(range(a))
 
@@ -77,22 +77,22 @@ class Test:
 
                     if next_state in ending_states:
                         break
-                graph.store_inc(traj, total_reward)
+                memory.store_inc(traj, total_reward)
                 # print(traj)
         
-            graph.merge_inc(graph.inc)
-            graph.post_process()
-            graph.draw_graph()
-            graph.sanity_check()
+            memory.merge_inc(memory.inc)
+            memory.post_process()
+            memory.draw_graph()
+            memory.sanity_check()
 
     @staticmethod
     def build_graph_test_manual():
 
-        from src.module.agent.memory.graph import Graph
+        from memrl.src.module.agent.memory.memory import Memory
 
 
         IO.renew_dir(P.result_dir)
-        a = Graph(0, True)
+        a = Memory(0, True)
 
         classic_case = "classic"
         special_case = "special"
@@ -179,12 +179,10 @@ class Test:
         # merge
         a.merge_inc(a.inc)
 
-        a.main.node_print()
 
         a.post_process()
         print("------------------------")
 
-        a.main.node_print()
 
         print("------------------------")
         for obs in important_obs:
@@ -387,7 +385,7 @@ class Test:
 
     @staticmethod
     def read_highway_graph():
-        from src.module.agent.memory.storage import Storage
+        from src.module.agent.memory.storage import Graph
         import numpy as np
 
         ms = IO.read_disk_dump(f"{P.model_dir}Boxoban-Test-v0-optimal.pkl")
@@ -400,7 +398,7 @@ class Test:
             else:
                 print(f"shrunk_node {nid}:")
 
-            o = ms._node[nid][Storage._node_obs][0]
+            o = ms._node[nid][Graph._node_obs][0]
             s = ""
             for i in range(len(o)):
                 if i > 0 and i % 10 == 0:
@@ -410,8 +408,8 @@ class Test:
             print("\n")
 
         def same_obs(a, b):
-            ao = ms._node[a][Storage._node_obs][0]
-            bo = ms._node[b][Storage._node_obs][0]
+            ao = ms._node[a][Graph._node_obs][0]
+            bo = ms._node[b][Graph._node_obs][0]
             print(ao == bo)
 
         def find_p5(obs):
@@ -421,16 +419,16 @@ class Test:
         error = 0
 
         for node in ms._crossing_nodes:
-            obs = ms._node[node][Storage._node_obs][0]
-            next_action = ms._node[node][Storage._node_action][0]
-            next_nodes = ms._node[node][Storage._node_next]
+            obs = ms._node[node][Graph._node_obs][0]
+            next_action = ms._node[node][Graph._node_action][0]
+            next_nodes = ms._node[node][Graph._node_next]
 
             base_p5 = find_p5(obs)
 
             for na, nnd in zip(next_action, next_nodes):
                 for nn in nnd:
                     if nn is not None:
-                        next_p5 = find_p5(ms._node[nn][Storage._node_obs][0])
+                        next_p5 = find_p5(ms._node[nn][Graph._node_obs][0])
                     else:
                         break
 

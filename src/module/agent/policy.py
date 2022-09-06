@@ -74,12 +74,12 @@ class Policy:
     ):
         try:  # sub-sub-process exception
             from src.module.agent.memory.indexer import Indexer
-            from src.module.agent.memory.graph import Graph
+            from src.module.agent.memory.memory import Memory
 
             last_report = time.time()
             last_frame = frames.value
             last_sync = time.time()
-            graph = Graph(id, Policy.is_head(id))
+            memory = Memory(id, Policy.is_head(id))
 
             if P.projector == P.projector_types[1]:
                 from src.module.agent.memory.projector import RandomProjector
@@ -107,15 +107,15 @@ class Policy:
                         sync.value = True
                     if sync.value:
                         if P.sync_mode == 0:
-                            graph.sync_by_pipe(
+                            memory.sync_by_pipe(
                                 head_slave_queues, 
                                 slave_head_queues, 
                                 sync
                             )
                         if P.sync_mode == 1:
-                            graph.sync_by_file(sync)
+                            memory.sync_by_file(sync)
                         if P.sync_mode == 2:
-                            graph.sync_by_pipe_disk(
+                            memory.sync_by_pipe_disk(
                                 head_slave_queues, 
                                 slave_head_queues, 
                                 sync
@@ -130,21 +130,16 @@ class Policy:
                             now - last_report > P.log_every or 
                             frames.value > P.total_frames
                         ):
-                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} G/C: {}/{}({:.1f}%) V: {:.1f}/{}".format(
+                            Logger.log("learner frames: {:4.1f}M fps: {:6.1f} {}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
-                                graph.main.obs_size(),
-                                graph.main.crossing_node_size() if P.statistic_crossing_obs else "-",
-                                100 * (graph.main.crossing_node_size() / (graph.main.obs_size() + 1e-8)) if P.statistic_crossing_obs else "-",
-                                graph.main.max_total_reward(),
-                                str(graph.main.max_total_reward_init_obs())[-4:],
+                                memory.info()
                             ), color="yellow")
                             last_report = now
                             last_frame = cur_frame
                         # check to stop
                         if frames.value > P.total_frames:
-                            graph.save_graph()
-                            Logger.log("graph saved")
+                            memory.save()
                             with finish.get_lock():
                                 finish.value = True
                     if finish.value:
@@ -171,13 +166,13 @@ class Policy:
                                 frames.value += (
                                     len(trajectory) * P.num_action_repeats
                                 )
-                            graph.store_inc(trajectory, total_reward)
+                            memory.store_inc(trajectory, total_reward)
                         learner_actor_queue.put(proj_index_init_obs)
                         if P.projector is not None:
                             projector.reset()
                         break
                     else:
-                        action = graph.get_action(obs)
+                        action = memory.get_action(obs)
                         learner_actor_queue.put(action)
         except KeyboardInterrupt:
             Logger.log(f"learner worker {id} {'(head)' if Policy.is_head(id) else '(slave)'} returned with KeyboardInterrupt")

@@ -5,7 +5,7 @@ from src.util.imports.numpy import np
 from collections import defaultdict
 
 
-class Storage:
+class Graph:
     # obs element index
     _obs_node_ind = 0  # corresponding node of the obs
     _obs_step = 1  # position in the node
@@ -25,11 +25,12 @@ class Storage:
         self._max_total_reward = dict()
         self._trajs = list()
         self.iterator = Iterator(self.id)
+        self.crossing_obs = set()
 
     def obs_action(self, obs: str) -> int:
         node_ind, step = self._obs[obs]
         # algorithm makes the first element the best action
-        return self._node[node_ind][Storage._node_action][step][0]
+        return self._node[node_ind][Graph._node_action][step][0]
 
     def obs_exist(self, obs: str) -> bool:
         return obs in self._obs
@@ -38,12 +39,12 @@ class Storage:
         return len(self._obs)
 
     def obs_node_ind(self, obs):
-        return self._obs[obs][Storage._obs_node_ind]
+        return self._obs[obs][Graph._obs_node_ind]
 
     def obs_is_crossing(self, obs):
         if obs not in self._obs:
             return False
-        ind = self._obs[obs][Storage._obs_node_ind]
+        ind = self._obs[obs][Graph._obs_node_ind]
         if ind in self._crossing_nodes:
             return True
         else:
@@ -56,12 +57,16 @@ class Storage:
         self._trajs.append(traj)
 
     def node_value(self, node):
-        return self._node[node][Storage._node_value]
+        return self._node[node][Graph._node_value]
 
     def node_update(self, node_ind: int, obs: list, actions: list, reward: list, next: list):
         node_value = sum(reward)  # node is treated as a whole and discount factor is not considerred within the node
         self._node[node_ind] = [obs, actions, reward, next, node_value]
         # add or update obs
+        if len(obs) > 1:  # check the obs not duplicated with the crossing obs
+            for o in obs:
+                if o in self.crossing_obs:
+                    raise("highway obs duplicated from crossing node")
         for ind, o in enumerate(obs):
             # list object reduces a lot mem comsuption
             self._obs[o] = [node_ind, ind]
@@ -69,9 +74,9 @@ class Storage:
     def node_next_ind(self):
         return len(self._node)
 
-    def node_next_accessable(self, node):
+    def node_next_ind(self, node):
         next_nodes = []
-        node_dict_list = self._node[node][Storage._node_next]
+        node_dict_list = self._node[node][Graph._node_next]
         for node_dict in node_dict_list:
             total_visit = sum(node_dict.values())
             for n in node_dict:
@@ -83,7 +88,7 @@ class Storage:
     def node_add(self, obs: list, action: list, reward: list, next: list):
         # exising node, return 
         if obs[0] in self._obs:
-            return self._obs[obs[0]][Storage._obs_node_ind]
+            return self._obs[obs[0]][Graph._obs_node_ind]
         # add new node
         node_ind = self.node_next_ind()
         self.node_update(node_ind, obs, action, reward, next)
@@ -101,28 +106,29 @@ class Storage:
         # 1. deal with non-exist crossing obs (traj. self loop), add empty crossing node
         if not self.obs_exist(crossing_obs):
             crossing_node_ind = self.node_add([crossing_obs], [[]], [reward], [])
-            self._crossing_nodes.add(crossing_node_ind)
+            self.crossing_node_add(crossing_node_ind, crossing_obs)
             return crossing_node_ind
 
         # 2. collect node info
-        node_ind = self._obs[crossing_obs][Storage._obs_node_ind]
-        step = self._obs[crossing_obs][Storage._obs_step]
-        node_obs_list = self._node[node_ind][Storage._node_obs]
-        node_action_list = self._node[node_ind][Storage._node_action]
-        node_reward_list = self._node[node_ind][Storage._node_reward]
-        node_next_list = self._node[node_ind][Storage._node_next]
+        node_ind = self._obs[crossing_obs][Graph._obs_node_ind]
+        step = self._obs[crossing_obs][Graph._obs_step]
+        node_obs_list = self._node[node_ind][Graph._node_obs]
+        node_action_list = self._node[node_ind][Graph._node_action]
+        node_reward_list = self._node[node_ind][Graph._node_reward]
+        node_next_list = self._node[node_ind][Graph._node_next]
         node_length = len(node_obs_list)
 
         # 3. existing node
         if node_length <= 1:
             if node_ind not in self._crossing_nodes:
                 # convert non-splittable road node to crossing node
-                self._crossing_nodes.add(node_ind)
+                self.crossing_node_add(node_ind, crossing_obs)
             return node_ind
 
         # 4. node split
         if step <= 0:  # crossing node is the first obs
             new_node_ind = self.node_next_ind()
+
             self.node_update(
                 new_node_ind, 
                 node_obs_list[step + 1:], 
@@ -139,7 +145,7 @@ class Storage:
                 [node_reward_list[step]], 
                 [{new_node_ind: 1}]
             )
-            self._crossing_nodes.add(crossing_node_ind)
+            self.crossing_node_add(crossing_node_ind, node_obs_list[step])
         elif step >= node_length - 1:  # crossing node is the last one
             crossing_node_ind = self.node_next_ind()
             self.node_update(
@@ -149,7 +155,7 @@ class Storage:
                 [node_reward_list[step]], 
                 node_next_list
             )
-            self._crossing_nodes.add(crossing_node_ind)
+            self.crossing_node_add(crossing_node_ind, node_obs_list[step])
 
             self.node_update(
                 node_ind, 
@@ -176,7 +182,7 @@ class Storage:
                 [node_reward_list[step]], 
                 [{new_node_ind: 1}]
             )
-            self._crossing_nodes.add(crossing_node_ind)
+            self.crossing_node_add(crossing_node_ind, node_obs_list[step])
 
             self.node_update(
                 node_ind, 
@@ -200,8 +206,8 @@ class Storage:
         val_0 = np.zeros([total_nodes], dtype=np.float32)
         colume_sum = np.zeros([total_nodes], dtype=np.int8)
         for node in self._node:
-            rew[node] = sum(self._node[node][Storage._node_reward])
-            val_0[node] = self._node[node][Storage._node_value]
+            rew[node] = sum(self._node[node][Graph._node_reward])
+            val_0[node] = self._node[node][Graph._node_value]
             for n in self.node_next_accessable(node):
                 adj[node][n] = 1
                 colume_sum[n] += 1
@@ -218,12 +224,12 @@ class Storage:
         val_n, iters, divider = self.iterator.iterate(adj, rew, val_0)
         Logger.log(f"learner value propagation: {iters} iters * {divider} batch", color="yellow")
         for ind, val in enumerate(val_n):
-            self._node[ind][Storage._node_value] = val
+            self._node[ind][Graph._node_value] = val
 
     def node_connection_dict(self, deterministic=False):
         d = defaultdict(list)
         for n in self._node:
-            node_dict_list = self._node[n][Storage._node_next]
+            node_dict_list = self._node[n][Graph._node_next]
             for node_dict in node_dict_list:
                 if deterministic:
                     d[n] += [list(node_dict.keys())[0]]
@@ -234,12 +240,16 @@ class Storage:
     def crossing_nodes(self):
         return self._crossing_nodes
 
+    def crossing_node_add(self, node, obs):
+        self._crossing_nodes.add(node)
+        self.crossing_obs.add(obs)
+
     def crossing_node_add_action(self, node_ind: int, action: int, next_node_ind: int) -> None:
         # corssing node only has one obs and one action list
-        crossing_node_action_list = self._node[node_ind][Storage._node_action][0]
+        crossing_node_action_list = self._node[node_ind][Graph._node_action][0]
         if action in crossing_node_action_list:
             ind = crossing_node_action_list.index(action)  
-            node_dict = self._node[node_ind][Storage._node_next][ind]
+            node_dict = self._node[node_ind][Graph._node_next][ind]
             if next_node_ind in node_dict:
                 # existing action and next node
                 node_dict[next_node_ind] += 1
@@ -248,8 +258,8 @@ class Storage:
                 node_dict[next_node_ind] = 1
         else:
             # add action if not exist
-            self._node[node_ind][Storage._node_action][0].append(action)
-            self._node[node_ind][Storage._node_next].append({next_node_ind: 1})
+            self._node[node_ind][Graph._node_action][0].append(action)
+            self._node[node_ind][Graph._node_next].append({next_node_ind: 1})
         
         # TEMP: sanity check: state-action integrety
         self.sanity_crossing(node_ind, action, next_node_ind)
@@ -263,9 +273,9 @@ class Storage:
 
         error = False
 
-        obs = ms._node[node][Storage._node_obs][0]
+        obs = ms._node[node][Graph._node_obs][0]
         if next_node is not None:
-            next_obs = ms._node[next_node][Storage._node_obs][0]
+            next_obs = ms._node[next_node][Graph._node_obs][0]
         else:
             # print("node is none")
             next_obs = obs
@@ -305,7 +315,7 @@ class Storage:
         for crossing_node_ind in self._crossing_nodes:
             max_action_value = - float("inf")
             target_ind = None
-            for ind, node_dict in enumerate(self._node[crossing_node_ind][Storage._node_next]):
+            for ind, node_dict in enumerate(self._node[crossing_node_ind][Graph._node_next]):
                 # compute the value of the action
                 action_value = None  
                 total_visit = sum(node_dict.values())
@@ -314,9 +324,9 @@ class Storage:
                         prob = node_dict[node] / total_visit
                         if prob <= P.min_accessable_prob:  # filter low prob trail and fake trail (conflict obs)
                             continue
-                        node_value = self._node[node][Storage._node_value]
+                        node_value = self._node[node][Graph._node_value]
                         if np.isnan(node_value):
-                            node_value = self._node[node][Storage._node_value] = 0
+                            node_value = self._node[node][Graph._node_value] = 0
                             # assert np.isnan(node_value), "nan in node values"
                         if action_value is None:
                             action_value = node_value * prob  # wighted value to select the action
@@ -334,8 +344,8 @@ class Storage:
                 continue
             
             # move the best action to the head of the lists
-            node_action_list = self._node[crossing_node_ind][Storage._node_action][0]  # crossing node only has one list for one obs
-            node_next_list = self._node[crossing_node_ind][Storage._node_next]
+            node_action_list = self._node[crossing_node_ind][Graph._node_action][0]  # crossing node only has one list for one obs
+            node_next_list = self._node[crossing_node_ind][Graph._node_next]
 
             target_action = node_action_list[target_ind]
             target_next = node_next_list[target_ind]
@@ -368,3 +378,6 @@ class Storage:
             return self._max_total_reward[
                 self.max_total_reward()
             ]
+
+
+

@@ -1,9 +1,8 @@
+from collections import defaultdict
 # from types import prepare_class
 # from typing import Sized
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
-from src.module.agent.memory.storage import Storage
-import operator
 from collections import defaultdict
 import networkx as nx
 # import matplotlib as mpl
@@ -13,132 +12,82 @@ from src.util.imports.numpy import np
 
 
 class Graph:
-    """
-    normal and shrunk observatin graphs
+    def __init__(self):
+        self.obs_reward = dict()
+        self.obs_next = defaultdict(dict)
+        self.obs_best_action = dict()
+        self.obs_node = dict()
+        self.node_obs = defaultdict(list)
+        self.node_value = dict()
+        self.node_next = defaultdict(dict)
 
-    Assumptions:
+        self.trajs = list()
 
-    1. one state can not be both a terminate state and a middle state
-    2. one state can have different obs
-    3. from the historical obs, algorithms have the chance to restore the current state
-    """
-    def __init__(self, id, is_head) -> None:
-        self.id = id
-        self.is_head = is_head
-        self.main = Storage(self.id)  # main storage
-        self.inc = Storage(self.id)  # incremental storage
+        self.general_info = dict()
+        self.general_info["max_total_reward"] = - float("inf")
+        self.general_info["max_total_reward_init_obs"] = None
 
-    def sync_by_pipe_disk(self, head_slave_queues, slave_head_queues, sync):
-        if not self.is_head:
-            # write increments (slave)
-            slave_head_queues[self.id].put(self.inc)
-            self.inc = Storage(self.id)
-            ready = head_slave_queues[self.id].get()
-            self.main = IO.read_disk_dump(P.sync_dir + "target.pkl")
-            slave_head_queues[self.id].put(["finish"])
-        else:
-            # read increments (head)
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue  # head has no increments stored
-                inc = slave_head_queues[i].get()
-                self.merge_inc(inc)
-            self.post_process()
+    def next_node_ind(self):
+        return len(self.node_obs)
 
-            # write target (head)
-            IO.renew_dir(P.sync_dir)
-            IO.write_disk_dump(P.sync_dir + "target.pkl", self.main)
-            sync.value = False
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue
-                head_slave_queues[i].put(["ready"])
+    def best_action_update(self):
+        for obs in self.obs_node:
+            best_action = None
+            node = self.obs_node[obs]
+            if len(self.node_next[node]) > 1:
+                max_value = - float("inf")
+                for action in self.node_next[node]:
+                    next_node_value = self.node_value[self.node_next[node][action]]
+                    if next_node_value > max_value:
+                        max_value = next_node_value
+                        best_action = action
+            else:
+                best_action = self.obs_next[obs].keys()[0]
+            self.obs_best_action[obs] = best_action
 
-            # wait for all slave finished (head)
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue
-                finished = slave_head_queues[i].get()
-                assert finished == ["finish"], "sync error"
-
-    def sync_by_pipe(self, head_slave_queues, slave_head_queues, sync):
-        if not self.is_head:
-            # write increments (slave)
-            slave_head_queues[self.id].put(self.inc)
-            self.inc = Storage(self.id)
-            self.main = head_slave_queues[self.id].get()
-            slave_head_queues[self.id].put(["finish"])
-        else:
-            # read increments (head)
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue  # head has no increments stored
-                inc = slave_head_queues[i].get()
-                self.merge_inc(inc)
-            self.post_process()
-
-            # write target (head)
-            sync.value = False
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue
-                head_slave_queues[i].put(self.main)
-
-            # wait for all slave finished (head)
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue
-                finished = slave_head_queues[i].get()
-                assert finished == ["finish"], "sync error"
-
-    def sync_by_file(self, sync):
+    def node_value_iteration(self):
         """
-        Synconize the mian and incremental stores that independent to their inner structure 
-        and content. Only support small 'sync_every' (like 1)
+        GNN-based value propagation
         """
-        if not self.is_head:
-            # write increments (not head)
-            IO.write_disk_dump(P.sync_dir + f"{self.id}.pkl", self.inc)
-            self.inc = Storage(self.id)
-            IO.write_disk_dump(P.sync_dir + f"{self.id}.ready", ["ready"])
-            IO.stick_read_disk_dump(P.sync_dir + "target.ok")
-            self.main = IO.read_disk_dump(P.sync_dir + "target.pkl")
-            IO.write_disk_dump(P.sync_dir + f"{self.id}.finish", ["finish"])
-        else:
-            # make sure writes are complete
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue
-                IO.stick_read_disk_dump(P.sync_dir + f"{i}.ready")
-
-            # read increments (head)
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue  # head has no increments stored
-                inc = IO.stick_read_disk_dump(P.sync_dir + f"{i}.pkl")
-                self.merge_inc(inc)
-            self.post_process()
-
-            # write target (head)
-            sync.value = False
-            IO.write_disk_dump(P.sync_dir + "target.pkl", self.main)
-            IO.write_disk_dump(P.sync_dir + "target.ok", ["ok"])
-
-            # remove increments (head)
-            for i in range(P.num_actor):
-                if self.id == i:
-                    continue
-                IO.stick_read_disk_dump(P.sync_dir + f"{i}.finish")
-
-            IO.delete_file(P.optimal_graph_path)
-            IO.move_file(P.sync_dir + "target.pkl", P.optimal_graph_path)
-            IO.renew_dir(P.sync_dir)
+        total_nodes = len(self.node_obs)
+        if total_nodes == 0:
+            return
+        adj = np.zeros([total_nodes, total_nodes], dtype=np.int8)
+        rew = np.zeros([total_nodes], dtype=np.float32)
+        val_0 = np.zeros([total_nodes], dtype=np.float32)
+        colume_sum = np.zeros([total_nodes], dtype=np.int8)
+        for node in self.node_obs:
+            obs_list = self.node_obs[node]
+            rew[node] = sum([self.obs_reward[o] for o in obs_list])
+            val_0[node] = rew[node]
+            for action in self.node_next[node]:
+                n = self.node_next[node][action]
+                adj[node][n] = 1
+                colume_sum[n] += 1
+        m1 = (np.sum(np.where(colume_sum > 1, 1, 0)) / total_nodes) * 100
+        m5 = (np.sum(np.where(colume_sum > 5, 1, 0)) / total_nodes) * 100
+        m10 = (np.sum(np.where(colume_sum > 10, 1, 0)) / total_nodes) * 100
+        # to dertermine the graph memory is more like a graph or more like a tree
+        # all 0% means it is a tree
+        Logger.log(f"{m1:>4.1f}%|{m5:>4.1f}%|{m10:>4.1f}% nodes with >1|>5|>10 merging trails", color="yellow")  
+        
+        # value propagation
+        if P.build_dag:
+            adj = adj - self.iterator.build_dag(adj)
+        val_n, iters, divider = self.iterator.iterate(adj, rew, val_0)
+        Logger.log(f"learner value propagation: {iters} iters * {divider} batch", color="yellow")
+        for ind, val in enumerate(val_n):
+            self.node_value[ind] = val
 
     def draw_graph(self):
         fig_path = f"{P.result_dir}graph"
 
         # 1. get all the node from the graph
-        connection_dict = self.main.node_connection_dict()
+        connection_dict = defaultdict(set)
+        for from_node in self.node_next:
+            for action in self.node_next[from_node]:
+                to_node = self.node_next[from_node][action]
+                connection_dict[from_node].add(to_node)
 
         # 2. build networkx DiGraph
         dg = nx.DiGraph()
@@ -152,8 +101,8 @@ class Graph:
         crossing_node_size = 100
         normal_node_size = 10
         for ind, node in enumerate(connection_dict.keys()):
-            color_weight = self.main.node_value(node)
-            if node in self.main.crossing_nodes():
+            color_weight = self.node_value[node]
+            if len(self.node_next[node]) > 1:
                 dg.add_node(ind, label=node, color=color_weight, size=crossing_node_size)
                 node_size.append(crossing_node_size)
                 node_color.append(color_weight)
@@ -171,7 +120,7 @@ class Graph:
                     continue
                 dg.add_edge(node_to_ind[from_node], node_to_ind[to_node])
                 edge_list.append((node_to_ind[from_node], node_to_ind[to_node]))
-                color_weight = (self.main.node_value(from_node) + self.main.node_value(to_node)) / 2.0
+                color_weight = (self.node_value[from_node] + self.node_value[to_node]) / 2.0
                 edge_color.append(color_weight)
 
         # 3. plot the graph with matplotlab
@@ -230,221 +179,7 @@ class Graph:
         plt.savefig(fig_path + ".pdf", format="PDF")
         plt.clf()
 
-    def save_graph(self):
-        IO.write_disk_dump(P.optimal_graph_path, self.main)
-
-    def sanity_check(self):
-        # check obs <--1:1--> node
-        visited = set()
-        for node in self.main._node.keys():
-            obs = self.main._node[node][Storage._node_obs][0]
-            if obs in visited:
-                raise Exception("same obs mapped to multiple nodes")
-            else:
-                visited.add(obs)
-        
-        stochastic_nodes = defaultdict(list)  # state single action forks
-        for node in self.main._node:
-            action_list = self.main._node[node][Storage._node_action][-1]
-            for action_ind, next in enumerate(self.main._node[node][Storage._node_next]):
-                forks = len(next)
-                if forks > 1:
-                    assert node in self.main.crossing_nodes(), "road node with crossing states did not convert to crossing node"
-                    stochastic_nodes[node].append([action_list[action_ind], next])
-        num_stochastic_nodes = len(stochastic_nodes.keys())
-        Logger.log(f"number of stochastic nodes: {num_stochastic_nodes}", color="yellow")
-        count = 0
-        for sn in stochastic_nodes:
-            Logger.log(f"sto. node: {sn} -- action_dict: {stochastic_nodes[sn]}", color="yellow")
-            count += 1
-            if count > 4:
-                if len(stochastic_nodes) > 5:
-                    Logger.log("...", color="yellow")
-                break
-
-    def get_action(self, obs):
-        if self.main.obs_exist(obs):
-            return self.main.obs_action(obs)
-        else:
-            return None
-
-    def store_inc(self, trajectory, total_reward):
-        """
-        amend and store the trajectory by the non-head process.
-        trajectory: o0, a0, o1, r1 --> o1, a1, o2, r2 --> ... --> on-1, an-1, on, rn
-        amend_traj: o0, a0, o1, r0 --> o1, a1, o2, r1 --> ... --> on-1, an-1, on, rn-1 --> on, None, on, rn
-        """
-        amend_traj = list()
-        last_reward = 0
-        final_obs = None
-        final_reward = None
-        for last_obs, prev_action, obs, reward in trajectory:
-            amend_traj.append([last_obs, prev_action, obs, last_reward])
-            last_reward = reward
-            final_obs = obs
-            final_reward = reward
-        amend_traj.append([final_obs, None, final_obs, final_reward])
-
-        self.inc.trajs_add(amend_traj)
-
-        # last_obs, prev_action, obs, reward (form obs) = trajectory item
-        self.inc.max_total_reward_update(total_reward, trajectory[0][0])
-
-    def get_traj_frag(self, traj, start, end):
-        """
-        get fragment [start, end) of trajectory
-        """
-        o = list()
-        a = list()
-        r = list()
-        for last_obs, prev_action, obs, reward in traj[start: end]:
-            o.append(last_obs)
-            a.append([prev_action])
-            r.append(reward)
-        return o, a, r
-    
-    def merge_inc(self, inc: Storage): 
-        """
-        merger increments to main store by the head process
-        """
-        # 1. build graph structure
-        for traj_ind, traj in enumerate(inc.trajs()):
-            # 1.1 find all crossing obs in current traj
-            crossing_steps = dict()
-            obs_to_steps = defaultdict(list)
-            past_obs = []
-            for step, [last_obs, prev_action, obs, reward] in enumerate(traj[:-1]):
-                # 1.1.1 find corssing obs for existing graph
-                if not self.main.obs_exist(last_obs):
-                    last_obs_in_graph = 0  # check the existence in the graph
-                else:
-                    last_obs_in_graph = 1
-                if not self.main.obs_exist(obs):
-                    obs_in_graph = 0
-                else:
-                    obs_in_graph = 1
-                # add new crossing obs
-                if last_obs_in_graph + obs_in_graph == 1:  # leave or enter a traj.
-                    if last_obs_in_graph == 1:
-                        crossing_steps[step] = last_obs
-                    if obs_in_graph == 1:
-                        crossing_steps[step + 1] = obs
-                if last_obs_in_graph + obs_in_graph == 2:  # between two existing non-adjacent states.
-                    # between two node
-                    from_node = self.main.obs_node_ind(last_obs)
-                    to_node = self.main.obs_node_ind(obs)
-                    from_node_pos = self.main._node[from_node][Storage._node_obs].index(last_obs)
-                    to_node_pos = self.main._node[to_node][Storage._node_obs].index(obs)
-                    if from_node != to_node:
-                        to_node_in_next = False
-                        for n in self.main._node[from_node][Storage._node_next]:
-                            if to_node in n:
-                                to_node_in_next = True
-                        if not to_node_in_next:
-                            crossing_steps[step] = last_obs
-                            crossing_steps[step + 1] = obs
-                        elif from_node_pos < len(self.main._node[from_node][Storage._node_obs]) - 1:  # not the last state
-                            crossing_steps[step] = last_obs
-                            crossing_steps[step + 1] = obs
-                    # within one node
-                    else:
-                        if from_node_pos != to_node_pos - 1:  # self-loop of existing crossing node will also be added
-                            crossing_steps[step] = last_obs
-                            crossing_steps[step + 1] = obs
-
-                # 1.2.2 add exising crossing obs, new traj. need to consider previously detected crossing_obs
-                if self.main.obs_is_crossing(last_obs):
-                    crossing_steps[step] = last_obs
-                if self.main.obs_is_crossing(obs):
-                    crossing_steps[step + 1] = obs
-
-                # 1.1.3 find crossing obs in current traj.
-                # map obs to list of steps
-                if step not in obs_to_steps[last_obs]:
-                    obs_to_steps[last_obs].append(step)
-                if step + 1 not in obs_to_steps[obs]:
-                    obs_to_steps[obs].append(step + 1)
-
-                if last_obs not in past_obs:
-                    last_obs_in_past = 0
-                else:
-                    last_obs_in_past = 1
-                if obs not in past_obs:
-                    obs_in_past = 0
-                else:
-                    obs_in_past = 1
-                
-                # add new crossing obs
-                crossing = []
-                if last_obs_in_past + obs_in_past == 1:  # leave or enter the past traj, self-loop included.
-                    if last_obs_in_past == 1:
-                        crossing.append(last_obs)
-                    if obs_in_past == 1:
-                        crossing.append(obs)
-                if last_obs_in_past + obs_in_past == 2:  # between two past fragments.
-                    from_step = obs_to_steps[last_obs][0]
-                    to_step = obs_to_steps[obs][0]
-                    if from_step != to_step - 1:
-                        crossing.append(last_obs)
-                        crossing.append(obs)
-
-                # add/update all corssing steps of all crossing states
-                for o in crossing:
-                    for cs in obs_to_steps[o]:
-                        if cs not in crossing_steps:
-                            crossing_steps[cs] = o
-
-                past_obs.append(last_obs)
-
-            # 1.2 add node and build interralation to existing graph
-            last_crossing_node_id = None
-            last_action = None
-            last_step = 0
-            sorted_crossing_steps = list(crossing_steps.keys())
-            list.sort(sorted_crossing_steps)
-            for step in sorted_crossing_steps:  # process croossing_obs with ascending order
-                assert step >= last_step, f"order wrong, last_step: {last_step}, step: {step}"
-                crossing_obs = crossing_steps[step]
-                crossing_node_ind = self.main.node_split(crossing_obs, reward=traj[step][3])
-                o, a, r = self.get_traj_frag(traj, last_step, step)
-                if len(o) > 0:
-                    shrunk_or_crossing_node_ind = self.main.node_add(o, a, r, [{crossing_node_ind: 1}])
-                else:
-                    shrunk_or_crossing_node_ind = crossing_node_ind
-                if last_crossing_node_id is not None:
-                    self.main.crossing_node_add_action(last_crossing_node_id, last_action, shrunk_or_crossing_node_ind)
-                last_crossing_node_id = crossing_node_ind
-                last_action = traj[step][1]
-                last_step = step + 1  # step is for the crossing node, thus let it as step + 1
-            # fragment after last crossing obs or the traj without crossing obs
-            o, a, r = self.get_traj_frag(traj, last_step, len(traj))
-            if len(o) > 0:
-                shrunk_or_crossing_node_ind = self.main.node_add(o, a, r, [{None: 1}])
-            else:
-                shrunk_or_crossing_node_ind = None
-            if last_crossing_node_id is not None:
-                self.main.crossing_node_add_action(last_crossing_node_id, last_action, shrunk_or_crossing_node_ind)
-
-            # 1.3 check all obs-action-reward triples are added.
-            for ind, [last_obs, prev_action, obs, reward] in enumerate(traj[:-1]):
-                assert self.main.obs_exist(last_obs) and self.main.obs_exist(obs), "add traj. error"
-
-        # 2. total reward update
-        self.main.max_total_reward_update(
-            total_reward=inc.max_total_reward(),
-            init_obs=inc.max_total_reward_init_obs()
-        )
-
-    def post_process(self):
-        # 1. value propagation
-        self.main.node_value_propagate()
-        
-        # 2. update action of crossing obs
-        self.main.crossing_node_action_update()
-
-        # 3. draw graph (optinal)
-        if P.draw_graph:
-            self.draw_graph()
-
-        if P.graph_sanity_check:
-            self.sanity_check()
+    def general_info_update(self, gi):
+        if gi["max_total_reward"] > self.general_info["max_total_reward"]:
+            self.general_info["max_total_reward"] = gi["max_total_reward"]
+            self.general_info["max_total_reward_init_obs"] = gi["max_total_reward_init_obs"]

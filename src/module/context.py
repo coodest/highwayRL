@@ -13,7 +13,7 @@ class Context:
     video_dir = out_dir + "video/"
     sync_dir = out_dir + "sync/"
     clean = False
-    log_every = 5
+    log_every = 10
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
 
@@ -99,6 +99,6 @@ class Profile(Context):
         C.env_name = C.env_name_list[int(current_profile)]
 
     C.render = False
-    C.sync_every = C.log_every = 10
+    C.sync_every = C.log_every = 2
 
     C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'
