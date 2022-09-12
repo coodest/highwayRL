@@ -62,7 +62,7 @@ class Memory:
                 assert finished == ["finish"], "sync error"
 
     def info(self):
-        return "G/C: {}/{}({:.1f}%) V: {:.3f}/{}".format(
+        return "G/C: {}/{}({:.1f}%) V: {:.2f}/{}".format(
             len(self.main.obs_node),
             len(self.main.intersections) if P.statistic_crossing_obs else "-",
             100 * (len(self.main.intersections) / (len(self.main.obs_node) + 1e-8)) if P.statistic_crossing_obs else "-",

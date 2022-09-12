@@ -21,7 +21,7 @@ class Maze:
             # maze_file="assets/maze_files/maze2d_100x100.npy", 
             # for random mazes
             # maze_file=None, 
-            maze_size=(20, 20),
+            maze_size=(30, 30),
             # modes
             # mode="plus",
             mode=None,

@@ -52,7 +52,7 @@ class Context:
     projected_dim = 8
     projected_hidden_dim = 32
     use_hash_index = False
-    gamma = 1  # discount factor
+    gamma = 0.99  # discount factor
     sync_every = log_every  # in second
     sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
     projector_types = [
