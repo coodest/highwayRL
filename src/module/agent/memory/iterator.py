@@ -5,7 +5,7 @@ from src.util.tools import Logger
 
 
 class Iterator:
-    def __init__(self, id) -> None:
+    def __init__(self, id=0) -> None:
         self.id = id
         ind = P.prio_gpu
         if len(P.gpus) > 1:

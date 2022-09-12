@@ -27,7 +27,7 @@ class Actor:
         """
         return self.id == P.head_actor
 
-    def get_action(self, last_obs, pre_action, obs, reward, done, first_frame):
+    def get_action(self, last_obs, pre_action, obs, reward, done, first_frame, receiver_init_obs=False):
         # query action from policy
         if first_frame:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, False])
@@ -44,7 +44,7 @@ class Actor:
                 if self.finish.value:
                     raise Exception()
 
-        if type(action) is str:  # the projected and indexed init obs
+        if receiver_init_obs:  # the projected and indexed init obs
             return action
 
         if action is not None:
@@ -65,12 +65,12 @@ class Actor:
         while True:  # episode loop
             # 0. init episode
             obs = last_obs = self.env.reset()
-            total_reward = 0
+            total_reward = 0.0
             epi_step = 1
             pre_action = 0
             done = False
             start_time = time.time()
-            reward = 0
+            reward = 0.0
             self.hit = list()
             while self.learner_actor_queues.qsize() > 0:  # empty queue before env interaction
                 self.learner_actor_queues.get()
@@ -89,7 +89,7 @@ class Actor:
 
                 # 4. done ops
                 if done:
-                    proj_index_init_obs = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
+                    proj_index_init_obs = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1, receiver_init_obs=True)
                     self.fps.append(
                         epi_step * P.num_action_repeats / (time.time() - start_time)
                     )

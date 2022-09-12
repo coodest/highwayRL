@@ -32,6 +32,36 @@ class IndexedDict:
             return self.dict[key]
 
 
+class LinkedListElement:
+    def __init__(self, data):
+        self.prev = None
+        self.next = None
+        self.data = data
+
+    def get_entire_list(self):
+        data_list = []
+        head = self
+        while True:
+            if head.prev is not None:
+                if head.prev.data == head.data:  # self-loop
+                    break
+                else:
+                    head = head.prev
+            else:
+                break
+        while True:
+            data_list.append(head.data)
+            if head.next is not None:
+                if head.next.data == head.data:  # self-loop
+                    break
+                else:
+                    head = head.next
+            else:
+                break
+            
+        return data_list
+
+
 class Counter:
     def __init__(self):
         self.index = -1

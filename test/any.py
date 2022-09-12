@@ -1,4 +1,3 @@
-from re import I
 from src.module.context import Profile as P
 from src.util.tools import IO, Logger, Funcs
 
@@ -32,7 +31,7 @@ class Test:
         2.1 build the graph using m traj.s
         2.2 test the connectivities in the traj.s on the graph
         """
-        from memrl.src.module.agent.memory.memory import Memory
+        from src.module.agent.memory.memory import Memory
         import random
 
         for seed in range(seed_range[0], seed_range[1]):
@@ -82,13 +81,11 @@ class Test:
         
             memory.merge_inc(memory.inc)
             memory.post_process()
-            memory.draw_graph()
-            memory.sanity_check()
 
     @staticmethod
     def build_graph_test_manual():
 
-        from memrl.src.module.agent.memory.memory import Memory
+        from src.module.agent.memory.memory import Memory
 
 
         IO.renew_dir(P.result_dir)
@@ -111,19 +108,20 @@ class Test:
             traj2, traj2_tr = [
                 ["b0", 2, "b1", 0],
                 ["b1", 2, "a2", 0],
-                ["a2", 2, "b3", 0],
-                ["b3", 2, "b4", 2],
+                ["a2", 2, "b2", 0],
+                ["b2", 2, "b3", 2],
+                ["b3", 2, "b4", 0],
                 ["b4", 2, "b5", 0],
                 ["b5", 2, "b6", 0],
             ], 2
             traj3, traj3_tr = [
                 ["c0", 3, "c1", 0],
                 ["c1", 3, "b5", 0],
-                ["b5", 3, "c3", 0],
-                ["c3", 3, "c4", 0],
-                ["c4", 3, "a4", 0],
-                ["a4", 3, "c6", 0],
-                ["c6", 3, "c7", 3],
+                ["b5", 3, "c2", 0],
+                ["c2", 3, "c3", 0],
+                ["c3", 3, "a4", 4],
+                ["a4", 3, "c4", 0],
+                ["c4", 3, "c5", 3],
             ], 3
 
             a.store_inc(traj1, traj1_tr)
@@ -179,19 +177,13 @@ class Test:
         # merge
         a.merge_inc(a.inc)
 
-
         a.post_process()
-        print("------------------------")
-
-
         print("------------------------")
         for obs in important_obs:
             print(a.get_action(obs))  # should be 2, 3, 1 for classic case
 
-        a.draw_graph()
-
     @staticmethod 
-    def vp_test():
+    def vi_test():
         from src.module.agent.memory.iterator import Iterator
         import numpy as np
 
@@ -210,6 +202,37 @@ class Test:
         np_val_0 = np.float32(np_val_0)
 
         iterator.iterate(np_adj, np_rew, np_val_0)
+
+    @staticmethod
+    def vi_validation():
+        import time
+
+        model = IO.read_disk_dump(f"{P.model_dir}maze_original-optimal.pkl")
+        max_total_reward_init_obs = model.general_info["max_total_reward_init_obs"]
+        print(max_total_reward_init_obs)
+        max_total_reward_traj = model.general_info["max_total_reward_traj"]
+        from src.module.env.maze import Maze
+        env = Maze.make_env(True)
+        env.reset()
+        done = False
+        total_reward = 0
+        model.draw_graph()
+        for step, [last_obs, prev_action, obs, reward] in enumerate(max_total_reward_traj, start=1):
+            if last_obs in model.obs_best_action:
+                searched_action = model.obs_best_action[last_obs]
+            real_obs, reward, done, info = env.step(prev_action)
+            assert obs == real_obs, "error"
+            total_reward += reward
+            if done:
+                print(total_reward)
+                break
+            else:
+                print(f"#{step} {real_obs} -{searched_action}-{prev_action}- {reward}")
+            env.render()
+            time.sleep(0.01)
+        env.render()
+
+        breakpoint()
         
     @staticmethod 
     def hashing_test():
@@ -467,11 +490,13 @@ class Test:
 
 if __name__ == "__main__":
     test = Test()
-    # testable of content for testing
+    # testable of content for testing:
+    #
     # test.plot_maze()  # test graph gen. for maze env.
     # test.build_graph_test_manual()
     # test.build_graph_test_auto()
-    # test.vp_test()
+    # test.vi_test()
+    test.vi_validation()
     # test.hashing_test()
     # test.make_atari_alternative_env()
     # test.atari_play()
@@ -481,7 +506,7 @@ if __name__ == "__main__":
     # test.test_pypullet()
     # test.test_sokoban()
     # test.test_tiny_sokoban()
-    test.read_highway_graph()
+    # test.read_highway_graph()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

@@ -45,10 +45,10 @@ rm -rf ./output
 # python -X pycache_prefix=./cache -m src.app.memrl 18
 # python -X pycache_prefix=./cache -m src.app.memrl 19
 # python -X pycache_prefix=./cache -m src.app.memrl 20
-python -X pycache_prefix=./cache -m src.app.memrl 21
+# python -X pycache_prefix=./cache -m src.app.memrl 21
 # python -X pycache_prefix=./cache -m src.app.memrl 22
 # python -X pycache_prefix=./cache -m src.app.memrl 23
-# python -X pycache_prefix=./cache -m src.app.memrl 24
+python -X pycache_prefix=./cache -m src.app.memrl 24
 # python -X pycache_prefix=./cache -m src.app.memrl 25
 # python -X pycache_prefix=./cache -m src.app.memrl 26
 

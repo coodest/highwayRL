@@ -62,10 +62,10 @@ class Memory:
                 assert finished == ["finish"], "sync error"
 
     def info(self):
-        return "G/C: {}/{}({:.1f}%) V: {:.1f}/{}".format(
+        return "G/C: {}/{}({:.1f}%) V: {:.3f}/{}".format(
             len(self.main.obs_node),
-            self.main.crossing_node_size() if P.statistic_crossing_obs else "-",
-            100 * (self.main.crossing_node_size() / (len(self.main.obs_node) + 1e-8)) if P.statistic_crossing_obs else "-",
+            len(self.main.intersections) if P.statistic_crossing_obs else "-",
+            100 * (len(self.main.intersections) / (len(self.main.obs_node) + 1e-8)) if P.statistic_crossing_obs else "-",
             self.main.general_info["max_total_reward"],
             str(self.main.general_info["max_total_reward_init_obs"])[-4:],
         )
@@ -73,9 +73,6 @@ class Memory:
     def save(self):
         IO.write_disk_dump(P.optimal_graph_path, self.main)
         Logger.log("memory saved")
-
-    def sanity_check(self):
-        pass
 
     def get_action(self, obs):
         if obs in self.main.obs_best_action:
@@ -105,102 +102,36 @@ class Memory:
         self.inc.general_info_update({
             "max_total_reward": total_reward, 
             "max_total_reward_init_obs": trajectory[0][0],
+            "max_total_reward_traj": trajectory,
         })
     
     def merge_inc(self, inc: Graph): 
         """
-        merger increments to main store by the head process
+        merger increments to main store by the head worker of learner
         """
-
-        def node_split(cross_node_ind, cross_obs):
-            obs_list = self.main.node_obs[cross_node_ind]
-            if len(obs_list) == 1:
-                return cross_node_ind
-            cross_ind = obs_list.index(cross_obs)
-            if cross_ind == 0:
-                self.main.node_obs[cross_node_ind] = [obs_list[cross_ind]]
-                self.main.node_obs[self.main.next_node_ind()] = obs_list[cross_ind + 1:]
-                return cross_node_ind
-            elif cross_ind == len(obs_list) - 1:
-                self.main.node_obs[cross_node_ind] = obs_list[:cross_ind]
-                new_cross_node_ind = self.main.next_node_ind()
-                self.main.node_obs[new_cross_node_ind] = [obs_list[cross_ind]]
-                return new_cross_node_ind
-            else:
-                self.main.node_obs[cross_node_ind] = obs_list[:cross_ind]
-                new_cross_node_ind = self.main.next_node_ind()
-                self.main.node_obs[new_cross_node_ind] = [obs_list[cross_ind]]
-                self.main.node_obs[self.main.next_node_ind()] = obs_list[cross_ind + 1:]
-                return new_cross_node_ind
-
-        # 1. build graph structure
-        for traj_ind, traj in enumerate(inc.trajs):
-            last_node_ind = None
-            last_crossing_node_ind = None
-            for last_obs, prev_action, obs, last_reward in traj:
-                # 1.1 add transitions to obs_next, obs_reward
-                self.main.obs_reward[last_obs] = last_reward
-                if prev_action is not None:
-                    self.main.obs_next[last_obs][prev_action] = obs
-                # 1.2 add node--obs bimap
-                if last_obs not in self.main.obs_node:
-                    if last_node_ind is None:
-                        last_node_ind = self.main.next_node_ind()
-                    self.main.obs_node[last_obs] = last_node_ind
-                    self.main.node_obs[last_node_ind].append(last_obs)
-                    if last_crossing_node_ind is not None:
-                        self.main.node_next[last_crossing_node_ind][prev_action] = last_node_ind
-                        last_crossing_node_ind = None
-                else:
-                    if len(self.main.obs_next[last_obs]) > 1:
-                        # meet existing intersection
-                        cross_node_ind = self.main.obs_node[last_obs]
-                        if last_node_ind is not None:
-                            if prev_action in self.main.node_next[last_node_ind]:
-                                assert self.main.node_next[last_node_ind][prev_action] == cross_node_ind, "env is stochastic."
-                            else:
-                                self.main.node_next[last_node_ind][prev_action] = cross_node_ind
-                        if last_crossing_node_ind is not None:
-                            self.main.node_next[last_crossing_node_ind][prev_action] = cross_node_ind
-                        last_crossing_node_ind = cross_node_ind
-                        last_node_ind = None 
-                    else:
-                        # meet existing highway
-                        if last_node_ind is None:  # hit the highway at the beginning
-                            last_node_ind = self.main.obs_node[last_obs]
-                            cross_node_ind = last_node_ind
-                        else:
-                            current_node_ind = self.main.obs_node[last_obs]
-                            if last_node_ind != current_node_ind:
-                                # enter the highway from other node: split and connect
-                                cross_node_ind = node_split(current_node_ind, last_obs)
-                                last_crossing_node_ind = cross_node_ind
-                            else:
-                                cross_node_ind = last_node_ind
-                        if prev_action not in self.main.obs_next[last_obs]:
-                            # leave highway: split and connect
-                            cross_node_ind = node_split(current_node_ind, last_obs)
-                            last_crossing_node_ind = cross_node_ind
-
-                        if last_crossing_node_ind is not None:
-                            self.main.node_next[last_crossing_node_ind][prev_action] = cross_node_ind
-                            last_crossing_node_ind = None
-
-        # 2. total reward update
+        # 1. add transitions to obs_next, obs_reward
+        self.main.add_trajs(inc.trajs)
+        
+        # 2. update general info
         self.main.general_info_update(inc.general_info)
 
     def post_process(self):
-        # 1. value iteration
+        # 1. graph reconstruction
+        self.main.graph_construction()
+
+        # 2. check the vlidity of the graph
+        if P.graph_sanity_check:
+            self.main.sanity_check()
+
+        # 3. value iteration
         self.main.node_value_iteration()
         
-        # 2. update action of crossing obs
+        # 4. update action of crossing obs
         self.main.best_action_update()
 
-        # 3. draw graph (optinal)
+        # 5. draw graph (optinal)
         if P.draw_graph:
             self.main.draw_graph()
-
-        if P.graph_sanity_check:
-            self.sanity_check()
+        
 
  

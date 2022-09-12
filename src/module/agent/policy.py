@@ -159,7 +159,7 @@ class Policy:
 
                     if add:  # does not add traj from head actor, and first transition from other actors
                         trajectory.append([last_obs, pre_action, obs, reward])
-                        total_reward += reward
+                        total_reward += float(reward)
                     if done:
                         if add:
                             with frames.get_lock():

@@ -9,41 +9,134 @@ import networkx as nx
 import matplotlib.pyplot as plt
 # import time
 from src.util.imports.numpy import np
+from src.util.tools import LinkedListElement
+from src.module.agent.memory.iterator import Iterator
+from tqdm import tqdm
+
 
 
 class Graph:
     def __init__(self):
         self.obs_reward = dict()
         self.obs_next = defaultdict(dict)
+        self.obs_prev = defaultdict(dict)
         self.obs_best_action = dict()
+        
+        self.trajs = list()
+        self.general_info = dict()
+        self.general_info["max_total_reward"] = - float("inf")
+        self.general_info["max_total_reward_init_obs"] = None
+        self.general_info["max_total_reward_traj"] = None
+
+        self.iterator = Iterator()
+
+        self.reset_node()
+
+    def reset_node(self):
         self.obs_node = dict()
         self.node_obs = defaultdict(list)
         self.node_value = dict()
         self.node_next = defaultdict(dict)
-
-        self.trajs = list()
-
-        self.general_info = dict()
-        self.general_info["max_total_reward"] = - float("inf")
-        self.general_info["max_total_reward_init_obs"] = None
+        self.intersections = set()
 
     def next_node_ind(self):
         return len(self.node_obs)
 
-    def best_action_update(self):
-        for obs in self.obs_node:
-            best_action = None
-            node = self.obs_node[obs]
-            if len(self.node_next[node]) > 1:
-                max_value = - float("inf")
-                for action in self.node_next[node]:
-                    next_node_value = self.node_value[self.node_next[node][action]]
-                    if next_node_value > max_value:
-                        max_value = next_node_value
-                        best_action = action
+    def add_trajs(self, trajs):
+        for traj_ind, traj in enumerate(trajs):
+            for last_obs, prev_action, obs, last_reward in traj:
+                self.obs_reward[last_obs] = last_reward
+                if prev_action is not None:
+                    self.obs_next[last_obs][prev_action] = obs
+                    self.obs_prev[obs][prev_action] = last_obs
+
+    def general_info_update(self, gi):
+        if gi["max_total_reward"] > self.general_info["max_total_reward"]:
+            self.general_info["max_total_reward"] = gi["max_total_reward"]
+            self.general_info["max_total_reward_init_obs"] = gi["max_total_reward_init_obs"]
+            self.general_info["max_total_reward_traj"] = gi["max_total_reward_traj"]
+
+    def is_intersection(self, obs):
+        intersection = False
+        if obs in self.obs_prev and len(self.obs_prev[obs]) > 1:
+            intersection = True
+        if obs in self.obs_next and len(self.obs_next[obs]) > 1:
+            intersection = True
+        return intersection
+
+    def graph_construction(self):
+        self.reset_node()
+
+        highway_ele = dict()
+        for obs in self.obs_reward:
+            if self.is_intersection(obs):
+                intersection_node_ind = self.next_node_ind()
+                self.intersections.add(intersection_node_ind)
+                self.obs_node[obs] = intersection_node_ind
+                self.node_obs[intersection_node_ind].append(obs)
+                self.node_value[intersection_node_ind] = self.obs_reward[obs]
             else:
-                best_action = self.obs_next[obs].keys()[0]
-            self.obs_best_action[obs] = best_action
+                if obs not in highway_ele:
+                    highway_ele[obs] = LinkedListElement(obs)
+                if obs in self.obs_next:
+                    next_obs = list(self.obs_next[obs].values())[0]
+                    if not self.is_intersection(next_obs):
+                        if next_obs not in highway_ele:
+                            highway_ele[next_obs] = LinkedListElement(next_obs)
+                        highway_ele[obs].next = highway_ele[next_obs]
+                        highway_ele[next_obs].prev = highway_ele[obs]
+                if obs in self.obs_prev:
+                    prev_obs = list(self.obs_prev[obs].values())[0]
+                    if not self.is_intersection(prev_obs):
+                        if prev_obs not in highway_ele:
+                            highway_ele[prev_obs] = LinkedListElement(prev_obs)
+                        highway_ele[obs].prev = highway_ele[prev_obs]
+                        highway_ele[prev_obs].next = highway_ele[obs]
+
+        visited_obs = set()
+        fragments = defaultdict(list)
+        for obs in highway_ele:
+            if obs in visited_obs:
+                continue
+            fragment = highway_ele[obs].get_entire_list()
+            visited_obs.update(fragment)
+            fragments[fragment[0]] = fragment
+
+        for first_obs in fragments:
+            highway_node_ind = self.next_node_ind()
+            obs_list = fragments[first_obs]
+            reward_list = [self.obs_reward[obs] for obs in obs_list]
+            discount_list = np.power(P.gamma, list(range(len(obs_list))))
+            value = np.sum(np.multiply(reward_list, discount_list))
+            self.node_obs[highway_node_ind] = obs_list
+            self.node_value[highway_node_ind] = value
+            for obs in obs_list:
+                self.obs_node[obs] = highway_node_ind
+
+            if first_obs in self.obs_prev:
+                prev_action = list(self.obs_prev[first_obs].keys())[0]
+                prev_obs = list(self.obs_prev[first_obs].values())[0]
+                self.node_next[self.obs_node[prev_obs]][prev_action] = highway_node_ind
+            last_obs = fragments[first_obs][-1]
+            if last_obs in self.obs_next:
+                next_action = list(self.obs_next[last_obs].keys())[0]
+                next_obs = list(self.obs_next[last_obs].values())[0]
+                self.node_next[highway_node_ind][next_action] = self.obs_node[next_obs]
+
+        # last, connect intersection node
+        for node in self.intersections:
+            obs = self.node_obs[node][0]
+            if obs in self.obs_next:
+                for action in self.obs_next[obs]:
+                    next_obs = self.obs_next[obs][action]
+                    next_node = self.obs_node[next_obs]
+                    self.node_next[node][action] = next_node
+
+    def sanity_check(self):
+        for node in self.intersections:
+            intersection_obs = self.node_obs[node][0]
+            if intersection_obs in self.obs_next and node in self.node_next:
+                assert len(self.obs_next[intersection_obs]) == len(self.node_next[node]), f"incomplete intersection: {intersection_obs}"
 
     def node_value_iteration(self):
         """
@@ -57,13 +150,13 @@ class Graph:
         val_0 = np.zeros([total_nodes], dtype=np.float32)
         colume_sum = np.zeros([total_nodes], dtype=np.int8)
         for node in self.node_obs:
-            obs_list = self.node_obs[node]
-            rew[node] = sum([self.obs_reward[o] for o in obs_list])
+            rew[node] = self.node_value[node]
             val_0[node] = rew[node]
-            for action in self.node_next[node]:
-                n = self.node_next[node][action]
-                adj[node][n] = 1
-                colume_sum[n] += 1
+            if node in self.node_next:
+                for action in self.node_next[node]:
+                    n = self.node_next[node][action]
+                    adj[node][n] = 1
+                    colume_sum[n] += 1
         m1 = (np.sum(np.where(colume_sum > 1, 1, 0)) / total_nodes) * 100
         m5 = (np.sum(np.where(colume_sum > 5, 1, 0)) / total_nodes) * 100
         m10 = (np.sum(np.where(colume_sum > 10, 1, 0)) / total_nodes) * 100
@@ -79,19 +172,27 @@ class Graph:
         for ind, val in enumerate(val_n):
             self.node_value[ind] = val
 
+    def best_action_update(self):
+        for obs in self.obs_node:
+            if obs in self.obs_next:
+                if len(self.obs_next[obs]) > 1:
+                    intersection_node = self.obs_node[obs]
+                    max_value = - float("inf")
+                    for action in self.node_next[intersection_node]:
+                        next_node_value = self.node_value[self.node_next[intersection_node][action]]
+                        if next_node_value >= max_value:
+                            max_value = next_node_value
+                            best_action = action
+                    self.obs_best_action[obs] = best_action
+                else:
+                    best_action = list(self.obs_next[obs].keys())[0]
+                    self.obs_best_action[obs] = best_action
+
     def draw_graph(self):
         fig_path = f"{P.result_dir}graph"
 
-        # 1. get all the node from the graph
-        connection_dict = defaultdict(set)
-        for from_node in self.node_next:
-            for action in self.node_next[from_node]:
-                to_node = self.node_next[from_node][action]
-                connection_dict[from_node].add(to_node)
-
-        # 2. build networkx DiGraph
+        # 1. build networkx DiGraph
         dg = nx.DiGraph()
-        node_to_ind = dict()
         node_size = []
         node_color = []
         edge_color = []
@@ -100,36 +201,33 @@ class Graph:
         node_label = dict()
         crossing_node_size = 100
         normal_node_size = 10
-        for ind, node in enumerate(connection_dict.keys()):
+        for ind, node in enumerate(self.node_value):
             color_weight = self.node_value[node]
-            if len(self.node_next[node]) > 1:
-                dg.add_node(ind, label=node, color=color_weight, size=crossing_node_size)
+            if node in self.intersections:
+                dg.add_node(node, color=color_weight, size=crossing_node_size)
                 node_size.append(crossing_node_size)
                 node_color.append(color_weight)
             else:
-                dg.add_node(ind, label=node, color=color_weight, size=normal_node_size)
+                dg.add_node(node, color=color_weight, size=normal_node_size)
                 node_size.append(normal_node_size)
                 node_color.append(color_weight)
-            pos.append(np.random.rand(2,))
-            node_to_ind[node] = ind
+
+            if P.env_type == P.env_types[5]:
+                coord = self.node_obs[node][0]
+                pos.append([coord[0], - coord[1]])
+            else:
+                pos.append(np.random.rand(2,))
             node_label[ind] = node
 
-        for ind, from_node in enumerate(connection_dict.keys()):
-            for to_node in connection_dict[from_node]:
-                if to_node is None:
-                    continue
-                dg.add_edge(node_to_ind[from_node], node_to_ind[to_node])
-                edge_list.append((node_to_ind[from_node], node_to_ind[to_node]))
+        for ind, from_node in enumerate(self.node_next):
+            for action in self.node_next[from_node]:
+                to_node = self.node_next[from_node][action]
+                dg.add_edge(from_node, to_node, weight=action)
+                edge_list.append([from_node, to_node])
                 color_weight = (self.node_value[from_node] + self.node_value[to_node]) / 2.0
                 edge_color.append(color_weight)
 
-        # 3. plot the graph with matplotlab
-        # save as GEXF file
-        # nx.write_gexf(dg, fig_path + ".gexf")
-        # save as graphML file
-        # nx.write_graphml(dg, fig_path + ".graphml")
-
-        # save as PDF file
+        # 2. plot the graph with matplotlab
         if len(node_color) > 0:
             vmax = max(node_color)
             vmin = min(node_color)
@@ -176,10 +274,7 @@ class Graph:
         sm._A = []
         cb = plt.colorbar(sm)
         cb.set_label('Node Value')
-        plt.savefig(fig_path + ".pdf", format="PDF")
+        plt.savefig(fig_path + ".pdf", format="PDF")  # save as PDF file
         plt.clf()
 
-    def general_info_update(self, gi):
-        if gi["max_total_reward"] > self.general_info["max_total_reward"]:
-            self.general_info["max_total_reward"] = gi["max_total_reward"]
-            self.general_info["max_total_reward_init_obs"] = gi["max_total_reward_init_obs"]
+    

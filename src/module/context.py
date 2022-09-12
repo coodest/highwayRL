@@ -52,7 +52,7 @@ class Context:
     projected_dim = 8
     projected_hidden_dim = 32
     use_hash_index = False
-    gamma = 0.99
+    gamma = 1  # discount factor
     sync_every = log_every  # in second
     sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
     projector_types = [
@@ -68,7 +68,7 @@ class Context:
     statistic_crossing_obs = True
     build_dag = False
     start_over = True  # break loop and start over for adj mat multification
-    max_vp_iter = 100  # num or float("inf")
+    max_vp_iter = 1e8  # num or float("inf")
     min_accessable_prob = 0  # minimum prob. to treat a state is accessable
     draw_graph = False  # whether draw matplotlib figure for the graph
     graph_sanity_check = True
@@ -99,6 +99,6 @@ class Profile(Context):
         C.env_name = C.env_name_list[int(current_profile)]
 
     C.render = False
-    C.sync_every = C.log_every = 2
+    # C.sync_every = C.log_every = 2
 
     C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'
