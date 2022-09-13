@@ -12,6 +12,8 @@ class Indexer:
 
         if P.use_hash_index:
             return Funcs.matrix_hashing(cell_num)
+        elif type(cell_num) is str:
+            return cell_num
         else:
             return tuple(cell_num)
 

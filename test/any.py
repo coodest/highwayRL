@@ -204,7 +204,7 @@ class Test:
         iterator.iterate(np_adj, np_rew, np_val_0)
 
     @staticmethod
-    def vi_validation():
+    def maze_vi_validation():
         import time
 
         model = IO.read_disk_dump(f"{P.model_dir}maze_original-optimal.pkl")
@@ -233,7 +233,53 @@ class Test:
         env.render()
 
         breakpoint()
-        
+
+    @staticmethod
+    def sokoban_vi_validation():
+        actions = {
+            0: "^",
+            1: "v",
+            2: "<",
+            3: ">",
+        }
+        print(actions)
+
+        def formated_obs(o):
+            s = ""
+            for i in range(len(o)):
+                if i > 0 and i % 10 == 0:
+                    s += "\n"
+                s += o[i]
+            s += "\n"
+            return s
+
+        model = IO.read_disk_dump(f"{P.model_dir}Boxoban-Val-v1-optimal.pkl")
+        max_total_reward_init_obs = model.general_info["max_total_reward_init_obs"]
+        max_total_reward = model.general_info["max_total_reward"]
+        print(max_total_reward)
+        print(formated_obs(max_total_reward_init_obs))
+        max_total_reward_traj = model.general_info["max_total_reward_traj"]
+        from src.module.env.sokoban import Sokoban
+        env = Sokoban.make_env()
+        env.reset()
+        done = False
+        total_reward = 0
+        for step, [last_obs, prev_action, obs, reward] in enumerate(max_total_reward_traj, start=1):
+            if last_obs in model.obs_best_action:
+                searched_action = model.obs_best_action[last_obs]
+            real_obs, reward, done, info = env.step(prev_action)
+            if obs != real_obs:
+                print(f"error ({step}): \n{formated_obs(last_obs)}action: {actions[prev_action]}\n{formated_obs(obs)}&\n{formated_obs(real_obs)}")
+            total_reward += reward
+            if done:
+                print(total_reward)
+                break
+            else:
+                pass
+                print(f"#{step} \n{formated_obs(real_obs)} -{actions[searched_action]}-{actions[prev_action]}- \n{formated_obs(obs)} {reward}\n")
+
+        breakpoint()
+
     @staticmethod 
     def hashing_test():
         import numpy as np
@@ -496,7 +542,8 @@ if __name__ == "__main__":
     # test.build_graph_test_manual()
     # test.build_graph_test_auto()
     # test.vi_test()
-    test.vi_validation()
+    # test.maze_vi_validation()
+    test.sokoban_vi_validation()
     # test.hashing_test()
     # test.make_atari_alternative_env()
     # test.atari_play()

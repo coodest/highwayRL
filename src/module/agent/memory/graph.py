@@ -95,12 +95,16 @@ class Graph:
 
         visited_obs = set()
         fragments = defaultdict(list)
+        total_len = 0
         for obs in highway_ele:
             if obs in visited_obs:
                 continue
             fragment = highway_ele[obs].get_entire_list()
             visited_obs.update(fragment)
             fragments[fragment[0]] = fragment
+            total_len += len(set(fragment))
+
+        Logger.log(f"{total_len} ? {len(highway_ele)} ? {len(set(highway_ele.keys()))}")
 
         for first_obs in fragments:
             highway_node_ind = self.next_node_ind()

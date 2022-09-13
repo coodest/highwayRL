@@ -39,20 +39,22 @@ class LinkedListElement:
         self.data = data
 
     def get_entire_list(self):
-        data_list = []
         head = self
+        backtraced = set()
         while True:
+            backtraced.add(head.data)
             if head.prev is not None:
-                if head.prev.data == head.data:  # self-loop
+                if head.prev.data in backtraced:  # loop
                     break
                 else:
                     head = head.prev
             else:
                 break
+        data_list = []
         while True:
             data_list.append(head.data)
             if head.next is not None:
-                if head.next.data == head.data:  # self-loop
+                if head.next.data in data_list:  # loop
                     break
                 else:
                     head = head.next
