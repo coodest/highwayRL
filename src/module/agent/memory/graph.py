@@ -47,6 +47,19 @@ class Graph:
 
     def add_trajs(self, trajs):
         for traj_ind, traj in enumerate(trajs):
+            # filter randomness
+            skip_traj = False
+            for last_obs, prev_action, obs, last_reward in traj:
+                if prev_action is not None:
+                    if prev_action in self.obs_next[last_obs]:
+                        exist_obs = list(self.obs_next[last_obs][prev_action].keys())[0]
+                        if obs != exist_obs:
+                            print(f"{exist_obs} {obs}")
+                            skip_traj = True
+            if skip_traj:
+                continue
+            
+            # add transition
             for last_obs, prev_action, obs, last_reward in traj:
                 self.obs_reward[last_obs] = last_reward
                 if prev_action is not None:
