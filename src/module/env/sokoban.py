@@ -27,7 +27,7 @@ class Sokoban:
     def make_env(render=False, is_head=False):
         # Logger.log(f"env_name: {P.env_name}")
         # env = TinySokoban(P.env_name)
-        env = OptimizedBoxobanEnv(max_steps=500)
+        env = OptimizedBoxobanEnv(max_steps=100)
 
         return env
 

@@ -18,7 +18,7 @@ class Context:
     prio_gpu = gpus[0]  # first device in gpu list
 
     # env
-    total_frames = 1e6  # default 1e7
+    total_frames = 1e7  # default 1e7
     env_types = [
         "atari_classic",  # 0
         "atari_historical_action",  # 1, not support projectors

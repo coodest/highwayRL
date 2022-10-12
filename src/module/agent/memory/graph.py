@@ -1,4 +1,5 @@
 from collections import defaultdict
+from distutils.command.config import dump_file
 # from types import prepare_class
 # from typing import Sized
 from src.util.tools import IO, Logger
@@ -21,6 +22,7 @@ class Graph:
         self.obs_next = defaultdict(dict)
         self.obs_prev = defaultdict(dict)
         self.obs_best_action = dict()
+        self.obs_next_reliable = defaultdict(dict)
         
         self.trajs = list()
         self.general_info = dict()
@@ -37,6 +39,7 @@ class Graph:
         self.node_obs = defaultdict(list)
         self.node_value = dict()
         self.node_next = defaultdict(dict)
+        self.node_next_reliable = defaultdict(dict)
         self.intersections = set()
 
     def next_node_ind(self):
@@ -47,8 +50,13 @@ class Graph:
             for last_obs, prev_action, obs, last_reward in traj:
                 self.obs_reward[last_obs] = last_reward
                 if prev_action is not None:
-                    self.obs_next[last_obs][prev_action] = obs
-                    self.obs_prev[obs][prev_action] = last_obs
+                    if prev_action not in self.obs_next[last_obs]:
+                        self.obs_next[last_obs][prev_action] = defaultdict(int)
+                    self.obs_next[last_obs][prev_action][obs] += 1
+
+                    if prev_action not in self.obs_prev[obs]:
+                        self.obs_prev[obs][prev_action] = defaultdict(int)
+                    self.obs_prev[obs][prev_action][last_obs] += 1
 
     def general_info_update(self, gi):
         if gi["max_total_reward"] > self.general_info["max_total_reward"]:
@@ -60,7 +68,11 @@ class Graph:
         intersection = False
         if obs in self.obs_prev and len(self.obs_prev[obs]) > 1:
             intersection = True
+        if obs in self.obs_prev and len(self.obs_prev[obs]) == 1 and len(list(self.obs_prev[obs].values())[0]) > 1:
+            intersection = True
         if obs in self.obs_next and len(self.obs_next[obs]) > 1:
+            intersection = True
+        if obs in self.obs_next and len(self.obs_next[obs]) == 1 and len(list(self.obs_next[obs].values())[0]) > 1:
             intersection = True
         return intersection
 
@@ -79,32 +91,39 @@ class Graph:
                 if obs not in highway_ele:
                     highway_ele[obs] = LinkedListElement(obs)
                 if obs in self.obs_next:
-                    next_obs = list(self.obs_next[obs].values())[0]
+                    for action in self.obs_next[obs]:
+                        next_obs = list(self.obs_next[obs][action].keys())[0]
                     if not self.is_intersection(next_obs):
                         if next_obs not in highway_ele:
                             highway_ele[next_obs] = LinkedListElement(next_obs)
                         highway_ele[obs].next = highway_ele[next_obs]
                         highway_ele[next_obs].prev = highway_ele[obs]
                 if obs in self.obs_prev:
-                    prev_obs = list(self.obs_prev[obs].values())[0]
+                    for action in self.obs_prev[obs]:
+                        prev_obs = list(self.obs_prev[obs][action].keys())[0]
                     if not self.is_intersection(prev_obs):
                         if prev_obs not in highway_ele:
                             highway_ele[prev_obs] = LinkedListElement(prev_obs)
                         highway_ele[obs].prev = highway_ele[prev_obs]
                         highway_ele[prev_obs].next = highway_ele[obs]
 
-        visited_obs = set()
+        visited_obs = dict()
         fragments = defaultdict(list)
         total_len = 0
         for obs in highway_ele:
             if obs in visited_obs:
                 continue
             fragment = highway_ele[obs].get_entire_list()
-            visited_obs.update(fragment)
+            dup_obs = dict()
+            for ind, f in enumerate(fragment):
+                if f not in visited_obs:
+                    visited_obs[f] = fragment
+                else:
+                    dup_obs[f] = ind
             fragments[fragment[0]] = fragment
-            total_len += len(set(fragment))
-
-        Logger.log(f"{total_len} ? {len(highway_ele)} ? {len(set(highway_ele.keys()))}")
+            total_len += len(fragment)
+            if total_len != len(visited_obs) and len(dup_obs) > 0:
+                Logger.log(f"total_len: {total_len}, visited_obs: {len(visited_obs)}, duplicated obs: {len(dup_obs)}", color="red")
 
         for first_obs in fragments:
             highway_node_ind = self.next_node_ind()
@@ -119,22 +138,28 @@ class Graph:
 
             if first_obs in self.obs_prev:
                 prev_action = list(self.obs_prev[first_obs].keys())[0]
-                prev_obs = list(self.obs_prev[first_obs].values())[0]
-                self.node_next[self.obs_node[prev_obs]][prev_action] = highway_node_ind
+                prev_obs = list(self.obs_prev[first_obs][prev_action].keys())[0]
+                if prev_action not in self.node_next[self.obs_node[prev_obs]]:
+                    self.node_next[self.obs_node[prev_obs]][prev_action] = defaultdict(int)
+                self.node_next[self.obs_node[prev_obs]][prev_action][highway_node_ind] += 1
             last_obs = fragments[first_obs][-1]
             if last_obs in self.obs_next:
                 next_action = list(self.obs_next[last_obs].keys())[0]
-                next_obs = list(self.obs_next[last_obs].values())[0]
-                self.node_next[highway_node_ind][next_action] = self.obs_node[next_obs]
+                next_obs = list(self.obs_next[last_obs][next_action].keys())[0]
+                if next_action not in self.node_next[highway_node_ind]:
+                    self.node_next[highway_node_ind][next_action] = defaultdict(int)
+                self.node_next[highway_node_ind][next_action][self.obs_node[next_obs]] += 1
 
         # last, connect intersection node
         for node in self.intersections:
             obs = self.node_obs[node][0]
             if obs in self.obs_next:
                 for action in self.obs_next[obs]:
-                    next_obs = self.obs_next[obs][action]
-                    next_node = self.obs_node[next_obs]
-                    self.node_next[node][action] = next_node
+                    for next_obs in self.obs_next[obs][action]:
+                        next_node = self.obs_node[next_obs]
+                        if action not in self.node_next[node]:
+                            self.node_next[node][action] = defaultdict(int)
+                        self.node_next[node][action][next_node] += 1
 
     def sanity_check(self):
         for node in self.intersections:
@@ -158,9 +183,9 @@ class Graph:
             val_0[node] = rew[node]
             if node in self.node_next:
                 for action in self.node_next[node]:
-                    n = self.node_next[node][action]
-                    adj[node][n] = 1
-                    colume_sum[n] += 1
+                    for next_node in self.node_next[node][action]:
+                        adj[node][next_node] = 1
+                        colume_sum[next_node] += 1
         m1 = (np.sum(np.where(colume_sum > 1, 1, 0)) / total_nodes) * 100
         m5 = (np.sum(np.where(colume_sum > 5, 1, 0)) / total_nodes) * 100
         m10 = (np.sum(np.where(colume_sum > 10, 1, 0)) / total_nodes) * 100
@@ -183,10 +208,11 @@ class Graph:
                     intersection_node = self.obs_node[obs]
                     max_value = - float("inf")
                     for action in self.node_next[intersection_node]:
-                        next_node_value = self.node_value[self.node_next[intersection_node][action]]
-                        if next_node_value >= max_value:
-                            max_value = next_node_value
-                            best_action = action
+                        for next_node in self.node_next[intersection_node][action]:
+                            next_node_value = self.node_value[next_node]
+                            if next_node_value >= max_value:
+                                max_value = next_node_value
+                                best_action = action
                     self.obs_best_action[obs] = best_action
                 else:
                     best_action = list(self.obs_next[obs].keys())[0]
@@ -225,11 +251,11 @@ class Graph:
 
         for ind, from_node in enumerate(self.node_next):
             for action in self.node_next[from_node]:
-                to_node = self.node_next[from_node][action]
-                dg.add_edge(from_node, to_node, weight=action)
-                edge_list.append([from_node, to_node])
-                color_weight = (self.node_value[from_node] + self.node_value[to_node]) / 2.0
-                edge_color.append(color_weight)
+                for to_node in self.node_next[from_node][action]:
+                    dg.add_edge(from_node, to_node, weight=action)
+                    edge_list.append([from_node, to_node])
+                    color_weight = (self.node_value[from_node] + self.node_value[to_node]) / 2.0
+                    edge_color.append(color_weight)
 
         # 2. plot the graph with matplotlab
         if len(node_color) > 0:
