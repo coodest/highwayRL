@@ -54,7 +54,7 @@ class Graph:
                     if prev_action in self.obs_next[last_obs]:
                         exist_obs = list(self.obs_next[last_obs][prev_action].keys())[0]
                         if obs != exist_obs:
-                            print(f"{exist_obs} {obs}")
+                            Logger.log(f"{exist_obs} {obs}")
                             skip_traj = True
             if skip_traj:
                 continue
