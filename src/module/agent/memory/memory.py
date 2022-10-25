@@ -86,7 +86,7 @@ class Memory:
         amend_traj: o0, a0, o1, r0 --> o1, a1, o2, r1 --> ... --> on-1, an-1, on, rn-1 --> on, None, on, rn
         """
         amend_traj = list()
-        last_reward = 0
+        last_reward = 0.0
         final_obs = None
         final_reward = None
         for last_obs, prev_action, obs, reward in trajectory:

@@ -18,7 +18,7 @@ class Context:
     prio_gpu = gpus[0]  # first device in gpu list
 
     # env
-    total_frames = 1e7  # default 1e7
+    total_frames = 5e5  # default 1e7
     env_types = [
         "atari_classic",  # 0
         "atari_historical_action",  # 1, not support projectors
@@ -52,6 +52,7 @@ class Context:
     projected_dim = 8
     projected_hidden_dim = 32
     use_hash_index = False
+    alpha = 1.0
     gamma = 0.99  # discount factor
     sync_every = log_every  # in second
     sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file

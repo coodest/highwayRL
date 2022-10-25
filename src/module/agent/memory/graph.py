@@ -58,10 +58,46 @@ class Graph:
                             skip_traj = True
             if skip_traj:
                 continue
-            
+
+            # compute reliablity score of state value in the highway graph
+            last_obs_return = 0
+            for last_obs, prev_action, obs, last_reward in traj[::-1]:
+                # last_obs return
+                last_obs_return += last_reward + last_obs_return * P.gamma
+                
+                # last_obs value
+                if last_obs in self.obs_node:  # graph model exist
+                    node = self.obs_node[last_obs]
+                    if self.is_intersection(last_obs):
+                        last_obs_value = self.node_value[node]
+                    else:
+                        last_obs_value = 0
+                        obs_list = self.node_obs[self.obs_node[last_obs]]
+                        ind = obs_list.index(last_obs)
+                        for o in obs_list[:ind - 1:-1]:
+                            last_obs_value += self.obs_reward[o] + last_obs_value * P.gamma
+                        if node in self.node_next:
+                            max_next_node_value = - float("inf")
+                            for next_node in self.node_next[node]:
+                                next_node_value = self.node_value[next_node]
+                                if next_node_value > max_next_node_value:
+                                    max_next_node_value = next_node_value
+                            last_obs_value += max_next_node_value * P.gamma
+                else:
+                    last_obs_value = last_obs_return
+                
+                # reliability score
+                # self.obs_next_reliable[last_obs] = P.alpha * (
+                #     np.exp( - abs(last_obs_return - last_obs_value) / (abs(last_obs_value) + 1e-4))
+                # )
+                # self.obs_next_reliable[last_obs] = P.alpha * (
+                #     np.exp(abs(last_obs_return - last_obs_value))
+                # )
+                self.obs_next_reliable[last_obs] = 1
+
             # add transition
             for last_obs, prev_action, obs, last_reward in traj:
-                self.obs_reward[last_obs] = last_reward
+                self.obs_reward[last_obs] = float(last_reward)
                 if prev_action is not None:
                     if prev_action not in self.obs_next[last_obs]:
                         self.obs_next[last_obs][prev_action] = defaultdict(int)
@@ -174,6 +210,13 @@ class Graph:
                             self.node_next[node][action] = defaultdict(int)
                         self.node_next[node][action][next_node] += 1
 
+        # update adjacency matrix
+        for node in self.node_next:
+            for action in self.node_next[node]:
+                for next_node in self.node_next[node][action]:
+                    next_node_first_obs = self.node_obs[next_node][0]
+                    self.node_next_reliable[node][next_node] = self.obs_next_reliable[next_node_first_obs]
+
     def sanity_check(self):
         for node in self.intersections:
             intersection_obs = self.node_obs[node][0]
@@ -187,7 +230,7 @@ class Graph:
         total_nodes = len(self.node_obs)
         if total_nodes == 0:
             return
-        adj = np.zeros([total_nodes, total_nodes], dtype=np.int8)
+        adj = np.zeros([total_nodes, total_nodes], dtype=np.float32)
         rew = np.zeros([total_nodes], dtype=np.float32)
         val_0 = np.zeros([total_nodes], dtype=np.float32)
         colume_sum = np.zeros([total_nodes], dtype=np.int8)
@@ -197,7 +240,7 @@ class Graph:
             if node in self.node_next:
                 for action in self.node_next[node]:
                     for next_node in self.node_next[node][action]:
-                        adj[node][next_node] = 1
+                        adj[node][next_node] = self.node_next_reliable[node][next_node]
                         colume_sum[next_node] += 1
         m1 = (np.sum(np.where(colume_sum > 1, 1, 0)) / total_nodes) * 100
         m5 = (np.sum(np.where(colume_sum > 5, 1, 0)) / total_nodes) * 100

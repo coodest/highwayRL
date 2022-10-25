@@ -43,6 +43,7 @@ class OptimizedBoxobanEnv(gym.Env):
         self.observation_space = self.env.observation_space
         self.spec = self.env.spec
         self.metadata = self.env.metadata
+        self.last_frame = None
 
     def step(self, action):
         state = self.env.room_state
@@ -67,12 +68,17 @@ class OptimizedBoxobanEnv(gym.Env):
         obs, reward, done, info = self.env.step(action)
 
         obs = np.array2string(obs).replace(" ", "").replace("[", "").replace("]", "").replace("\n", "")
+        temp = obs
+        obs = self.last_frame + obs
+        self.last_frame = temp
 
         return obs, reward, done, info
 
     def reset(self):
         obs = self.env.reset()
         obs = np.array2string(obs).replace(" ", "").replace("[", "").replace("]", "").replace("\n", "")
+        self.last_frame = obs
+        obs = self.last_frame + obs
         return obs
 
     def render(self, mode):

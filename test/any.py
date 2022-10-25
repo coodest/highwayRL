@@ -532,6 +532,59 @@ class Test:
 
         print(f"error: {error}")
         breakpoint()
+
+    @staticmethod
+    def sokoban_vi_test():
+        graph = IO.read_disk_dump(f"{P.model_dir}Boxoban-Val-v1-optimal.pkl")
+        from src.module.env.sokoban import Sokoban
+        visited_graph = set()
+        print({
+            "^": 0,
+            "v": 1,
+            "<": 2,
+            ">": 3,
+        })
+
+        def show(obs):
+            s = ""
+            for i in range(len(obs)):
+                if i > 0 and i % 10 == 0:
+                    s += "\n"
+                s += obs[i]
+            return s
+
+        while True:
+            env = Sokoban.make_env()
+            last_obs = obs = env.reset()
+            while True:
+                action = env.action_space.sample()
+                if last_obs in graph.obs_next:
+                    for a in graph.obs_next[last_obs]:
+                        next_obs = list(graph.obs_next[last_obs][a].keys())[0]
+                        if next_obs not in visited_graph:
+                            action = a
+                            break
+                obs, reward, done, info = env.step(action)
+
+                if last_obs in graph.obs_next:
+                    if action in graph.obs_next[last_obs]:
+                        graph_obs = list(graph.obs_next[last_obs][action].keys())[0]
+                        assert graph_obs == obs, f"next wrong:\n {show(last_obs)}\n -{action}-\n {show(obs)}\n\n {show(graph_obs)}"
+                        visited_graph.add(last_obs)
+                if obs in graph.obs_prev:
+                    if action in graph.obs_prev[obs]:
+                        if last_obs in graph.obs_prev[obs][action]:
+                            visited_graph.add(last_obs)
+                if obs in graph.obs_reward:
+                    assert graph.obs_reward[obs] == reward, f"reward wrong: {graph.obs_reward[obs]} != {reward}"
+                    # visited_graph.add(obs)
+                
+                last_obs = obs
+                if done:
+                    visited_percent = (len(visited_graph)) / (len(list(graph.obs_next.keys())))
+                    print(f"{visited_percent:4.4f}")
+                    break
+        breakpoint()
             
 
 if __name__ == "__main__":
@@ -543,7 +596,8 @@ if __name__ == "__main__":
     # test.build_graph_test_auto()
     # test.vi_test()
     # test.maze_vi_validation()
-    test.sokoban_vi_validation()
+    test.sokoban_vi_test()
+    # test.sokoban_vi_validation()
     # test.hashing_test()
     # test.make_atari_alternative_env()
     # test.atari_play()
