@@ -9,7 +9,7 @@ import cv2
 
 class Atari:
     @staticmethod
-    def make_env(render=False, obs_type=None, is_head=False):
+    def make_env(render=False, obs_type="classic", is_head=False):
         if P.sticky_action:
             repeat_action_probability = 0.25
             ver = "v0"

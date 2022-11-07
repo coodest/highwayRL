@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import os
 import pickle
 import logging
@@ -7,6 +6,7 @@ import shutil
 import time
 import traceback
 from src.util.imports.numpy import np
+import hashlib
 import psutil
 import pytz
 from pathlib import Path
@@ -268,13 +268,20 @@ class Funcs:
         Logger.error("Error msg: " + str(exception_str))
 
     @staticmethod
-    def matrix_hashing(obs):
+    def matrix_hashing(obs, type="sha256"):
         """
         hashing function for matrix without collision
         :param obs: the sparse matrix
         :return: the hashed str
         """
-        return hashlib.sha256(np.array(obs)).hexdigest()
+        if type == "sha256":
+            return hashlib.sha256(np.array(obs)).hexdigest()
+        if type == "shake_256":
+            return hashlib.shake_256(np.array(obs)).hexdigest(length=32)
+        if type == "md5":
+            return hashlib.md5(np.array(obs)).hexdigest()
+        if type == "sha384":
+            return hashlib.sha384(np.array(obs)).hexdigest()
     
     @staticmethod
     def run_cmd(command, timeout=60):

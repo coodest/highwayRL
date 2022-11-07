@@ -8,7 +8,6 @@ from src.util.tools import Funcs, Logger, IO
 import time
 import gym_sokoban
 import copy
-import random
 from gym_sokoban.envs.boxoban_env import BoxobanEnv
 from gym_sokoban.envs.sokoban_env import SokobanEnv
 from gym_sokoban.envs.render_utils import room_to_rgb
@@ -18,8 +17,8 @@ from os.path import isfile, join
 import requests
 import zipfile
 from tqdm import tqdm
-import random
-import numpy as np
+from src.util.imports.random import *
+from src.util.imports.numpy import *
 
 
 class Sokoban:

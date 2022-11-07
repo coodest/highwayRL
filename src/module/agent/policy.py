@@ -73,26 +73,15 @@ class Policy:
         finish
     ):
         try:  # sub-sub-process exception
-            from src.module.agent.memory.indexer import Indexer
+            from src.module.agent.memory.projector import Projector
+            from src.module.agent.memory.projector import Indexer, Hasher
             from src.module.agent.memory.memory import Memory
 
             last_report = time.time()
             last_frame = frames.value
             last_sync = time.time()
             memory = Memory(id, Policy.is_head(id))
-
-            if P.projector == P.projector_types[1]:
-                from src.module.agent.memory.projector import RandomProjector
-                projector = RandomProjector(id)
-            if P.projector == P.projector_types[2]:
-                from src.module.agent.memory.projector import CNNProjector
-                projector = CNNProjector(id)
-            if P.projector == P.projector_types[3]:
-                from src.module.agent.memory.projector import RNNProjector
-                projector = RNNProjector(id)
-            if P.projector == P.projector_types[4]:
-                from src.module.agent.memory.projector import NRNNProjector
-                projector = NRNNProjector(id)
+            projector = Projector(id)
 
             while True:
                 trajectory = []
@@ -148,12 +137,7 @@ class Policy:
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
 
-                    
-                    if P.projector is not None:
-                        last_obs, obs = projector.batch_project([last_obs, obs])
-
-                    if P.indexer_enabled:
-                        last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
+                    last_obs, obs = projector.batch_project([last_obs, obs])
 
                     if proj_index_init_obs is None:
                         proj_index_init_obs = obs
@@ -169,8 +153,7 @@ class Policy:
                                 )
                             memory.store_inc(trajectory, total_reward)
                         learner_actor_queue.put(proj_index_init_obs)
-                        if P.projector is not None:
-                            projector.reset()
+                        projector.reset()
                         break
                     else:
                         action = memory.get_action(obs)

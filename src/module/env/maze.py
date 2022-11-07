@@ -4,7 +4,7 @@ from gym.utils import seeding
 import pygame
 import os
 import gym
-from src.util.imports.random import random
+from src.util.imports.random import *
 from src.util.imports.numpy import np
 from src.module.context import Profile as P
 from src.util.tools import Funcs

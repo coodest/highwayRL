@@ -585,7 +585,86 @@ class Test:
                     print(f"{visited_percent:4.4f}")
                     break
         breakpoint()
-            
+
+    @staticmethod
+    def multi_hash():
+        from src.module.agent.memory.projector import Projector
+        import numpy as np
+
+        a = np.random.rand(3,2,3)
+        b = np.random.rand(3,2,3)
+        c = np.random.rand(3,2,3)
+
+        # print(f"{a}\n\n{b}\n\n{c}")
+
+        last_obs = a
+        obs = b
+        projector = Projector(id=0)
+        last_obs, obs = projector.batch_project([last_obs, obs])
+        print(f"first time:\n{last_obs}\n{obs}\n")
+        last_obs = b
+        obs = c
+        last_obs, obs = projector.batch_project([last_obs, obs])
+        print(f"second time:\n{last_obs}\n{obs}\n")
+
+    @staticmethod
+    def atari_vi():
+        graph = IO.read_disk_dump(f"{P.model_dir}StarGunner-optimal.pkl")
+        from src.module.env.atari import Atari
+        from src.module.agent.memory.projector import Projector
+
+        visited_graph = set()
+        projector = Projector(0)
+        P.env_name = P.env_name_list[int(24)]
+        env = Atari.make_env()
+
+
+        def show(obs):
+            s = ""
+            for i in range(len(obs)):
+                if i > 0 and i % 10 == 0:
+                    s += "\n"
+                s += obs[i]
+            return obs[-4:]
+
+        while True:
+            last_obs = obs = env.reset()
+            while True:
+                action = env.action_space.sample()
+                # if last_obs in graph.obs_next:
+                #     for a in graph.obs_next[last_obs]:
+                #         next_obs = list(graph.obs_next[last_obs][a].keys())[0]
+                #         if next_obs not in visited_graph:
+                #             action = a
+                #             break
+                obs, reward, done, info = env.step(action)
+                last_obs, obs = projector.batch_project([last_obs, obs])
+                print(f"{last_obs[-4:]}")
+                saved_init_obs = graph.general_info["max_total_reward_init_obs"]
+                print(f"{saved_init_obs[-4:]}")
+                from src.util.imports.numpy import np
+                import hashlib
+                breakpoint()
+
+                if last_obs in graph.obs_next:
+                    if action in graph.obs_next[last_obs]:
+                        graph_obs = list(graph.obs_next[last_obs][action].keys())[0]
+                        assert graph_obs == obs, f"next wrong:\n {show(last_obs)}\n -{action}-\n {show(obs)}\n\n {show(graph_obs)}"
+                        visited_graph.add(last_obs)
+                if obs in graph.obs_prev:
+                    if action in graph.obs_prev[obs]:
+                        if last_obs in graph.obs_prev[obs][action]:
+                            visited_graph.add(last_obs)
+                if obs in graph.obs_reward:
+                    assert graph.obs_reward[obs] == reward, f"reward wrong: {graph.obs_reward[obs]} != {reward}"
+                    # visited_graph.add(obs)
+                
+                last_obs = obs
+                if done:
+                    visited_percent = (len(visited_graph)) / (len(list(graph.obs_next.keys())))
+                    print(f"{len(visited_graph)}/{len(list(graph.obs_next.keys()))} ({visited_percent})")
+                    break
+
 
 if __name__ == "__main__":
     test = Test()
@@ -596,7 +675,9 @@ if __name__ == "__main__":
     # test.build_graph_test_auto()
     # test.vi_test()
     # test.maze_vi_validation()
-    test.sokoban_vi_test()
+    # test.sokoban_vi_test()
+    # test.multi_hash()
+    test.atari_vi()
     # test.sokoban_vi_validation()
     # test.hashing_test()
     # test.make_atari_alternative_env()

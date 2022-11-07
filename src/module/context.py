@@ -18,7 +18,7 @@ class Context:
     prio_gpu = gpus[0]  # first device in gpu list
 
     # env
-    total_frames = 5e5  # default 1e7
+    total_frames = 1e3  # default 1e7
     env_types = [
         "atari_classic",  # 0
         "atari_historical_action",  # 1, not support projectors
@@ -30,15 +30,15 @@ class Context:
         "box_2d",  # 7
         "sokoban",  # 8
     ]
-    env_type = env_types[8]
+    env_type = env_types[0]
     render = False  # whether test actor to render the env
     render_every = 5
     # atari
     env_name = None
-    max_episode_steps = 108000
-    max_random_noops = 30  # 30, to control wheter the env is random initialized
-    num_action_repeats = 4
-    stack_frames = 1
+    max_episode_steps = [108000, 100][1]
+    max_random_noops = 0  # 30, to control wheter the env is random initialized
+    num_action_repeats = 1
+    stack_frames = 2
     screen_size = 84
     sticky_action = False
     # simple_scene
@@ -47,15 +47,7 @@ class Context:
     # agent
     num_actor = len(gpus) * 8
     head_actor = num_actor - 1  # the last actor
-    indexer_enabled = True
-    obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
-    projected_dim = 8
-    projected_hidden_dim = 32
-    use_hash_index = False
-    alpha = 1.0
-    gamma = 0.99  # discount factor
-    sync_every = log_every  # in second
-    sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
+    # agent:projector
     projector_types = [
         None,  # 0
         "random",  # 1
@@ -64,6 +56,16 @@ class Context:
         "n-rnn",  # 4
     ]
     projector = projector_types[0]  # select None to disable random projection
+    projected_dim = 8
+    projected_hidden_dim = 32
+    indexer_enabled = False
+    obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
+    hashing_type = [None, "sha256", "multiple"][1]  # None, sha256, multiple
+    # agent:graph
+    alpha = 1.0
+    gamma = 0.99  # discount factor
+    sync_every = log_every  # in second
+    sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True

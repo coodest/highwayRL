@@ -4,6 +4,44 @@ from src.module.context import Profile as P
 from src.util.tools import Logger, Funcs
 
 
+
+class Projector:
+    def __init__(self, id) -> None:
+        self.neural_projector = None
+        if P.projector == P.projector_types[1]:
+            self.neural_projector = RandomProjector(id)
+        if P.projector == P.projector_types[2]:
+            self.neural_projector = CNNProjector(id)
+        if P.projector == P.projector_types[3]:
+            self.neural_projector = RNNProjector(id)
+        if P.projector == P.projector_types[4]:
+            self.neural_projector = NRNNProjector(id)
+
+        self.hasher = Hasher()
+
+    def batch_project(self, inputs):
+        last_obs, obs = inputs
+
+        if self.neural_projector is not None:
+            last_obs, obs = self.neural_projector.batch_project([last_obs, obs])
+
+        if P.indexer_enabled:
+            last_obs, obs = Indexer.batch_get_ind([last_obs, obs])
+
+        if P.hashing_type is not None:
+            last_obs, obs = self.hasher.batch_map([last_obs, obs])
+        else:
+            # use raw output of env, memory may quickly used up
+            last_obs, obs = tuple(last_obs), tuple(obs)
+
+        return last_obs, obs
+
+    def reset(self):
+        if self.neural_projector is not None:
+            self.neural_projector.reset()
+        self.hasher.reset()
+
+
 class RandomMatrixLayer(torch.nn.Module):
     def __init__(self, inf, outf):
         super().__init__()
@@ -16,7 +54,64 @@ class RandomMatrixLayer(torch.nn.Module):
             return self.layer(input)
 
 
-class Projector:
+class Indexer:
+    @staticmethod
+    def get_ind(obs):
+        if P.obs_min_dis > 0:
+            cell_num = [int(i / P.obs_min_dis) for i in obs]
+        else:
+            cell_num = obs
+
+        if type(cell_num) is str:
+            return cell_num
+        else:
+            return tuple(cell_num)
+
+    @staticmethod
+    def batch_get_ind(obs_list):
+        inds = []
+        for obs in obs_list:
+            inds.append(Indexer.get_ind(obs))
+        return inds
+
+    
+class Hasher:
+    def __init__(self) -> None:
+        self.hist_input = np.expand_dims(np.array([]), axis=0)
+        self.hist_hash = ""
+
+    def map(self, input):
+        if P.hashing_type == "sha256":
+            return Funcs.matrix_hashing(input)
+        if P.hashing_type == "multiple":
+            res = ""
+            res += Funcs.matrix_hashing(input, type="sha256")
+            res += Funcs.matrix_hashing(input, type="md5")
+            res += Funcs.matrix_hashing(input, type="shake_256")
+            return res
+
+    def batch_map(self, inputs):
+        last_obs, obs = inputs
+        if len(self.hist_hash) == 0:
+            self.hist_input = np.array([last_obs])
+            a = self.map(self.hist_input)
+            self.hist_input = np.append(self.hist_input, [np.array(obs)], axis=0)
+            b = self.map(self.hist_input)
+            self.hist_hash = b
+            return a, b
+        else:
+            a = self.hist_hash
+            self.hist_input = np.append(self.hist_input, [np.array(obs)], axis=0)
+            b = self.map(self.hist_input)
+            self.hist_hash = b
+            return a, b
+
+    def reset(self):
+        self.hist_input = np.expand_dims(np.array([]), axis=0)
+        self.hist_hash = ""
+
+
+class NeuralProjector:
     def __init__(self, id) -> None:
         self.id = id
         ind = P.prio_gpu
@@ -38,7 +133,7 @@ class Projector:
         pass
 
 
-class RandomProjector(Projector):
+class RandomProjector(NeuralProjector):
     def __init__(self, id) -> None:
         super().__init__(id)
         self.random_matrix = None
@@ -64,7 +159,7 @@ class RandomProjector(Projector):
         return result
 
 
-class RNNProjector(Projector):
+class RNNProjector(NeuralProjector):
     def __init__(self, id) -> None:
         super().__init__(id)
         self.random_matrix = None
@@ -126,7 +221,7 @@ class RNNProjector(Projector):
         return results
 
 
-class NRNNProjector(Projector):
+class NRNNProjector(NeuralProjector):
     def __init__(self, id, steps=5) -> None:
         super().__init__(id)
         self.steps = steps
@@ -185,7 +280,7 @@ class NRNNProjector(Projector):
         return results
 
 
-class CNNProjector(Projector):
+class CNNProjector(NeuralProjector):
     def __init__(self, id) -> None:
         super().__init__(id)
 

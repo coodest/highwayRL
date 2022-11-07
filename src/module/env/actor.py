@@ -3,8 +3,8 @@ from src.util.tools import Logger, Funcs
 import time
 from multiprocessing import Queue
 from collections import deque
-from src.util.imports.random import random
-from src.util.imports.numpy import np
+from src.util.imports.random import *
+from src.util.imports.numpy import *
 
 
 class Actor:

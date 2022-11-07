@@ -21,7 +21,7 @@ from gfootball.env import wrappers
 from gfootball.env import scenario_builder
 from gfootball.scenarios import *
 import gfootball_engine as libgame
-import numpy as np
+from src.util.imports.numpy import *
 from src.module.context import Profile as P
 
 
