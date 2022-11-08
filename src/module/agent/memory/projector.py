@@ -81,6 +81,7 @@ class Hasher:
         self.hist_hash = ""
 
     def map(self, input):
+        input = input.tobytes()
         if P.hashing_type == "sha256":
             return Funcs.matrix_hashing(input)
         if P.hashing_type == "multiple":
