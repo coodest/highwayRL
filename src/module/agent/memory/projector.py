@@ -19,7 +19,7 @@ class Projector:
 
         self.hasher = Hasher()
 
-    def batch_project(self, inputs):
+    def batch_project(self, inputs, first_frame=False):
         last_obs, obs = inputs
 
         if self.neural_projector is not None:
@@ -33,6 +33,10 @@ class Projector:
         else:
             # use raw output of env, memory may quickly used up
             last_obs, obs = tuple(last_obs), tuple(obs)
+
+        if first_frame:
+            self.hasher.reset()
+            obs = last_obs
 
         return last_obs, obs
 
@@ -81,7 +85,7 @@ class Hasher:
         self.hist_hash = ""
 
     def map(self, input):
-        input = input.tobytes()
+        # input = input.tobytes()
         if P.hashing_type == "sha256":
             return Funcs.matrix_hashing(input)
         if P.hashing_type == "multiple":

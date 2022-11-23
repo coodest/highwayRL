@@ -96,8 +96,13 @@ class Graph:
                 self.obs_next_reliable[last_obs] = 1
 
             # add transition
-            for last_obs, prev_action, obs, last_reward in traj:
-                self.obs_reward[last_obs] = float(last_reward)
+            total_reward = 0
+            for ind, [last_obs, prev_action, obs, last_reward] in enumerate(traj):
+                total_reward += last_reward
+                if last_obs in self.obs_reward:
+                    self.obs_reward[last_obs] = max(self.obs_reward[last_obs], float(last_reward))
+                else:
+                    self.obs_reward[last_obs] = float(last_reward)
                 if prev_action is not None:
                     if prev_action not in self.obs_next[last_obs]:
                         self.obs_next[last_obs][prev_action] = defaultdict(int)
@@ -106,6 +111,13 @@ class Graph:
                     if prev_action not in self.obs_prev[obs]:
                         self.obs_prev[obs][prev_action] = defaultdict(int)
                     self.obs_prev[obs][prev_action][last_obs] += 1
+
+            # last_obs, prev_action, obs, reward (form obs) = trajectory item
+            self.general_info_update({
+                "max_total_reward": total_reward, 
+                "max_total_reward_init_obs": traj[0][0],
+                "max_total_reward_traj": traj,
+            })
 
     def general_info_update(self, gi):
         if gi["max_total_reward"] > self.general_info["max_total_reward"]:

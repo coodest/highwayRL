@@ -98,13 +98,6 @@ class Memory:
 
         self.inc.trajs.append(amend_traj)
 
-        # last_obs, prev_action, obs, reward (form obs) = trajectory item
-        self.inc.general_info_update({
-            "max_total_reward": total_reward, 
-            "max_total_reward_init_obs": trajectory[0][0],
-            "max_total_reward_traj": trajectory,
-        })
-    
     def merge_inc(self, inc: Graph): 
         """
         merger increments to main store by the head worker of learner

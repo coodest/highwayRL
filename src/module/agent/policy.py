@@ -137,10 +137,10 @@ class Policy:
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
 
-                    last_obs, obs = projector.batch_project([last_obs, obs])
+                    last_obs, obs = projector.batch_project([last_obs, obs], proj_index_init_obs is None)
 
                     if proj_index_init_obs is None:
-                        proj_index_init_obs = obs
+                        proj_index_init_obs = last_obs
 
                     if add:  # does not add traj from head actor, and first transition from other actors
                         trajectory.append([last_obs, pre_action, obs, reward])

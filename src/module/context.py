@@ -12,13 +12,14 @@ class Context:
     result_dir = out_dir + "result/"
     video_dir = out_dir + "video/"
     sync_dir = out_dir + "sync/"
+    env_dir = out_dir + "env/"
     clean = False
     log_every = 10
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
 
     # env
-    total_frames = 1e3  # default 1e7
+    total_frames = [1e7, 1e5][1]  # default 1e7
     env_types = [
         "atari_classic",  # 0
         "atari_historical_action",  # 1, not support projectors
@@ -35,10 +36,10 @@ class Context:
     render_every = 5
     # atari
     env_name = None
-    max_episode_steps = [108000, 100][1]
+    max_episode_steps = [108000, 1000][1]
     max_random_noops = 0  # 30, to control wheter the env is random initialized
     num_action_repeats = 1
-    stack_frames = 2
+    stack_frames = 1
     screen_size = 84
     sticky_action = False
     # simple_scene

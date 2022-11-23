@@ -608,62 +608,84 @@ class Test:
         print(f"second time:\n{last_obs}\n{obs}\n")
 
     @staticmethod
-    def atari_vi():
+    def atari_graph_replay():
         graph = IO.read_disk_dump(f"{P.model_dir}StarGunner-optimal.pkl")
         from src.module.env.atari import Atari
         from src.module.agent.memory.projector import Projector
+        import time
 
-        visited_graph = set()
+        Logger.path = f"{P.log_dir}{P.env_name}-{Logger.get_date()}-test.log"
+
         projector = Projector(0)
         P.env_name = P.env_name_list[int(24)]
         env = Atari.make_env()
+        saved_traj = graph.general_info["max_total_reward_traj"]
+        saved_last_obs = [e[0] for e in saved_traj]
+        saved_action = [e[1] for e in saved_traj]
+        # show info
+        projector.reset()
+        last_obs = obs = env.reset()
+        last_obs, obs = projector.batch_project([last_obs, obs], first_frame=True)
+        g_action = graph.obs_best_action[obs]
+        ereward = 0
+        current_obs = last_obs
+        epi_step = 1
+        while True:
+            ereward += graph.obs_reward[current_obs]
+            if current_obs in graph.obs_next:
+                # if saved_last_obs[epi_step - 1] != current_obs:
+                #     Logger.log("wrong.")
+                #     breakpoint()
+                Logger.log(f"{saved_last_obs[epi_step - 1][-4:]} vs {current_obs[-4:]}; {saved_traj[epi_step - 1][3]} vs {graph.obs_reward[current_obs]}")
+                e_action = saved_traj[epi_step - 1][1]
+                epi_step += 1
+            else:
+                break
+            current_obs = list(graph.obs_next[current_obs][e_action].keys())[0]
+        saved_init_obs = graph.general_info["max_total_reward_init_obs"]
+        Logger.log(f"save action replay: {last_obs[-4:]} vs {saved_init_obs[-4:]}; {ereward} vs {graph.general_info['max_total_reward']}; {epi_step} vs {len(saved_action)}")
 
+    @staticmethod
+    def atari_traj_replay():
+        from src.module.env.atari import Atari
+        from src.module.agent.memory.projector import Projector
 
-        def show(obs):
-            s = ""
-            for i in range(len(obs)):
-                if i > 0 and i % 10 == 0:
-                    s += "\n"
-                s += obs[i]
-            return obs[-4:]
+        Logger.path = f"{P.log_dir}{P.env_name}-{Logger.get_date()}-test.log"
+
+        projector = Projector(0)
+        P.env_name = P.env_name_list[int(24)]
+        env = Atari.make_env()
+        # saved_traj = IO.read_disk_dump(f"{P.result_dir}221122100310-traj.pkl")
+        saved_traj = IO.read_disk_dump(f"{P.result_dir}221122100635-traj.pkl")
+        saved_last_obs = [e[0] for e in saved_traj]
+        saved_action = [e[1] for e in saved_traj]
+        saved_obs = [e[2] for e in saved_traj]
+        saved_reward = [e[3] for e in saved_traj]
+        saved_total_reward = sum(saved_reward)
 
         while True:
+            # set env
+            epi_step = 1
+            projector.reset()
             last_obs = obs = env.reset()
+            
+            total_reward = 0
             while True:
-                action = env.action_space.sample()
-                # if last_obs in graph.obs_next:
-                #     for a in graph.obs_next[last_obs]:
-                #         next_obs = list(graph.obs_next[last_obs][a].keys())[0]
-                #         if next_obs not in visited_graph:
-                #             action = a
-                #             break
+                s_action = saved_action[epi_step - 1]
+                action = s_action
                 obs, reward, done, info = env.step(action)
-                last_obs, obs = projector.batch_project([last_obs, obs])
-                print(f"{last_obs[-4:]}")
-                saved_init_obs = graph.general_info["max_total_reward_init_obs"]
-                print(f"{saved_init_obs[-4:]}")
-                from src.util.imports.numpy import np
-                import hashlib
-                breakpoint()
+                env.render(mode="rgb_array")
 
-                if last_obs in graph.obs_next:
-                    if action in graph.obs_next[last_obs]:
-                        graph_obs = list(graph.obs_next[last_obs][action].keys())[0]
-                        assert graph_obs == obs, f"next wrong:\n {show(last_obs)}\n -{action}-\n {show(obs)}\n\n {show(graph_obs)}"
-                        visited_graph.add(last_obs)
-                if obs in graph.obs_prev:
-                    if action in graph.obs_prev[obs]:
-                        if last_obs in graph.obs_prev[obs][action]:
-                            visited_graph.add(last_obs)
-                if obs in graph.obs_reward:
-                    assert graph.obs_reward[obs] == reward, f"reward wrong: {graph.obs_reward[obs]} != {reward}"
-                    # visited_graph.add(obs)
-                
+                plast_obs, pobs = projector.batch_project([last_obs, obs], epi_step == 1)
+                if epi_step > 1:
+                    assert saved_last_obs[epi_step - 2] == plast_obs, "wrong"
+                total_reward += reward
                 last_obs = obs
+            
                 if done:
-                    visited_percent = (len(visited_graph)) / (len(list(graph.obs_next.keys())))
-                    print(f"{len(visited_graph)}/{len(list(graph.obs_next.keys()))} ({visited_percent})")
+                    Logger.log(f"saved reward: {saved_total_reward} total reward: {total_reward} steps: {epi_step}")
                     break
+                epi_step += 1
 
 
 if __name__ == "__main__":
@@ -677,7 +699,7 @@ if __name__ == "__main__":
     # test.maze_vi_validation()
     # test.sokoban_vi_test()
     # test.multi_hash()
-    test.atari_vi()
+    test.atari_traj_replay()
     # test.sokoban_vi_validation()
     # test.hashing_test()
     # test.make_atari_alternative_env()

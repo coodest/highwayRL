@@ -3,48 +3,64 @@ from gym.spaces.box import Box
 from gym.wrappers import TimeLimit, RecordVideo
 from src.util.imports.numpy import np
 from src.module.context import Profile as P
-from src.util.tools import Funcs, Logger
+from src.util.tools import Funcs, Logger, IO
 import cv2
+import time
 
 
 class Atari:
     @staticmethod
     def make_env(render=False, obs_type="classic", is_head=False):
-        if P.sticky_action:
-            repeat_action_probability = 0.25
-            ver = "v0"
-        else:  # Deterministic
-            repeat_action_probability = 0.0
-            ver = "v4"
-        if obs_type in ["classic", "historical_action"]:
-            # env = gym.make(f"{P.env_name}Deterministic-{ver}", full_action_space=True)
-            env = gym.make(
-                f"{P.env_name}NoFrameskip-{ver}", 
-                frameskip=1,
-                repeat_action_probability=repeat_action_probability,
-                full_action_space=True
+        env_path = f"{P.env_dir}{P.env_name}.pkl"
+        if is_head:
+            if P.sticky_action:
+                repeat_action_probability = 0.25
+                ver = "v0"
+            else:  # Deterministic
+                repeat_action_probability = 0.0
+                ver = "v4"
+            if obs_type in ["classic", "historical_action"]:
+                # env = gym.make(
+                #     f"{P.env_name}Deterministic-{ver}", 
+                #     frameskip=1,
+                #     full_action_space=True,
+                # )
+                env = gym.make(
+                    f"{P.env_name}NoFrameskip-{ver}", 
+                    frameskip=1,
+                    repeat_action_probability=repeat_action_probability,
+                    full_action_space=True,
+                    # render_mode='human',
+                )
+            if obs_type == "ram":
+                env = gym.make(
+                    f"{P.env_name}-ramNoframeskip-{ver}", 
+                    frameskip=1,
+                    repeat_action_probability=repeat_action_probability,
+                    full_action_space=True,
+                )
+
+            env.seed(2022)
+
+            env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
+
+            if render:
+                env = RecordVideo(env, f"{P.video_dir}{P.env_name}/", episode_trigger=lambda episode_id: episode_id % P.render_every == 0)  # output every episode
+
+            env = AtariPreprocessing(
+                env,
+                obs_type=obs_type,
+                frame_skip=P.num_action_repeats,
+                max_random_noops=P.max_random_noops,
             )
-        if obs_type == "ram":
-            env = gym.make(
-                f"{P.env_name}-ramNoframeskip-{ver}", 
-                frameskip=1,
-                repeat_action_probability=repeat_action_probability,
-                full_action_space=True
-            )
-
-        env.seed(2022)
-
-        env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
-
-        if render:
-            env = RecordVideo(env, f"{P.video_dir}{P.env_name}/", episode_trigger=lambda episode_id: episode_id % P.render_every == 0)  # output every episode
-
-        env = AtariPreprocessing(
-            env,
-            obs_type=obs_type,
-            frame_skip=P.num_action_repeats,
-            max_random_noops=P.max_random_noops,
-        )
+            IO.write_disk_dump(env_path, env)
+        else:
+            while True:
+                try:
+                    env = IO.read_disk_dump(env_path)
+                    break
+                except Exception:
+                    time.sleep(0.1)
 
         return env
 
@@ -97,10 +113,11 @@ class AtariPreprocessing(object):
         # frames.
         self.obs_type = obs_type
         if obs_type == "classic":
-            self.screen_buffer = [
-                np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8),
-                np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8),
-            ]
+            self.screen_buffer = []
+            for _ in range(P.stack_frames):
+                self.screen_buffer.append(
+                    np.empty((obs_dims.shape[0], obs_dims.shape[1]), dtype=np.uint8)
+                )
         if obs_type == "historical_action":
             self.action_list = []
         if obs_type == "ram":
@@ -167,7 +184,8 @@ class AtariPreprocessing(object):
 
         if self.obs_type == "classic":
             self._fetch_grayscale_observation(self.screen_buffer[0])
-            self.screen_buffer[1].fill(0)
+            for i in range(1, P.stack_frames):
+                self.screen_buffer[i].fill(0)
             return self._pool_and_resize()
         if self.obs_type == "historical_action":
             self.action_list = []
@@ -236,9 +254,9 @@ class AtariPreprocessing(object):
             if is_terminal:
                 break
             # We max-pool over the last two frames, in grayscale.
-            elif time_step >= self.frame_skip - 2:
+            elif time_step >= self.frame_skip - P.stack_frames:
                 if self.obs_type == "classic":
-                    t = time_step - (self.frame_skip - 2)
+                    t = time_step - (self.frame_skip - P.stack_frames)
                     self._fetch_grayscale_observation(self.screen_buffer[t])
                 if self.obs_type == "ram":
                     if time_step >= self.frame_skip - 1:
@@ -283,17 +301,19 @@ class AtariPreprocessing(object):
           transformed_screen: numpy array, pooled, resized screen.
         """
         # Pool if there are enough screens to do so.
-        if self.frame_skip > 1:
-            np.maximum(
-                self.screen_buffer[0], self.screen_buffer[1], out=self.screen_buffer[0]
+        # if self.frame_skip > 1:
+        #     np.maximum(
+        #         self.screen_buffer[0], self.screen_buffer[1], out=self.screen_buffer[0]
+        #     )
+        def resize(input):
+            return cv2.resize(
+                input,
+                (self.screen_size, self.screen_size),
+                interpolation=cv2.INTER_LINEAR,
             )
 
-        transformed_image = cv2.resize(
-            self.screen_buffer[0],
-            (self.screen_size, self.screen_size),
-            interpolation=cv2.INTER_LINEAR,
-        )
+        transformed_image = [resize(i) for i in self.screen_buffer]
 
         int_image = np.asarray(transformed_image, dtype=np.uint8)
-        # return np.expand_dims(int_image, axis=2)
+        # Logger.log(f"{self.screen_buffer[0].shape} {len(self.screen_buffer)} {int_image.shape}")
         return np.ndarray.flatten(int_image)
