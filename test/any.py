@@ -636,7 +636,13 @@ class Test:
                 # if saved_last_obs[epi_step - 1] != current_obs:
                 #     Logger.log("wrong.")
                 #     breakpoint()
-                Logger.log(f"{saved_last_obs[epi_step - 1][-4:]} vs {current_obs[-4:]}; {saved_traj[epi_step - 1][3]} vs {graph.obs_reward[current_obs]}")
+                snode = graph.obs_node[current_obs]
+                snode_value = graph.node_value[snode]
+                
+                if snode == 116:
+                    for o in graph.node_value[snode]
+                    breakpoint()
+                Logger.log(f"{saved_last_obs[epi_step - 1][-4:]} vs {current_obs[-4:]}; {saved_traj[epi_step - 1][3]} vs {graph.obs_reward[current_obs]}; {snode}:{snode_value}")
                 e_action = saved_traj[epi_step - 1][1]
                 epi_step += 1
             else:
@@ -687,6 +693,48 @@ class Test:
                     break
                 epi_step += 1
 
+    @staticmethod
+    def atari_graph_reinteract():
+        graph = IO.read_disk_dump(f"{P.model_dir}StarGunner-optimal.pkl")
+        from src.module.env.atari import Atari
+        from src.module.agent.memory.projector import Projector
+        import time
+
+        Logger.path = f"{P.log_dir}{P.env_name}-{Logger.get_date()}-test.log"
+
+        projector = Projector(0)
+        P.env_name = P.env_name_list[int(24)]
+        env = Atari.make_env()
+        epi_step = 1
+        projector.reset()
+        last_obs = obs = env.reset()
+        plast_obs, pobs = projector.batch_project([last_obs, obs], epi_step == 1)
+
+        saved_traj = graph.general_info["max_total_reward_traj"]
+        saved_obs = [e[2] for e in saved_traj]
+        saved_action = [e[1] for e in saved_traj]
+            
+        total_reward = 0
+        while True:
+            action = graph.obs_best_action[pobs]
+
+            if action != saved_action[epi_step - 1]:
+                Logger.log(f"#{epi_step} g-s A: {action}-{saved_action[epi_step - 1]}")
+            obs, reward, done, info = env.step(action)
+            epi_step += 1
+            plast_obs, pobs = projector.batch_project([last_obs, obs], epi_step == 1)
+            if pobs != saved_obs[epi_step - 2]:
+                gnode = graph.obs_node[pobs]
+                gnode_value = graph.node_value[gnode]
+                Logger.log(f"{pobs[-4:]} - {saved_obs[epi_step - 2][-4:]} step {epi_step - 1} inconsistence, {gnode}:{gnode_value} - {reward}")
+            env.render(mode="rgb_array")
+            total_reward += reward
+            last_obs = obs
+        
+            if done:
+                Logger.log(f"total reward: {total_reward} steps: {epi_step}")
+                break
+
 
 if __name__ == "__main__":
     test = Test()
@@ -699,7 +747,9 @@ if __name__ == "__main__":
     # test.maze_vi_validation()
     # test.sokoban_vi_test()
     # test.multi_hash()
-    test.atari_traj_replay()
+    # test.atari_graph_reinteract()
+    test.atari_graph_replay()
+    # test.atari_traj_replay()
     # test.sokoban_vi_validation()
     # test.hashing_test()
     # test.make_atari_alternative_env()

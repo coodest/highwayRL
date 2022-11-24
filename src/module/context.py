@@ -14,12 +14,12 @@ class Context:
     sync_dir = out_dir + "sync/"
     env_dir = out_dir + "env/"
     clean = False
-    log_every = 10
+    log_every = 20
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
 
     # env
-    total_frames = [1e7, 1e5][1]  # default 1e7
+    total_frames = [1e7, 2e5][0]  # default 1e7
     env_types = [
         "atari_classic",  # 0
         "atari_historical_action",  # 1, not support projectors
@@ -36,9 +36,9 @@ class Context:
     render_every = 5
     # atari
     env_name = None
-    max_episode_steps = [108000, 1000][1]
+    max_episode_steps = [108000, 1000][0]
     max_random_noops = 0  # 30, to control wheter the env is random initialized
-    num_action_repeats = 1
+    num_action_repeats = 4
     stack_frames = 1
     screen_size = 84
     sticky_action = False
@@ -64,7 +64,7 @@ class Context:
     hashing_type = [None, "sha256", "multiple"][1]  # None, sha256, multiple
     # agent:graph
     alpha = 1.0
-    gamma = 0.99  # discount factor
+    gamma = [0.99, 1][1]  # discount factor
     sync_every = log_every  # in second
     sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
     e_greedy = [0.1, 1]
