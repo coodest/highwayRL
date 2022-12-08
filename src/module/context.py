@@ -64,7 +64,7 @@ class Context:
     hashing_type = [None, "sha256", "multiple"][1]  # None, sha256, multiple
     # agent:graph
     alpha = 1.0
-    gamma = [0.99, 1][0]  # discount factor
+    gamma = [0.99, 1][1]  # discount factor
     sync_every = log_every  # in second
     sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
     e_greedy = [0.1, 1]
