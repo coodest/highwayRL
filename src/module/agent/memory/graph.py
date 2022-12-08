@@ -244,10 +244,12 @@ class Graph:
             return
         adj = np.zeros([total_nodes, total_nodes], dtype=np.float32)
         rew = np.zeros([total_nodes], dtype=np.float32)
+        gamma = np.zeros([total_nodes], dtype=np.float32)
         val_0 = np.zeros([total_nodes], dtype=np.float32)
         colume_sum = np.zeros([total_nodes], dtype=np.int8)
         for node in self.node_obs:
             rew[node] = self.node_value[node]
+            gamma[node] = np.power(P.gamma, len(self.node_obs[node]))
             val_0[node] = rew[node]
             if node in self.node_next:
                 for action in self.node_next[node]:
@@ -264,7 +266,7 @@ class Graph:
         # value propagation
         if P.build_dag:
             adj = adj - self.iterator.build_dag(adj)
-        val_n, iters, divider = self.iterator.iterate(adj, rew, val_0)
+        val_n, iters, divider = self.iterator.iterate(adj, rew, gamma, val_0)
         Logger.log(f"learner value propagation: {iters} iters * {divider} batch", color="yellow")
         for ind, val in enumerate(val_n):
             self.node_value[ind] = val

@@ -59,13 +59,14 @@ class Iterator:
         return edge_to_remove
 
     
-    def iterate(self, np_adj, np_rew, np_val_0):
+    def iterate(self, np_adj, np_rew, np_gamma, np_val_0):
         with torch.no_grad():
             # debug: limit the VRam size
             # torch.cuda.set_per_process_memory_fraction(0.5)
 
             adj = torch.from_numpy(np_adj).to(self.device)
             rew = torch.from_numpy(np_rew).to(self.device)
+            gamma = torch.from_numpy(np_gamma).to(self.device)
             val = torch.from_numpy(np_val_0).to(self.device)
 
             iters = 0
@@ -96,7 +97,7 @@ class Iterator:
                         pro = None
                         divider *= 2
 
-                val = mul * P.gamma + rew
+                val = mul * gamma + rew
                 if torch.sum(last_val - val) == 0:
                     break
             result = val.cpu().detach().numpy().tolist()
