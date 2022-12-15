@@ -1,3 +1,3 @@
 import random
 
-random.seed(2021)
+random.seed(2022)

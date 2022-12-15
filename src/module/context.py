@@ -14,7 +14,7 @@ class Context:
     sync_dir = out_dir + "sync/"
     env_dir = out_dir + "env/"
     clean = False
-    log_every = 40
+    log_every = 20
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
 
@@ -37,8 +37,8 @@ class Context:
     # atari
     env_name = None
     max_train_episode_steps = [1000][0]
-    max_eval_episode_steps = [108000, 1000][0]
-    max_random_ops = [10, 20, 30][2]  # 30, to control wheter the env is random initialized
+    max_eval_episode_steps = [108000, 1000][1]
+    max_random_ops = [0, 10, 20, 30][0]  # 30, to control wheter the env is random initialized
     max_random_noops = [30, 0][1]  # 30, to control wheter the env is random initialized
     num_action_repeats = 4
     stack_frames = 1

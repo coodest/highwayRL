@@ -1,3 +1,3 @@
 import numpy as np
 
-np.random.seed(2021)
+np.random.seed(2022)

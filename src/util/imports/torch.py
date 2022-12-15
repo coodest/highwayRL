@@ -1,3 +1,3 @@
 import torch
 
-torch.manual_seed(2021)
+torch.manual_seed(2022)
