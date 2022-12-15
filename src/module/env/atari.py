@@ -19,7 +19,7 @@ class Atari:
             else:  # Deterministic
                 repeat_action_probability = 0.0
                 ver = "v4"
-            if obs_type in ["classic", "historical_action"]:\
+            if obs_type in ["classic", "historical_action"]:
                 env = gym.make(
                     f"{P.env_name}NoFrameskip-{ver}", 
                     frameskip=1,
