@@ -20,6 +20,9 @@ class Actor:
         self.max_episodic_reward = None
         self.p = (P.e_greedy[1] - P.e_greedy[0]) / (P.num_actor - 1) * self.id + P.e_greedy[0]
         self.hit = None
+
+    def reset_random_ops(self):
+        self.random_ops = int(Funcs.rand_prob() * P.max_random_ops)
             
     def is_testing_actor(self):
         """
@@ -27,9 +30,9 @@ class Actor:
         """
         return self.id == P.head_actor
 
-    def get_action(self, last_obs, pre_action, obs, reward, done, first_frame, receiver_init_obs=False):
+    def get_action(self, last_obs, pre_action, obs, reward, done, epi_step, receiver_init_obs=False):
         # query action from policy
-        if first_frame:
+        if epi_step == 1:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, False])
         else:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, not self.is_testing_actor()])
@@ -58,13 +61,19 @@ class Actor:
         elif action is None:
             # if policy can not return action
             action = self.env.action_space.sample()
-            
+        
+        while self.random_ops > 0 and not self.is_testing_actor():
+            self.random_ops -= 1
+            action = self.env.action_space.sample()
+            break
+
         return action
 
     def interact(self):
         while True:  # episode loop
             # 0. init episode
             obs = last_obs = self.env.reset()
+            self.reset_random_ops()
             total_reward = 0.0
             epi_step = 1
             pre_action = 0
@@ -76,7 +85,7 @@ class Actor:
                 self.learner_actor_queues.get()
             while True:  # step loop
                 # 1. get action
-                action = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1)
+                action = self.get_action(last_obs, pre_action, obs, reward, done, epi_step)
                 last_obs = obs if isinstance(obs, str) or isinstance(obs, int) or isinstance(obs, tuple) else obs.copy()
 
                 # 2. interact
@@ -89,7 +98,7 @@ class Actor:
 
                 # 4. done ops
                 if done:
-                    proj_index_init_obs = self.get_action(last_obs, pre_action, obs, reward, done, epi_step == 1, receiver_init_obs=True)
+                    proj_index_init_obs = self.get_action(last_obs, pre_action, obs, reward, done, epi_step, receiver_init_obs=True)
                     self.fps.append(
                         epi_step * P.num_action_repeats / (time.time() - start_time)
                     )

@@ -11,13 +11,13 @@ from src.util.imports.random import *
 class SimpleScene:
     @staticmethod
     def make_env(render=False, is_head=False):
-        env = SimpleSceneEnv()
+        env = SimpleSceneEnv(max_episode_steps=P.seq_len)
 
         return env
 
 
 class SimpleSceneEnv(gym.Env):
-    def __init__(self, max_episode_steps=P.seq_len, seed=0) -> None:
+    def __init__(self, max_episode_steps=100, seed=0) -> None:
         super().__init__()
 
         self.spec = EnvSpec("SimpleScene-v0", max_episode_steps=max_episode_steps)

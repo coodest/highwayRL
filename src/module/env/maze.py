@@ -13,6 +13,11 @@ from src.util.tools import Funcs
 class Maze:
     @staticmethod
     def make_env(render=False, is_head=False):
+        if is_head:
+            max_episode_steps=P.max_eval_episode_steps
+        else:
+            max_episode_steps=P.max_train_episode_steps
+        
         env = MazeEnv(
             # for fixed mazes
             # maze_file="assets/maze_files/maze2d_3x3.npy", 
@@ -26,7 +31,7 @@ class Maze:
             # mode="plus",
             mode=None,
             enable_render=render,
-            max_episode_steps=P.max_episode_steps,
+            max_episode_steps=max_episode_steps,
         )
         env.seed(2022)  # set seed to be deterministic
 

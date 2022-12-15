@@ -24,6 +24,9 @@ class Box2D:
                     # env.reset(seed=2022)
                     IO.write_disk_dump(env_path, env)
 
-        # env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
+        # if is_head:
+        #     env = TimeLimit(env.env, max_episode_steps=P.max_eval_episode_steps)
+        # else:
+        #     env = TimeLimit(env.env, max_episode_steps=P.max_train_episode_steps)
 
         return env

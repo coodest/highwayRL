@@ -24,6 +24,4 @@ class ToyText:
                     # env.reset(seed=2022)
                     IO.write_disk_dump(env_path, env)
 
-        # env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
-
         return env
