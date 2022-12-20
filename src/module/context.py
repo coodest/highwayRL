@@ -14,12 +14,12 @@ class Context:
     sync_dir = out_dir + "sync/"
     env_dir = out_dir + "env/"
     clean = False
-    log_every = 20
+    log_every = 50
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
 
     # env
-    total_frames = [1e7, 2e5, 4e7][2]  # default 1e7
+    total_frames = [1e7, 2e5, 4e7][0]  # default 1e7
     env_types = [
         "atari_classic",  # 0
         "atari_historical_action",  # 1, not support projectors
@@ -36,12 +36,12 @@ class Context:
     render_every = 5
     # atari
     env_name = None
-    max_train_episode_steps = [1000][0]
-    max_eval_episode_steps = [108000, 1000][1]
+    max_train_episode_steps = [108000, 1000][0]
+    max_eval_episode_steps = [108000, 1000, 27000][0]
     max_random_ops = [0, 10, 20, 30][0]  # 30, to control wheter the env is random initialized
     max_random_noops = [30, 0][1]  # 30, to control wheter the env is random initialized
     num_action_repeats = 4
-    stack_frames = 1
+    stack_frames = 2
     screen_size = 84
     sticky_action = False
     # simple_scene
@@ -58,12 +58,12 @@ class Context:
         "rnn",  # 3
         "n-rnn",  # 4
     ]
-    projector = projector_types[0]  # select None to disable random projection
+    projector = projector_types[3]  # select None to disable random projection
     projected_dim = 8
     projected_hidden_dim = 32
     indexer_enabled = False
     obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
-    hashing_type = [None, "sha256", "multiple"][1]  # None, sha256, multiple
+    hashing_type = [None, "sha256", "multiple"][0]  # None, sha256, multiple
     # agent:graph
     alpha = 1.0
     gamma = [0.99, 1][1]  # discount factor
