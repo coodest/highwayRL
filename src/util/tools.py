@@ -340,7 +340,7 @@ class IO:
 
     @staticmethod
     def delete_dir(directory):
-        shutil.rmtree(directory, True)
+        shutil.rmtree(path=directory, ignore_errors=True)
 
     @staticmethod
     def renew_dir(directory):

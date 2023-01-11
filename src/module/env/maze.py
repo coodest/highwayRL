@@ -14,9 +14,9 @@ class Maze:
     @staticmethod
     def make_env(render=False, is_head=False):
         if is_head:
-            max_episode_steps=P.max_eval_episode_steps
+            max_episode_steps = P.max_eval_episode_steps
         else:
-            max_episode_steps=P.max_train_episode_steps
+            max_episode_steps = P.max_train_episode_steps
         
         env = MazeEnv(
             # for fixed mazes

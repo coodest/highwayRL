@@ -5,15 +5,15 @@ from src.util.tools import IO
 class Context:
     # common
     work_dir = './'
-    out_dir = work_dir + "output/"
     asset_dir = work_dir + "assets/"
+    out_dir = work_dir + "output/"
     log_dir = out_dir + "log/"
     model_dir = out_dir + "model/"
     result_dir = out_dir + "result/"
     video_dir = out_dir + "video/"
     sync_dir = out_dir + "sync/"
     env_dir = out_dir + "env/"
-    clean = False
+    out_dirs = [out_dir, log_dir, model_dir, result_dir, video_dir, sync_dir, env_dir]
     log_every = 50
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
@@ -21,15 +21,13 @@ class Context:
     # env
     total_frames = [1e7, 2e5, 4e7][0]  # default 1e7
     env_types = [
-        "atari_classic",  # 0
-        "atari_historical_action",  # 1, not support projectors
-        "atari_ram",  # 2
-        "atari_alternative",  # 3
-        "simple_scene",  # 4
-        "maze",  # 5
-        "toy_text",  # 6
-        "box_2d",  # 7
-        "sokoban",  # 8
+        "atari",  # 0
+        "maze",  # 1
+        "toy_text",  # 2
+        "box_2d",  # 3
+        "sokoban",  # 4
+        "football",  # 5
+        "bullet",  # 6
     ]
     env_type = env_types[0]
     render = False  # whether test actor to render the env
@@ -39,13 +37,15 @@ class Context:
     max_train_episode_steps = [108000, 1000][0]
     max_eval_episode_steps = [108000, 1000, 27000][0]
     max_random_ops = [0, 10, 20, 30][0]  # 30, to control wheter the env is random initialized
-    max_random_noops = [30, 0][1]  # 30, to control wheter the env is random initialized
-    num_action_repeats = 4
+    random_init_ops = [  # control wheter the env is random initialized
+        {"max_random_ops": 0},  # diasble random ops
+        {"max_random_ops": 30, "ops_option": [0]},
+        {"max_random_ops": 30, "ops_option": "all"},
+    ][1]
+    num_action_repeats = 4  # equivelent to frame skip
     stack_frames = 2
     screen_size = 84
     sticky_action = False
-    # simple_scene
-    seq_len = 500
 
     # agent
     num_actor = len(gpus) * 8
@@ -54,15 +54,12 @@ class Context:
     projector_types = [
         None,  # 0
         "random",  # 1
-        "cnn",  # 2
-        "rnn",  # 3
-        "n-rnn",  # 4
+        "rnn",  # 2
+        "n-rnn",  # 3
     ]
-    projector = projector_types[3]  # select None to disable random projection
+    projector = projector_types[2]  # select None to disable random projection
     projected_dim = 8
     projected_hidden_dim = 32
-    indexer_enabled = False
-    obs_min_dis = 0  # indexer_enabled must be True, 0: turn  off associative memory, 1e-3: distance
     hashing_type = [None, "sha256", "multiple"][0]  # None, sha256, multiple
     # agent:graph
     alpha = 1.0
@@ -89,22 +86,19 @@ class Profile(Context):
     
     current_profile = sys.argv[1] if len(sys.argv) > 1 else "1"
     
-    if C.env_type in C.env_types[0:4]:
+    if C.env_type in C.env_types[0]:
         C.env_name_list = IO.read_file(f"{C.asset_dir}atari.txt")
         C.env_name = C.env_name_list[int(current_profile)]
-    if C.env_type in C.env_types[4:6]:
+    if C.env_type in C.env_types[1]:
         C.env_name = f"{C.env_type}_original"
-    if C.env_type in C.env_types[6]:
+    if C.env_type in C.env_types[2]:
         C.env_name_list = IO.read_file(f"{C.asset_dir}toy_text.txt")
         C.env_name = C.env_name_list[int(current_profile)]
-    if C.env_type in C.env_types[7]:
+    if C.env_type in C.env_types[3]:
         C.env_name_list = IO.read_file(f"{C.asset_dir}box_2d.txt")
         C.env_name = C.env_name_list[int(current_profile)]
-    if C.env_type in C.env_types[8]:
+    if C.env_type in C.env_types[4]:
         C.env_name_list = IO.read_file(f"{C.asset_dir}sokoban.txt")
         C.env_name = C.env_name_list[int(current_profile)]
-
-    C.render = False
-    # C.sync_every = C.log_every = 2
 
     C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'

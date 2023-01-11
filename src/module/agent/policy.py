@@ -74,7 +74,6 @@ class Policy:
     ):
         try:  # sub-sub-process exception
             from src.module.agent.memory.projector import Projector
-            from src.module.agent.memory.projector import Indexer, Hasher
             from src.module.agent.memory.memory import Memory
 
             last_report = time.time()

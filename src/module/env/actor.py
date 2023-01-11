@@ -25,7 +25,7 @@ class Actor:
         self.hit = None
 
     def reset_random_ops(self):
-        self.random_ops = int(Funcs.rand_prob() * P.max_random_ops)
+        self.random_ops = int(Funcs.rand_prob() * P.random_init_ops["max_random_ops"])
             
     def is_testing_actor(self):
         """
@@ -65,10 +65,12 @@ class Actor:
             # if policy can not return action
             action = self.env.action_space.sample()
         
-        while self.random_ops > 0 and not self.is_testing_actor():
+        if self.random_ops > 0 and not self.is_testing_actor():
             self.random_ops -= 1
-            action = self.env.action_space.sample()
-            break
+            if P.random_init_ops["ops_option"] == "all":
+                action = self.env.action_space.sample()
+            else:
+                action = random.choice(P.random_init_ops["ops_option"])
 
         return action
 
