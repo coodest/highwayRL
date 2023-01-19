@@ -9,12 +9,9 @@ from src.util.imports.numpy import *
 
 class Actor:
     def __init__(self, id, env_func, actor_learner_queue: Queue, learner_actor_queues: Queue, finish):
-        random.seed(id)
-        np.random.seed(id)
         self.id = id  # actor identifier
         self.num_episode = 0
         self.env = env_func(render=self.is_testing_actor() and P.render, is_head=self.is_testing_actor())
-        self.env.seed = id
         self.finish = finish
         self.fps = deque(maxlen=10)
         self.actor_learner_queue = actor_learner_queue

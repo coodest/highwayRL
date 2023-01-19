@@ -315,6 +315,10 @@ class IO:
         return restore
 
     @staticmethod
+    def file_exist(path):
+        return Path(path).exists()
+
+    @staticmethod
     def read_file(path):
         content = []
         with open(path, "r") as file:

@@ -80,7 +80,7 @@ class Policy:
             last_frame = frames.value
             last_sync = time.time()
             memory = Memory(id, Policy.is_head(id))
-            projector = Projector(id)
+            projector = Projector(id, Policy.is_head(id))
 
             while True:
                 trajectory = []

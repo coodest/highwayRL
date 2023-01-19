@@ -12,7 +12,7 @@ class Atari:
     @staticmethod
     def make_env(render=False, is_head=False):
         env_path = f"{P.env_dir}{P.env_name}.pkl"
-        if is_head:
+        if is_head and not IO.file_exist(env_path):
             if P.sticky_action:
                 repeat_action_probability = 0.25
                 ver = "v0"

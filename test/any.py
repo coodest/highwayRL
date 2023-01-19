@@ -588,7 +588,7 @@ class Test:
 
     @staticmethod
     def multi_hash():
-        from src.module.agent.memory.projector import Projector
+        from src.module.agent.memory.projector import RNNProjector
         import numpy as np
 
         a = np.random.rand(3,2,3)
@@ -599,7 +599,7 @@ class Test:
 
         last_obs = a
         obs = b
-        projector = Projector(id=0)
+        projector = RNNProjector(id=0)
         last_obs, obs = projector.batch_project([last_obs, obs])
         print(f"first time:\n{last_obs}\n{obs}\n")
         last_obs = b
@@ -611,12 +611,12 @@ class Test:
     def atari_graph_replay():
         graph = IO.read_disk_dump(f"{P.model_dir}StarGunner-optimal.pkl")
         from src.module.env.atari import Atari
-        from src.module.agent.memory.projector import Projector
+        from src.module.agent.memory.projector import RNNProjector
         import time
 
         Logger.path = f"{P.log_dir}{P.env_name}-{Logger.get_date()}-test.log"
 
-        projector = Projector(0)
+        projector = RNNProjector(0)
         P.env_name = P.env_name_list[int(24)]
         env = Atari.make_env()
         saved_traj = graph.general_info["max_total_reward_traj"]
@@ -654,11 +654,11 @@ class Test:
     @staticmethod
     def atari_traj_replay():
         from src.module.env.atari import Atari
-        from src.module.agent.memory.projector import Projector
+        from src.module.agent.memory.projector import RNNProjector
 
         Logger.path = f"{P.log_dir}{P.env_name}-{Logger.get_date()}-test.log"
 
-        projector = Projector(0)
+        projector = RNNProjector(0)
         P.env_name = P.env_name_list[int(24)]
         env = Atari.make_env()
         # saved_traj = IO.read_disk_dump(f"{P.result_dir}221122100310-traj.pkl")
@@ -697,12 +697,12 @@ class Test:
     def atari_graph_reinteract():
         graph = IO.read_disk_dump(f"{P.model_dir}StarGunner-optimal.pkl")
         from src.module.env.atari import Atari
-        from src.module.agent.memory.projector import Projector
+        from src.module.agent.memory.projector import RNNProjector
         import time
 
         Logger.path = f"{P.log_dir}{P.env_name}-{Logger.get_date()}-test.log"
 
-        projector = Projector(0)
+        projector = RNNProjector(0)
         P.env_name = P.env_name_list[int(24)]
         env = Atari.make_env()
         epi_step = 1

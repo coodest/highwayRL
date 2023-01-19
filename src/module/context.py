@@ -34,14 +34,14 @@ class Context:
     render_every = 5
     # atari
     env_name = None
-    max_train_episode_steps = [108000, 1000][0]
+    max_train_episode_steps = [108000, 1000, 27000][0]
     max_eval_episode_steps = [108000, 1000, 27000][0]
     max_random_ops = [0, 10, 20, 30][0]  # 30, to control wheter the env is random initialized
     random_init_ops = [  # control wheter the env is random initialized
         {"max_random_ops": 0},  # diasble random ops
         {"max_random_ops": 30, "ops_option": [0]},
         {"max_random_ops": 30, "ops_option": "all"},
-    ][1]
+    ][0]
     num_action_repeats = 4  # equivelent to frame skip
     stack_frames = 2
     screen_size = 84
@@ -51,16 +51,16 @@ class Context:
     num_actor = len(gpus) * 8
     head_actor = num_actor - 1  # the last actor
     # agent:projector
-    projector_types = [
-        None,  # 0
+    projector = [
+        "raw",  # 0
         "random",  # 1
         "rnn",  # 2
         "n-rnn",  # 3
-    ]
-    projector = projector_types[2]  # select None to disable random projection
+        "sha256_hash",  # 4
+        "multiple_hash",  # 5
+    ][2]
     projected_dim = 8
     projected_hidden_dim = 32
-    hashing_type = [None, "sha256", "multiple"][0]  # None, sha256, multiple
     # agent:graph
     alpha = 1.0
     gamma = [0.99, 1][1]  # discount factor
