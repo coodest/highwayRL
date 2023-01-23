@@ -21,21 +21,15 @@ class Projector:
         if P.projector == "multiple_hash":
             self.projector = HashProjector(id)
 
-    def batch_project(self, inputs, first_frame=False):
+    def batch_project(self, inputs):
         last_obs, obs = inputs
 
-        if self.projector is not None:
-            last_obs, obs = self.projector.batch_project([last_obs, obs])
-
-        if first_frame:
-            self.reset()
-            obs = last_obs
+        last_obs, obs = self.projector.batch_project([last_obs, obs])
 
         return last_obs, obs
 
     def reset(self):
-        if self.projector is not None:
-            self.projector.reset()
+        self.projector.reset()
 
 
 class RandomMatrixLayer(torch.nn.Module):
@@ -75,7 +69,7 @@ class RawProjector:
 class HashProjector(RawProjector):
     def __init__(self, id) -> None:
         self.hist_input = np.expand_dims(np.array([]), axis=0)
-        self.hist_hash = ""
+        self.last_result = ""
 
     def project(self, input):
         # input = input.tobytes()
@@ -90,23 +84,18 @@ class HashProjector(RawProjector):
 
     def batch_project(self, inputs):
         last_obs, obs = inputs
-        if len(self.hist_hash) == 0:
-            self.hist_input = np.array([last_obs])
-            a = self.project(self.hist_input)
-            self.hist_input = np.append(self.hist_input, [np.array(obs)], axis=0)
-            b = self.project(self.hist_input)
-            self.hist_hash = b
-            return a, b
+        if self.last_result == "":
+            self.hist_input = np.array([obs])
         else:
-            a = self.hist_hash
             self.hist_input = np.append(self.hist_input, [np.array(obs)], axis=0)
-            b = self.project(self.hist_input)
-            self.hist_hash = b
-            return a, b
+        a = self.last_result
+        b = self.project(self.hist_input)
+        self.last_result = b
+        return a, b
 
     def reset(self):
         self.hist_input = np.expand_dims(np.array([]), axis=0)
-        self.hist_hash = ""
+        self.last_result = ""
 
 
 class RandomProjector(RawProjector):
@@ -148,11 +137,11 @@ class RNNProjector(RawProjector):
         self.random_matrix = self.random_matrix.to(self.device)
         self.hidden_0 = self.hidden_0.to(self.device)
         self.last_result = ""
-        self.hidden = None
+        self.hidden = self.hidden_0
         self.step = 0
-        self.reset()
 
     def reset(self):
+        self.last_result = ""
         self.hidden = self.hidden_0
         self.step = 0
 
@@ -191,11 +180,9 @@ class NRNNProjector(RawProjector):
     def __init__(self, id, steps=5):
         super().__init__(id)
         self.steps = steps
-        with torch.no_grad():
-            self.hidden_share = torch.rand(P.projected_hidden_dim, requires_grad=False).to(self.device)
-            self.hidden = None
-            self.reset()
-        self.random_matrix = None
+        self.hidden_share = torch.rand(P.projected_hidden_dim, requires_grad=False).to(self.device)
+        self.hidden = torch.tile(self.hidden_share, (self.steps, 1)).to(self.device)
+        self.last_result = ""
 
         obs_dim = P.screen_size * P.screen_size * P.stack_frames
         self.unit_weight = torch.rand([
@@ -205,11 +192,10 @@ class NRNNProjector(RawProjector):
         self.random_matrix = torch.tile(self.unit_weight, (self.steps, 1, 1)).to(self.device)
                 
         self.step_status = torch.arange(steps).to(self.device)  # indicate current step
-        # self.last_result = np.zeros(P.projected_dim)
-        self.last_result = ""
 
     def reset(self):
         self.hidden = torch.tile(self.hidden_share, (self.steps, 1))
+        self.last_result = ""
 
     def project(self, obs):
         with torch.no_grad():  # no grad calculation

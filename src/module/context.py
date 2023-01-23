@@ -59,7 +59,7 @@ class Context:
         "n-rnn",  # 3
         "sha256_hash",  # 4
         "multiple_hash",  # 5
-    ][2]
+    ][4]
     projected_dim = 8
     projected_hidden_dim = 32
     # agent:graph

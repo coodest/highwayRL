@@ -345,17 +345,20 @@ class Test:
 
     @staticmethod
     def rnn():
-        from src.module.agent.memory.projector import RNNProjector
+        from src.module.agent.memory.projector import RNNProjector, HashProjector
         import numpy as np
-        projector = RNNProjector(id)
-
-        last_obs = obs = np.full(shape=[84 * 84], fill_value=7.)
+        # projector = HashProjector(id)
+        projector = RNNProjector(id, True)
+        
+        last_obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=1.)
+        obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=2.)
         a, b = projector.batch_project([last_obs, obs])
 
-        obs = np.full(shape=[84 * 84], fill_value=10.)
+        last_obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=3.)
+        obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=4.)
         c, d = projector.batch_project([last_obs, obs])
 
-        print(f"{a}\n{b}\n{c}\n{d}")
+        print(f"a {a}\nb {b}\n\nc {c}\nd {d}")
 
     @staticmethod
     def football():
@@ -639,9 +642,6 @@ class Test:
                 snode = graph.obs_node[current_obs]
                 snode_value = graph.node_value[snode]
                 
-                if snode == 116:
-                    for o in graph.node_value[snode]
-                    breakpoint()
                 Logger.log(f"{saved_last_obs[epi_step - 1][-4:]} vs {current_obs[-4:]}; {saved_traj[epi_step - 1][3]} vs {graph.obs_reward[current_obs]}; {snode}:{snode_value}")
                 e_action = saved_traj[epi_step - 1][1]
                 epi_step += 1
@@ -748,14 +748,14 @@ if __name__ == "__main__":
     # test.sokoban_vi_test()
     # test.multi_hash()
     # test.atari_graph_reinteract()
-    test.atari_graph_replay()
+    # test.atari_graph_replay()
     # test.atari_traj_replay()
     # test.sokoban_vi_validation()
     # test.hashing_test()
     # test.make_atari_alternative_env()
     # test.atari_play()
     # test.nrnn()
-    # test.rnn()
+    test.rnn()
     # test.football()
     # test.test_pypullet()
     # test.test_sokoban()

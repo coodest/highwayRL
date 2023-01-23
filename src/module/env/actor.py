@@ -111,7 +111,7 @@ class Actor:
                         self.max_episodic_reward = total_reward
                     hit_rate = 100 * (sum(self.hit) / len(self.hit))
                     if hit_rate < 100:
-                        last_step_before_loss = self.hit.index(0)
+                        last_step_before_loss = self.hit.index(0) + 1
                     else:
                         last_step_before_loss = len(self.hit)
                     if self.is_testing_actor():
