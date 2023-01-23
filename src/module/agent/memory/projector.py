@@ -7,7 +7,7 @@ import time
 
 
 class Projector:
-    def __init__(self, id, is_head) -> None:
+    def __init__(self, id, is_head):
         if P.projector == "raw":
             self.projector = RawProjector(id)
         if P.projector == "random":
@@ -110,7 +110,7 @@ class HashProjector(RawProjector):
 
 
 class RandomProjector(RawProjector):
-    def __init__(self, id) -> None:
+    def __init__(self, id):
         super().__init__(id)
         obs_dim = P.screen_size * P.screen_size * P.stack_frames
         self.random_matrix = RandomMatrixLayer(obs_dim, P.projected_dim).to(self.device)
@@ -129,10 +129,10 @@ class RandomProjector(RawProjector):
 
 
 class RNNProjector(RawProjector):
-    def __init__(self, id, is_head) -> None:
+    def __init__(self, id, is_head):
         super().__init__(id)
+        projector_path = f"{P.model_dir}{P.env_name}-projector.pkl"
         if is_head:
-            projector_path = f"{P.model_dir}{P.env_name}-projector.pkl"
             obs_dim = P.screen_size * P.screen_size * P.stack_frames
             self.hidden_0 = torch.rand(P.projected_hidden_dim, requires_grad=False)
             self.random_matrix = RandomMatrixLayer(obs_dim + P.projected_hidden_dim, P.projected_dim + P.projected_hidden_dim)
@@ -188,7 +188,7 @@ class RNNProjector(RawProjector):
 
 
 class NRNNProjector(RawProjector):
-    def __init__(self, id, steps=5) -> None:
+    def __init__(self, id, steps=5):
         super().__init__(id)
         self.steps = steps
         with torch.no_grad():

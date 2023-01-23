@@ -8,13 +8,14 @@ class Context:
     asset_dir = work_dir + "assets/"
     out_dir = work_dir + "output/"
     log_dir = out_dir + "log/"
+    summary_dir = out_dir + "summary/"
     model_dir = out_dir + "model/"
     result_dir = out_dir + "result/"
     video_dir = out_dir + "video/"
     sync_dir = out_dir + "sync/"
     env_dir = out_dir + "env/"
     out_dirs = [out_dir, log_dir, model_dir, result_dir, video_dir, sync_dir, env_dir]
-    log_every = 50
+    log_every = 20
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
 
@@ -65,7 +66,6 @@ class Context:
     alpha = 1.0
     gamma = [0.99, 1][1]  # discount factor
     sync_every = log_every  # in second
-    sync_mode = 2  # 0: sync by pipe, 1: sync by file, 2: sync by both pipe and file
     e_greedy = [0.1, 1]
     optimal_graph_path = None
     statistic_crossing_obs = True

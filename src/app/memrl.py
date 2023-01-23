@@ -9,9 +9,10 @@ class MemRL:
     @staticmethod
     def start():
         # 1. init
-        Logger.path = f"{P.log_dir}{P.env_name}-{Logger.get_date()}.log"
+        Logger.log_path = f"{P.log_dir}{P.env_name}-{Logger.get_date()}.log"
+        Logger.summary_dir = f"{P.summary_dir}{P.env_name}/"
         for dir in P.out_dirs:
-            IO.make_dir(P.out_dir)
+            IO.make_dir(dir)
         start_time = time.time()
 
         # 2. show args

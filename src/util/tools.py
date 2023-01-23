@@ -74,11 +74,31 @@ class Counter:
 
 
 class Logger:
-    path = None
+    log_path = None
+
+    summary_dir = None
+    summary_writer = None
 
     @staticmethod
     def error(msg):
         Logger.log(msg, color="cyan")
+
+    @staticmethod
+    def show(num="Insersion"):
+        Logger.log(f"---- {num} ----")
+
+    @staticmethod
+    def write(tag, value, step, type="scalar"):
+        if Logger.summary_writer is None:
+            from torch.utils.tensorboard import SummaryWriter
+            Logger.summary_writer = SummaryWriter(Logger.summary_dir)
+        if type == "scalar":
+            Logger.summary_writer.add_scalar(tag, value, step)
+            return
+        if type == "text":
+            Logger.summary_writer.add_text(tag, value, step)
+            return
+        Logger.log("type error.")
 
     @staticmethod
     def log(raw_msg, color=None, style=None, new_line=True, make_title=True):
@@ -164,8 +184,8 @@ class Logger:
             raw_title = ""
 
         logger.info(title + msg)
-        if Logger.path is not None:
-            Logger.write_log(msg=f"{raw_title} {raw_msg}", path=Logger.path)
+        if Logger.log_path is not None:
+            Logger.write_log(msg=f"{raw_title} {raw_msg}", path=Logger.log_path)
 
     @staticmethod
     def make_msg_title():

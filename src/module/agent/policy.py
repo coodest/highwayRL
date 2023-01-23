@@ -94,20 +94,11 @@ class Policy:
                     ):
                         sync.value = True
                     if sync.value:
-                        if P.sync_mode == 0:
-                            memory.sync_by_pipe(
-                                head_slave_queues, 
-                                slave_head_queues, 
-                                sync
-                            )
-                        if P.sync_mode == 1:
-                            memory.sync_by_file(sync)
-                        if P.sync_mode == 2:
-                            memory.sync_by_pipe_disk(
-                                head_slave_queues, 
-                                slave_head_queues, 
-                                sync
-                            )
+                        memory.sync_by_pipe_disk(
+                            head_slave_queues, 
+                            slave_head_queues, 
+                            sync
+                        )
                         last_sync = time.time()
                     
                     if Policy.is_head(id):
@@ -132,7 +123,7 @@ class Policy:
                                 finish.value = True
                     if finish.value:
                         return
-                    
+
                     info = actor_learner_queue.get()
                     last_obs, pre_action, obs, reward, done, add = info
 
