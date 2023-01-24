@@ -98,6 +98,9 @@ class Logger:
         if type == "text":
             Logger.summary_writer.add_text(tag, value, step)
             return
+        if type == "histogram":
+            Logger.summary_writer.add_histogram(tag, value, step)
+            return
         Logger.log("type error.")
 
     @staticmethod

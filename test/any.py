@@ -333,15 +333,33 @@ class Test:
     @staticmethod
     def nrnn():
         from src.module.agent.memory.projector import NRNNProjector
-        projector = NRNNProjector(id)
+        import numpy as np
+        projector = NRNNProjector(id, True)
 
-        last_obs = obs = [0, 1, 0]
+        last_obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=1.)
+        obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=1.)
         a, b = projector.batch_project([last_obs, obs])
+        print(f"{a}  {b}")
 
-        obs = [0, 0, 2]
-        c, d = projector.batch_project([last_obs, obs])
+        last_obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=2.)
+        obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=3.)
+        a, b = projector.batch_project([last_obs, obs])
+        print(f"{a}  {b}")
 
-        print(f"{a}\n{b}\n{c}\n{d}")
+        last_obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=2.)
+        obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=3.)
+        a, b = projector.batch_project([last_obs, obs])
+        print(f"{a}  {b}")
+
+        last_obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=2.)
+        obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=3.)
+        a, b = projector.batch_project([last_obs, obs])
+        print(f"{a}  {b}")
+
+        last_obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=2.)
+        obs = np.full(shape=[P.screen_size * P.screen_size * P.stack_frames], fill_value=3.)
+        a, b = projector.batch_project([last_obs, obs])
+        print(f"{a}  {b}")
 
     @staticmethod
     def rnn():
@@ -754,8 +772,8 @@ if __name__ == "__main__":
     # test.hashing_test()
     # test.make_atari_alternative_env()
     # test.atari_play()
-    # test.nrnn()
-    test.rnn()
+    test.nrnn()
+    # test.rnn()
     # test.football()
     # test.test_pypullet()
     # test.test_sokoban()

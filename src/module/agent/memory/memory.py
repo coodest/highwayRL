@@ -76,8 +76,10 @@ class Memory:
 
     def get_action(self, obs):
         if obs in self.main.obs_best_action:
-            return self.main.obs_best_action[obs]
-        return None
+            action = self.main.obs_best_action[obs]
+            value = self.main.get_obs_value(obs)
+            return action, value
+        return None, None
 
     def store_inc(self, trajectory, total_reward):
         """

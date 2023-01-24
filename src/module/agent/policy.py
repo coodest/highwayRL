@@ -143,12 +143,12 @@ class Policy:
                                     len(trajectory) * P.num_action_repeats
                                 )
                             memory.store_inc(trajectory, total_reward)
-                        learner_actor_queue.put(proj_index_init_obs)
+                        learner_actor_queue.put([proj_index_init_obs, None])
                         projector.reset()
                         break
                     else:
-                        action = memory.get_action(obs)
-                        learner_actor_queue.put(action)
+                        action, value = memory.get_action(obs)
+                        learner_actor_queue.put([action, value])
         except KeyboardInterrupt:
             Logger.log(f"learner worker {id} {'(head)' if Policy.is_head(id) else '(slave)'} returned with KeyboardInterrupt")
         except Exception:

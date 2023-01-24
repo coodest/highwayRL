@@ -46,6 +46,7 @@ class Graph:
         return len(self.node_obs)
 
     def add_trajs(self, trajs):
+        num_skip_traj = 0
         for traj_ind, traj in enumerate(trajs):
             # filter randomness
             skip_traj = False
@@ -54,9 +55,9 @@ class Graph:
                     if prev_action in self.obs_next[last_obs]:
                         exist_obs = list(self.obs_next[last_obs][prev_action].keys())[0]
                         if obs != exist_obs:
-                            Logger.log(f"skip random traj.: {exist_obs} {obs}")
                             skip_traj = True
             if skip_traj:
+                num_skip_traj += 1
                 continue
 
             # compute reliablity score of state value in the highway graph
@@ -118,6 +119,7 @@ class Graph:
                 "max_total_reward_init_obs": traj[0][0],
                 "max_total_reward_traj": traj,
             })
+        Logger.log(f"skip random traj.s: {num_skip_traj}", color="yellow")
 
     def general_info_update(self, gi):
         if gi["max_total_reward"] > self.general_info["max_total_reward"]:
@@ -287,6 +289,15 @@ class Graph:
                 else:
                     best_action = list(self.obs_next[obs].keys())[0]
                     self.obs_best_action[obs] = best_action
+
+    def get_obs_value(self, obs):
+        node = self.obs_node[obs]
+        value = self.node_value[node]
+        for o in self.node_obs[node]:
+            value -= self.obs_reward[o]
+            if o == obs:
+                break
+        return value
 
     def draw_graph(self):
         fig_path = f"{P.result_dir}graph"

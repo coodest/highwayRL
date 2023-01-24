@@ -20,6 +20,8 @@ class Actor:
         self.max_episodic_reward = None
         self.p = (P.e_greedy[1] - P.e_greedy[0]) / (P.num_actor - 1) * self.id + P.e_greedy[0]
         self.hit = None
+        self.epi_return_est = None
+        self.total_reward = None
 
     def reset_random_ops(self):
         self.random_ops = int(Funcs.rand_prob() * P.random_init_ops["max_random_ops"])
@@ -39,7 +41,7 @@ class Actor:
 
         while True:
             try:  # sub-process exception
-                action = self.learner_actor_queues.get(timeout=0.1)
+                action, value = self.learner_actor_queues.get(timeout=0.1)
                 break
             except KeyboardInterrupt:
                 raise KeyboardInterrupt()
@@ -54,6 +56,9 @@ class Actor:
             self.hit.append(1)
         else:
             self.hit.append(0)
+        
+        if value is not None and (value + self.total_reward) not in self.epi_return_est:
+            self.epi_return_est[value + self.total_reward] = epi_step
 
         if random.random() > self.p:
             # epsilon-greedy
@@ -76,13 +81,14 @@ class Actor:
             # 0. init episode
             obs = last_obs = self.env.reset()
             self.reset_random_ops()
-            total_reward = 0.0
+            self.total_reward = 0.0
             epi_step = 1
             pre_action = 0
             done = False
             start_time = time.time()
             reward = 0.0
             self.hit = list()
+            self.epi_return_est = {0.0: 0}
             while self.learner_actor_queues.qsize() > 0:  # empty queue before env interaction
                 self.learner_actor_queues.get()
             while True:  # step loop
@@ -95,7 +101,7 @@ class Actor:
 
                 # 3. post ops
                 pre_action = action
-                total_reward += reward
+                self.total_reward += reward
                 epi_step += 1
 
                 # 4. done ops
@@ -104,18 +110,18 @@ class Actor:
                     self.fps.append(
                         epi_step * P.num_action_repeats / (time.time() - start_time)
                     )
-                    self.episodic_reward.append(total_reward)
+                    self.episodic_reward.append(self.total_reward)
                     if self.max_episodic_reward is None:
-                        self.max_episodic_reward = total_reward
-                    elif self.max_episodic_reward < total_reward:
-                        self.max_episodic_reward = total_reward
+                        self.max_episodic_reward = self.total_reward
+                    elif self.max_episodic_reward < self.total_reward:
+                        self.max_episodic_reward = self.total_reward
                     hit_rate = 100 * (sum(self.hit) / len(self.hit))
                     if hit_rate < 100:
                         last_step_before_loss = self.hit.index(0) + 1
                     else:
                         last_step_before_loss = len(self.hit)
                     if self.is_testing_actor():
-                        Logger.log("evl_actor R: {:6.2f} AR: {:6.2f} MR: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
+                        Logger.log("evl_actor R: {:6.2f} AR: {:6.2f} MR: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} OFF: {} O1: {}".format(
                             self.episodic_reward[-1],
                             np.mean(self.episodic_reward),
                             self.max_episodic_reward,
@@ -123,6 +129,7 @@ class Actor:
                             hit_rate,
                             last_step_before_loss,
                             len(self.hit),
+                            self.epi_return_est,
                             str(proj_index_init_obs)[-4:]
                         ))
                     Logger.write(f"Actor_{self.id}/R", self.episodic_reward[-1], self.num_episode)
@@ -132,5 +139,9 @@ class Actor:
                     Logger.write(f"Actor_{self.id}/Hit%", hit_rate, self.num_episode)
                     Logger.write(f"Actor_{self.id}/LostAt", f"{last_step_before_loss}/{len(self.hit)}", self.num_episode, type="text")
                     Logger.write(f"Actor_{self.id}/O_1", str(proj_index_init_obs)[-4:], self.num_episode, type="text")
+                    Logger.write(f"Actor_{self.id}/return_curve", np.array([
+                        list(self.epi_return_est.keys()),
+                    ]), self.num_episode, type="histogram")
+
                     break
             self.num_episode += 1

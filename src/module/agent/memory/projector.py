@@ -15,11 +15,13 @@ class Projector:
         if P.projector == "rnn":
             self.projector = RNNProjector(id, is_head)
         if P.projector == "n-rnn":
-            self.projector = NRNNProjector(id)
+            self.projector = NRNNProjector(id, is_head)
         if P.projector == "sha256_hash":
             self.projector = HashProjector(id)
         if P.projector == "multiple_hash":
             self.projector = HashProjector(id)
+        if P.projector == "multi-scale_rnn":
+            self.projector = MultiscaleRNNProjector(id, is_head)
 
     def batch_project(self, inputs):
         last_obs, obs = inputs
@@ -118,9 +120,8 @@ class RandomProjector(RawProjector):
 
 
 class RNNProjector(RawProjector):
-    def __init__(self, id, is_head):
+    def __init__(self, id, is_head, projector_path=f"{P.model_dir}{P.env_name}-projector.pkl"):
         super().__init__(id)
-        projector_path = f"{P.model_dir}{P.env_name}-projector.pkl"
         if is_head:
             obs_dim = P.screen_size * P.screen_size * P.stack_frames
             self.hidden_0 = torch.rand(P.projected_hidden_dim, requires_grad=False)
@@ -177,25 +178,36 @@ class RNNProjector(RawProjector):
 
 
 class NRNNProjector(RawProjector):
-    def __init__(self, id, steps=5):
+    def __init__(self, id, is_head, steps=5, projector_path=f"{P.model_dir}{P.env_name}-projector.pkl"):
         super().__init__(id)
+
+        if is_head:
+            obs_dim = P.screen_size * P.screen_size * P.stack_frames
+            self.hidden_share = torch.rand(P.projected_hidden_dim, requires_grad=False)
+            unit_weight = torch.rand([
+                P.projected_dim + P.projected_hidden_dim,  # number nerons (output dim)
+                obs_dim + P.projected_hidden_dim  # weight of neurons (input dim)
+            ], requires_grad=False)
+            IO.write_disk_dump(projector_path, [self.hidden_share, unit_weight])
+        else:
+            while True:
+                try:
+                    self.hidden_share, unit_weight = IO.read_disk_dump(projector_path)
+                    break
+                except Exception:
+                    time.sleep(0.1)
+
         self.steps = steps
-        self.hidden_share = torch.rand(P.projected_hidden_dim, requires_grad=False).to(self.device)
+        self.hidden_share = self.hidden_share.to(self.device)
         self.hidden = torch.tile(self.hidden_share, (self.steps, 1)).to(self.device)
         self.last_result = ""
-
-        obs_dim = P.screen_size * P.screen_size * P.stack_frames
-        self.unit_weight = torch.rand([
-            P.projected_dim + P.projected_hidden_dim,  # number nerons (output dim)
-            obs_dim + P.projected_hidden_dim  # weight of neurons (input dim)
-        ], requires_grad=False)
-        self.random_matrix = torch.tile(self.unit_weight, (self.steps, 1, 1)).to(self.device)
-                
-        self.step_status = torch.arange(steps).to(self.device)  # indicate current step
+        self.random_matrix = torch.tile(unit_weight, (self.steps, 1, 1)).to(self.device)
+        self.step_status = torch.arange(self.steps).to(self.device)  # indicate current step
 
     def reset(self):
         self.hidden = torch.tile(self.hidden_share, (self.steps, 1))
         self.last_result = ""
+        self.step_status = torch.arange(self.steps).to(self.device)
 
     def project(self, obs):
         with torch.no_grad():  # no grad calculation
@@ -203,9 +215,9 @@ class NRNNProjector(RawProjector):
             raw = torch.tensor(obs, dtype=torch.float32, requires_grad=False).to(self.device)
             # [self.steps, obs_dim]
             input = torch.tile(raw, (self.steps, 1))
-            # [self.steps, obs_dim + P.projected_hidden_dimP.projected_hidden_dim]
+            # [self.steps, obs_dim + P.projected_hidden_dim]
             input = torch.cat([input, self.hidden], dim=1)
-            # [self.steps, 1, obs_dim + P.projected_hidden_dimP.projected_hidden_dim]
+            # [self.steps, 1, obs_dim + P.projected_hidden_dim]
             input = input.unsqueeze(dim=1)
 
             output = torch.mul(self.random_matrix, input) 
@@ -233,3 +245,22 @@ class NRNNProjector(RawProjector):
         results.append(self.last_result)
         results.append(self.project(obs_list[-1]))
         return results
+
+
+class MultiscaleRNNProjector(RawProjector):
+    def __init__(self, id, is_head, steps=5):
+        super().__init__(id)
+    
+        self.l1_rnn = RNNProjector(id, is_head=is_head, projector_path=f"{P.model_dir}{P.env_name}-projector-l1.pkl")
+        self.l2_rnn = NRNNProjector(id, is_head=is_head, projector_path=f"{P.model_dir}{P.env_name}-projector-l2.pkl", steps=steps)
+
+    def reset(self):
+        self.l1_rnn.reset()
+        self.l2_rnn.reset()
+
+    def batch_project(self, obs_list):   
+        results_l1 = self.l1_rnn.batch_project(obs_list)
+        results_l2 = self.l2_rnn.batch_project(obs_list)
+        # return [results_l1, results_l2]
+        # return results_l1
+        return results_l2  # TODO: combine two layers

@@ -24,6 +24,9 @@
 # pipreqs .
 
 rm -rf ./output
+pkill -f tensorboard
+tensorboard --logdir ./output/summary/ &
+sleep 1
 
 # python -X pycache_prefix=./cache -m src.app.memrl 1
 # python -X pycache_prefix=./cache -m src.app.memrl 2

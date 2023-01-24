@@ -15,7 +15,7 @@ class Context:
     sync_dir = out_dir + "sync/"
     env_dir = out_dir + "env/"
     out_dirs = [out_dir, log_dir, model_dir, result_dir, video_dir, sync_dir, env_dir]
-    log_every = 20
+    log_every = 300
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
 
@@ -59,6 +59,7 @@ class Context:
         "n-rnn",  # 3
         "sha256_hash",  # 4
         "multiple_hash",  # 5
+        "multi-scale_rnn",  # 6
     ][4]
     projected_dim = 8
     projected_hidden_dim = 32
