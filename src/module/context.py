@@ -51,7 +51,7 @@ class Context:
     # agent
     num_actor = len(gpus) * 8
     head_actor = num_actor - 1  # the last actor
-    # agent:projector
+    # agent:policy:projector
     projector = [
         "raw",  # 0
         "random",  # 1
@@ -60,15 +60,15 @@ class Context:
         "sha256_hash",  # 4
         "multiple_hash",  # 5
         "multi-scale_rnn",  # 6
-    ][4]
+    ][2]
     projected_dim = 8
     projected_hidden_dim = 32
-    # agent:graph
+    # agent:policy:graph
     alpha = 1.0
     gamma = [0.99, 1][1]  # discount factor
     sync_every = log_every  # in second
     e_greedy = [0.1, 1]
-    optimal_graph_path = None
+    optimal_policy_path = None
     statistic_crossing_obs = True
     build_dag = False
     start_over = True  # break loop and start over for adj mat multification
@@ -102,4 +102,4 @@ class Profile(Context):
         C.env_name_list = IO.read_file(f"{C.asset_dir}sokoban.txt")
         C.env_name = C.env_name_list[int(current_profile)]
 
-    C.optimal_graph_path = C.model_dir + f'{C.env_name}-optimal.pkl'
+    C.optimal_policy_path = C.model_dir + f'{C.env_name}-optimal.pkl'

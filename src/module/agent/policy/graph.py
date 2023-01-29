@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 # import time
 from src.util.imports.numpy import np
 from src.util.tools import LinkedListElement
-from src.module.agent.memory.iterator import Iterator
+from src.module.agent.policy.iterator import Iterator
 from tqdm import tqdm
 
 

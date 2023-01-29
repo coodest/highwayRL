@@ -77,29 +77,29 @@ class MemRL:
     def learner_run(actor_learner_queues, learner_actor_queues, finish):
         try:
             # 1. init
-            from src.module.agent.policy import Policy
+            from src.module.agent.learner import Learner
             os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
 
-            # 2. train
+            # 2. learn
             Funcs.run_cmd("nvidia-cuda-mps-control -d", 2)
-            policy = Policy(actor_learner_queues, learner_actor_queues, finish)
+            learner = Learner(actor_learner_queues, learner_actor_queues, finish)
             try:  # sub-process exception detection
-                optimal_graph = policy.train()  # tain the policy
+                optimal_policy = learner.learn()  # learn the policy
             except KeyboardInterrupt:
                 Logger.error("ctrl-c pressed")
-                policy.wait_to_finish()
+                learner.wait_to_finish()
             except FileNotFoundError:
-                Logger.error("optimal graph not found, training failed")
+                Logger.error("optimal policy not found, learning failed")
             except Exception:
                 Funcs.trace_exception()
             finally:
                 with finish.get_lock():
                     finish.value = True
-                Logger.log("training finished")
+                Logger.log("learning finished")
             Funcs.run_cmd("echo quit | nvidia-cuda-mps-control", 2)
 
             # 3. parameterization
-            # TODO: Q-table parameterization
+            # TODO: policy parameterization
             Logger.log("dnn model saved")
         except Exception:
             Funcs.trace_exception()
@@ -108,7 +108,7 @@ class MemRL:
     def actor_run(id, actor_learner_queues, learner_actor_queues, finish):
         try:
             # 1. make env and actor
-            from src.module.env.actor import Actor
+            from src.module.agent.actor import Actor
 
             actor = Actor(id, MemRL.create_env, actor_learner_queues, learner_actor_queues, finish)
 
@@ -143,6 +143,7 @@ class MemRL:
         if P.env_type == P.env_types[4]:
             from src.module.env.sokoban import Sokoban
             return Sokoban.make_env(render, is_head)
+        # TODO: add football and pybullet
 
 
 if __name__ == "__main__":

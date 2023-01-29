@@ -1,11 +1,10 @@
 from src.module.context import Profile as P
 from src.util.tools import Logger, Funcs, IO
 import time
-import os
 from multiprocessing import Process, Value, Queue
 
 
-class Policy:
+class Learner:
     def __init__(self, actor_learner_queues, learner_actor_queues, finish):
         self.frames = Value("d", 0)
         self.sync = Value("b", False)
@@ -33,10 +32,10 @@ class Policy:
             Logger.log(f"{ind} ", new_line=False, make_title=False)
         Logger.log("joined", make_title=False)
 
-    def train(self):
+    def learn(self):
         for id in range(P.num_actor):
             p = Process(
-                target=Policy.response_action,
+                target=Learner.response_action,
                 args=[
                     id,
                     self.actor_learner_queues[id],
@@ -53,9 +52,9 @@ class Policy:
 
         self.wait_to_finish()
         
-        optimal_graph = IO.read_disk_dump(P.optimal_graph_path)
+        optimal_policy = IO.read_disk_dump(P.optimal_policy_path)
 
-        return optimal_graph
+        return optimal_policy
 
     @staticmethod
     def is_head(index):
@@ -73,22 +72,22 @@ class Policy:
         finish
     ):
         try:  # sub-sub-process exception
-            from src.module.agent.memory.projector import Projector
-            from src.module.agent.memory.memory import Memory
+            from src.module.agent.policy.projector import Projector
+            from src.module.agent.policy.memory import Memory
 
             last_report = time.time()
             last_frame = frames.value
             last_sync = time.time()
-            memory = Memory(id, Policy.is_head(id))
-            projector = Projector(id, Policy.is_head(id))
+            memory = Memory(id, Learner.is_head(id))
+            projector = Projector(id, Learner.is_head(id))
 
             while True:
                 trajectory = []
                 total_reward = 0
                 proj_index_init_obs = None
                 while True:
-                    # sync graph
-                    if Policy.is_head(id) and (
+                    # sync memory
+                    if Learner.is_head(id) and (
                         time.time() - last_sync > P.sync_every or 
                         frames.value > P.total_frames
                     ):
@@ -101,7 +100,7 @@ class Policy:
                         )
                         last_sync = time.time()
                     
-                    if Policy.is_head(id):
+                    if Learner.is_head(id):
                         # logging info
                         cur_frame = frames.value
                         now = time.time()
@@ -150,6 +149,6 @@ class Policy:
                         action, value = memory.get_action(obs)
                         learner_actor_queue.put([action, value])
         except KeyboardInterrupt:
-            Logger.log(f"learner worker {id} {'(head)' if Policy.is_head(id) else '(slave)'} returned with KeyboardInterrupt")
+            Logger.log(f"learner worker {id} {'(head)' if Learner.is_head(id) else '(slave)'} returned with KeyboardInterrupt")
         except Exception:
             Funcs.trace_exception()

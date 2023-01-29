@@ -2,7 +2,7 @@
 # from typing import Sized
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
-from src.module.agent.memory.graph import Graph
+from src.module.agent.policy.graph import Graph
 import operator
 from collections import defaultdict
 import networkx as nx
@@ -71,7 +71,7 @@ class Memory:
         )
 
     def save(self):
-        IO.write_disk_dump(P.optimal_graph_path, self.main)
+        IO.write_disk_dump(P.optimal_policy_path, self.main)
         Logger.log("memory saved")
 
     def get_action(self, obs):
