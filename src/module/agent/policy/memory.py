@@ -3,51 +3,47 @@
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 from src.module.agent.policy.graph import Graph
-import operator
-from collections import defaultdict
-import networkx as nx
-# import matplotlib as mpl
-import matplotlib.pyplot as plt
-# import time
-from src.util.imports.numpy import np
+from src.util.imports.numpy import np  # influence the hit rate of actor
 
 
 class Memory:
     """
-    memory for the highway graph
+    memory, the RL model, consists of the highway graphs
 
     Assumptions:
 
     1. one state can not be both a terminate state and a middle state
     2. one state can have different obs
-    3. from the historical obs, algorithms have the chance to restore the current state
+    3. from the historical obs, algorithms have the chance to restore the current state (fully observable)
     """
     def __init__(self, id, is_head) -> None:
         self.id = id
         self.is_head = is_head
-        self.main = Graph()  # main storage
-        self.inc = Graph()  # incremental storage
+        self.main = Graph()
+        self.new_trajs = list()
 
     def sync_by_pipe_disk(self, head_slave_queues, slave_head_queues, sync):
         if not self.is_head:
-            # write increments (slave)
-            slave_head_queues[self.id].put(self.inc)
-            self.inc = Graph()
+            # write trajs (slave)
+            slave_head_queues[self.id].put(self.new_trajs)
+            self.new_trajs = list()
             ready = head_slave_queues[self.id].get()
-            self.main = IO.read_disk_dump(P.sync_dir + "target.pkl")
+            # read latest graph (slave)
+            self.main = IO.read_disk_dump(P.sync_dir + "latest.pkl")
             slave_head_queues[self.id].put(["finish"])
         else:
-            # read increments (head)
+            # read trajs (head)
             for i in range(P.num_actor):
                 if self.id == i:
-                    continue  # head has no increments stored
-                inc = slave_head_queues[i].get()
-                self.merge_inc(inc)
-            self.post_process()
+                    continue  # head has no trajs stored
+                new_trajs = slave_head_queues[i].get()
+                self.merge_new_trajs(new_trajs)
+            
+            self.update_graph()
 
-            # write target (head)
+            # write latest graph (head)
             IO.renew_dir(P.sync_dir)
-            IO.write_disk_dump(P.sync_dir + "target.pkl", self.main)
+            IO.write_disk_dump(P.sync_dir + "latest.pkl", self.main)
             sync.value = False
             for i in range(P.num_actor):
                 if self.id == i:
@@ -98,19 +94,16 @@ class Memory:
             final_reward = reward
         amend_traj.append([final_obs, None, final_obs, final_reward])  # last transition
 
-        self.inc.trajs.append(amend_traj)
+        self.new_trajs.append(amend_traj)
 
-    def merge_inc(self, inc: Graph): 
+    def merge_new_trajs(self, new_trajs): 
         """
-        merger increments to main store by the head worker of learner
+        merger increments to graph(s) by the head worker of learner
         """
-        # 1. add transitions to obs_next, obs_reward
-        self.main.add_trajs(inc.trajs)
-        
-        # 2. update general info
-        self.main.general_info_update(inc.general_info)
+        # add transitions to obs_next, obs_reward
+        self.main.add_trajs(new_trajs)
 
-    def post_process(self):
+    def update_graph(self):
         # 1. graph reconstruction
         self.main.graph_construction()
 

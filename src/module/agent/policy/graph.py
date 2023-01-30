@@ -24,7 +24,6 @@ class Graph:
         self.obs_best_action = dict()
         self.obs_next_reliable = defaultdict(dict)
         
-        self.trajs = list()
         self.general_info = dict()
         self.general_info["max_total_reward"] = - float("inf")
         self.general_info["max_total_reward_init_obs"] = None
