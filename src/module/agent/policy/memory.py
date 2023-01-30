@@ -77,7 +77,7 @@ class Memory:
             return action, value
         return None, None
 
-    def store_inc(self, trajectory, total_reward):
+    def store_new_trajs(self, trajectory):
         """
         amend and store the trajectory by the non-head process.
         trajectory: o0, a0, o1, r1 --> o1, a1, o2, r2 --> ... --> on-1, an-1, on, rn

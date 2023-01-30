@@ -83,7 +83,6 @@ class Learner:
 
             while True:
                 trajectory = []
-                total_reward = 0
                 proj_index_init_obs = None
                 while True:
                     # sync memory
@@ -134,14 +133,13 @@ class Learner:
 
                     if add:  # does not add traj from head actor, and first transition from other actors
                         trajectory.append([last_obs, pre_action, obs, reward])
-                        total_reward += float(reward)
                     if done:
                         if add:
                             with frames.get_lock():
                                 frames.value += (
                                     len(trajectory) * P.num_action_repeats
                                 )
-                            memory.store_inc(trajectory, total_reward)
+                            memory.store_new_trajs(trajectory)
                         learner_actor_queue.put([proj_index_init_obs, None])
                         projector.reset()
                         break
