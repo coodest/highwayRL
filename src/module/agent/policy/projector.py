@@ -89,7 +89,7 @@ class HashProjector(RawProjector):
         if self.last_result == "":
             self.hist_input = np.array([obs])
         else:
-            self.hist_input = np.append(self.hist_input, [np.array(obs)], axis=0)
+            self.hist_input = np.append(self.hist_input, np.array([obs]), axis=0)
         a = self.last_result
         b = self.project(self.hist_input)
         self.last_result = b
