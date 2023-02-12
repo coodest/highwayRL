@@ -15,7 +15,7 @@ class Context:
     sync_dir = out_dir + "sync/"
     env_dir = out_dir + "env/"
     out_dirs = [out_dir, log_dir, model_dir, result_dir, video_dir, sync_dir, env_dir]
-    log_every = 10
+    log_every = 20
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
 
@@ -43,7 +43,7 @@ class Context:
         {"max_random_ops": 30, "ops_option": [0]},
         {"max_random_ops": 30, "ops_option": "all"},
     ][0]
-    num_action_repeats = 4  # equivelent to frame skip
+    num_action_repeats = 2  # equivelent to frame skip
     stack_frames = 2
     screen_size = 84
     sticky_action = False

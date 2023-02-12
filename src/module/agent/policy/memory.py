@@ -33,11 +33,16 @@ class Memory:
             slave_head_queues[self.id].put(["finish"])
         else:
             # read trajs (head)
+            num_skip_traj = 0
+            num_all_traj = 0
             for i in range(P.num_actor):
                 if self.id == i:
                     continue  # head has no trajs stored
                 new_trajs = slave_head_queues[i].get()
-                self.merge_new_trajs(new_trajs)
+                skip_traj, all_traj = self.merge_new_trajs(new_trajs)
+                num_skip_traj += skip_traj
+                num_all_traj += all_traj
+            Logger.log(f"skip / all traj.s: {num_skip_traj} / {num_all_traj}", color="yellow")
             
             self.update_graph()
 
@@ -101,7 +106,7 @@ class Memory:
         merger increments to graph(s) by the head worker of learner
         """
         # add transitions to obs_next, obs_reward
-        self.main.add_trajs(new_trajs)
+        return self.main.add_trajs(new_trajs)
 
     def update_graph(self):
         # 1. graph reconstruction

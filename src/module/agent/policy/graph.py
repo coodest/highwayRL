@@ -118,7 +118,7 @@ class Graph:
                 "max_total_reward_init_obs": traj[0][0],
                 "max_total_reward_traj": traj,
             })
-        Logger.log(f"skip random traj.s: {num_skip_traj}", color="yellow")
+        return skip_traj, len(trajs)
 
     def general_info_update(self, gi):
         if gi["max_total_reward"] > self.general_info["max_total_reward"]:
@@ -235,6 +235,13 @@ class Graph:
             intersection_obs = self.node_obs[node][0]
             if intersection_obs in self.obs_next and node in self.node_next:
                 assert len(self.obs_next[intersection_obs]) == len(self.node_next[node]), f"incomplete intersection: {intersection_obs}"
+
+        merging = 0
+        for obs in self.obs_prev:
+            prev_actions = list(self.obs_prev[obs].keys())
+            if len(prev_actions) > 1:
+                merging += 1
+        Logger.log(f"graph is not a tree structure, {merging} mergings found", color="yellow")
 
     def node_value_iteration(self):
         """
