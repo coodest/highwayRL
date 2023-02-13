@@ -63,10 +63,9 @@ class Context:
         "multiple_hash",  # 5
         "multi-scale_rnn",  # 6
     ][2]
-    projected_dim = 8
-    projected_hidden_dim = 32
+    projected_dim = 16
+    projected_hidden_dim = 64
     # agent:policy:graph
-    alpha = 1.0
     gamma = [0.99, 1][1]  # discount factor
     sync_every = log_every  # in second
     e_greedy = [0.1, 1]
@@ -75,7 +74,6 @@ class Context:
     build_dag = False
     start_over = True  # break loop and start over for adj mat multification
     max_vp_iter = 1e8  # num or float("inf")
-    min_accessable_prob = 0  # minimum prob. to treat a state is accessable
     draw_graph = False  # whether draw matplotlib figure for the graph
     graph_sanity_check = True
 

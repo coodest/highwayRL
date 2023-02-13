@@ -22,7 +22,6 @@ class Graph:
         self.obs_next = defaultdict(dict)
         self.obs_prev = defaultdict(dict)
         self.obs_best_action = dict()
-        self.obs_next_reliable = defaultdict(dict)
         
         self.general_info = dict()
         self.general_info["max_total_reward"] = - float("inf")
@@ -38,7 +37,6 @@ class Graph:
         self.node_obs = defaultdict(list)
         self.node_value = dict()
         self.node_next = defaultdict(dict)
-        self.node_next_reliable = defaultdict(dict)
         self.intersections = set()
 
     def next_node_ind(self):
@@ -58,42 +56,6 @@ class Graph:
             if skip_traj:
                 num_skip_traj += 1
                 continue
-
-            # compute reliablity score of state value in the highway graph
-            last_obs_return = 0
-            for last_obs, prev_action, obs, last_reward in traj[::-1]:
-                # last_obs return
-                last_obs_return += last_reward + last_obs_return * P.gamma
-                
-                # last_obs value
-                if last_obs in self.obs_node:  # graph model exist
-                    node = self.obs_node[last_obs]
-                    if self.is_intersection(last_obs):
-                        last_obs_value = self.node_value[node]
-                    else:
-                        last_obs_value = 0
-                        obs_list = self.node_obs[self.obs_node[last_obs]]
-                        ind = obs_list.index(last_obs)
-                        for o in obs_list[:ind - 1:-1]:
-                            last_obs_value += self.obs_reward[o] + last_obs_value * P.gamma
-                        if node in self.node_next:
-                            max_next_node_value = - float("inf")
-                            for next_node in self.node_next[node]:
-                                next_node_value = self.node_value[next_node]
-                                if next_node_value > max_next_node_value:
-                                    max_next_node_value = next_node_value
-                            last_obs_value += max_next_node_value * P.gamma
-                else:
-                    last_obs_value = last_obs_return
-                
-                # reliability score
-                # self.obs_next_reliable[last_obs] = P.alpha * (
-                #     np.exp( - abs(last_obs_return - last_obs_value) / (abs(last_obs_value) + 1e-4))
-                # )
-                # self.obs_next_reliable[last_obs] = P.alpha * (
-                #     np.exp(abs(last_obs_return - last_obs_value))
-                # )
-                self.obs_next_reliable[last_obs] = 1
 
             # add transition
             total_reward = 0
@@ -223,13 +185,6 @@ class Graph:
                             self.node_next[node][action] = defaultdict(int)
                         self.node_next[node][action][next_node] += 1
 
-        # update adjacency matrix
-        for node in self.node_next:
-            for action in self.node_next[node]:
-                for next_node in self.node_next[node][action]:
-                    next_node_first_obs = self.node_obs[next_node][0]
-                    self.node_next_reliable[node][next_node] = self.obs_next_reliable[next_node_first_obs]
-
     def sanity_check(self):
         for node in self.intersections:
             intersection_obs = self.node_obs[node][0]
@@ -262,7 +217,7 @@ class Graph:
             if node in self.node_next:
                 for action in self.node_next[node]:
                     for next_node in self.node_next[node][action]:
-                        adj[node][next_node] = self.node_next_reliable[node][next_node]
+                        adj[node][next_node] = 1
                         colume_sum[next_node] += 1
         m1 = (np.sum(np.where(colume_sum > 1, 1, 0)) / total_nodes) * 100
         m5 = (np.sum(np.where(colume_sum > 5, 1, 0)) / total_nodes) * 100
