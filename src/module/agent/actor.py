@@ -41,7 +41,7 @@ class Actor:
 
         while True:
             try:  # sub-process exception
-                action, value = self.learner_actor_queues.get(timeout=0.1)
+                action, value, steps = self.learner_actor_queues.get(timeout=0.1)
                 break
             except KeyboardInterrupt:
                 raise KeyboardInterrupt()
@@ -60,12 +60,14 @@ class Actor:
         if value is not None and (value + self.total_reward) not in self.epi_return_est:
             self.epi_return_est[value + self.total_reward] = epi_step
 
+        # if policy can not return action
+        if action is None:
+            action = self.env.action_space.sample()
+        
+        # epsilon-greedy
         if random.random() > self.p:
-            # epsilon-greedy
-            action = self.env.action_space.sample()
-        elif action is None:
-            # if policy can not return action
-            action = self.env.action_space.sample()
+            if epi_step > steps * P.stick_on_graph:
+                action = self.env.action_space.sample()
         
         if self.random_ops > 0 and not self.is_testing_actor():
             self.random_ops -= 1
@@ -88,7 +90,7 @@ class Actor:
             start_time = time.time()
             reward = 0.0
             self.hit = list()
-            self.epi_return_est = {0.0: 0}
+            self.epi_return_est = {}
             while self.learner_actor_queues.qsize() > 0:  # empty queue before env interaction
                 self.learner_actor_queues.get()
             while True:  # step loop
@@ -140,7 +142,7 @@ class Actor:
                     Logger.write(f"Actor_{self.id}/LostAt", f"{last_step_before_loss}/{len(self.hit)}", self.num_episode, type="text")
                     Logger.write(f"Actor_{self.id}/O_1", str(proj_index_init_obs)[-4:], self.num_episode, type="text")
                     Logger.write(f"Actor_{self.id}/return_curve", np.array([
-                        list(self.epi_return_est.keys()),
+                        [0.0] if len(list(self.epi_return_est.keys())) == 0 else list(self.epi_return_est.keys()),
                     ]), self.num_episode, type="histogram")
 
                     break

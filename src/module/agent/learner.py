@@ -140,12 +140,12 @@ class Learner:
                                     len(trajectory) * P.num_action_repeats
                                 )
                             memory.store_new_trajs(trajectory)
-                        learner_actor_queue.put([proj_index_init_obs, None])
+                        learner_actor_queue.put([proj_index_init_obs, None, 0])
                         projector.reset()
                         break
                     else:
-                        action, value = memory.get_action(obs)
-                        learner_actor_queue.put([action, value])
+                        action, value, steps = memory.get_action(obs)
+                        learner_actor_queue.put([action, value, steps])
         except KeyboardInterrupt:
             Logger.log(f"learner worker {id} {'(head)' if Learner.is_head(id) else '(slave)'} returned with KeyboardInterrupt")
         except Exception:

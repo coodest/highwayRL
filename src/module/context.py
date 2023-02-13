@@ -49,8 +49,10 @@ class Context:
     sticky_action = False
 
     # agent
+    # agent:actor
     num_actor = len(gpus) * 8
     head_actor = num_actor - 1  # the last actor
+    stick_on_graph = 0.0
     # agent:policy:projector
     projector = [
         "raw",  # 0

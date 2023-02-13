@@ -76,11 +76,16 @@ class Memory:
         Logger.log("memory saved")
 
     def get_action(self, obs):
+        if self.main.general_info["max_total_reward_traj"] is not None:
+            steps = len(self.main.general_info["max_total_reward_traj"])
+        else:
+            steps = 0
+            
         if obs in self.main.obs_best_action:
             action = self.main.obs_best_action[obs]
             value = self.main.get_obs_value(obs)
-            return action, value
-        return None, None
+            return action, value, steps
+        return None, None, steps
 
     def store_new_trajs(self, trajectory):
         """
