@@ -63,8 +63,8 @@ class Context:
         "multiple_hash",  # 5
         "multi-scale_rnn",  # 6
     ][2]
-    projected_dim = 16
-    projected_hidden_dim = 64
+    projected_dim = 8
+    projected_hidden_dim = 32
     # agent:policy:graph
     gamma = [0.99, 1][1]  # discount factor
     sync_every = log_every  # in second
