@@ -276,19 +276,39 @@ class Funcs:
         return np.random.random()
 
     @staticmethod
-    def print_obj(obj):
-        s = "["
-        for name in dir(obj):
-            if name.startswith("_"):
+    def print_obj(obj_list):
+        configs = dict()
+        max_name_width = 0
+        for obj in obj_list:
+            for name in dir(obj):
+                configs[name] = getattr(obj, name)
+                if len(name) > max_name_width:
+                    max_name_width = len(name)
+
+        s = "Configurations:\n"
+        current_col = 1
+        total_col = 3
+        name_width = max_name_width
+        value_width = 20
+        for name in configs:
+            if str(name).startswith("__") or str(name) == "C":
                 continue
-            s += "{}:{}, ".format(name, getattr(obj, name))
-        s = s[:-2] + "]"
+            
+            s += f"{str.rjust(str(name), name_width, ' ')}: "
+            if len(str(configs[name])) > value_width:
+                s += f"{str.ljust(str(configs[name])[:value_width - 3 -5] + '...' + str(configs[name])[-5:], value_width, ' ')}"
+            else:
+                s += f"{str.ljust(str(configs[name])[:value_width], value_width, ' ')}"
+            
+            s += "\n" if current_col % total_col == 0 else "  "
+            current_col += 1
+
         Logger.log(s)
 
     @staticmethod
-    def trace_exception():
+    def trace_exception(label=""):
         exception_str = traceback.format_exc()
-        Logger.error("Error msg: " + str(exception_str))
+        Logger.error(f"Error msg {label}: " + str(exception_str))
 
     @staticmethod
     def matrix_hashing(obs, type="sha256"):

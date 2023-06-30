@@ -1,0 +1,4 @@
+--google research football games--
+custom_3_vs_2
+custom_5_vs_5
+custom_11_vs_11

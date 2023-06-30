@@ -3,12 +3,13 @@
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 from src.module.agent.policy.graph import Graph
-from src.util.imports.numpy import np  # influence the hit rate of actor
+from tqdm import tqdm
+# from src.util.imports.numpy import np  # influence the hit rate of actor
 
 
 class Memory:
     """
-    memory, the RL model, consists of the highway graphs
+    memory, the RL model, consists of the highway graph
 
     Assumptions:
 
@@ -19,17 +20,19 @@ class Memory:
     def __init__(self, id, is_head) -> None:
         self.id = id
         self.is_head = is_head
-        self.main = Graph()
+        self.graph = Graph()
         self.new_trajs = list()
 
     def sync_by_pipe_disk(self, head_slave_queues, slave_head_queues, sync):
+        graph_path = P.model_dir + "graph.pkl"
         if not self.is_head:
             # write trajs (slave)
             slave_head_queues[self.id].put(self.new_trajs)
+            del self.new_trajs
             self.new_trajs = list()
             ready = head_slave_queues[self.id].get()
             # read latest graph (slave)
-            self.main = IO.read_disk_dump(P.sync_dir + "latest.pkl")
+            self.graph = IO.read_disk_dump(graph_path)
             slave_head_queues[self.id].put(["finish"])
         else:
             # read trajs (head)
@@ -40,15 +43,16 @@ class Memory:
                     continue  # head has no trajs stored
                 new_trajs = slave_head_queues[i].get()
                 skip_traj, all_traj = self.merge_new_trajs(new_trajs)
+                del new_trajs
                 num_skip_traj += skip_traj
                 num_all_traj += all_traj
-            Logger.log(f"skip / all traj.s: {num_skip_traj} / {num_all_traj}", color="yellow")
+
+            Logger.log(f"skip / all traj.s: {num_skip_traj} / {num_all_traj}", color="blue")
             
-            self.update_graph()
+            self.graph.update_graph()
 
             # write latest graph (head)
-            IO.renew_dir(P.sync_dir)
-            IO.write_disk_dump(P.sync_dir + "latest.pkl", self.main)
+            IO.write_disk_dump(graph_path, self.graph)
             sync.value = False
             for i in range(P.num_actor):
                 if self.id == i:
@@ -62,30 +66,14 @@ class Memory:
                 finished = slave_head_queues[i].get()
                 assert finished == ["finish"], "sync error"
 
-    def info(self):
-        return "G/C: {}/{}({:.1f}%) V: {:.2f}/{}".format(
-            len(self.main.obs_node),
-            len(self.main.intersections) if P.statistic_crossing_obs else "-",
-            100 * (len(self.main.intersections) / (len(self.main.obs_node) + 1e-8)) if P.statistic_crossing_obs else "-",
-            self.main.general_info["max_total_reward"],
-            str(self.main.general_info["max_total_reward_init_obs"])[-4:],
-        )
-
     def save(self):
-        IO.write_disk_dump(P.optimal_policy_path, self.main)
-        Logger.log("memory saved")
+        # IO.write_disk_dump(P.optimal_graph_path, self.graph.get_q())
+        # IO.write_disk_dump(P.generated_dataset_path, self.graph.get_transition_dataset())
+        # TODO: save memory
+        Logger.log("memory saved", color="blue")
 
-    def get_action(self, obs):
-        if self.main.general_info["max_total_reward_traj"] is not None:
-            steps = len(self.main.general_info["max_total_reward_traj"])
-        else:
-            steps = 0
-            
-        if obs in self.main.obs_best_action:
-            action = self.main.obs_best_action[obs]
-            value = self.main.get_obs_value(obs)
-            return action, value, steps
-        return None, None, steps
+    def get_graph(self):
+        return self.graph
 
     def store_new_trajs(self, trajectory):
         """
@@ -97,13 +85,21 @@ class Memory:
         last_reward = 0.0
         final_obs = None
         final_reward = None
+
+        total_reward = 0
         for last_obs, prev_action, obs, reward in trajectory:
             amend_traj.append([last_obs, prev_action, obs, last_reward])
             last_reward = reward
             final_obs = obs
             final_reward = reward
-        amend_traj.append([final_obs, None, final_obs, final_reward])  # last transition
 
+            total_reward += reward
+        amend_traj.append([final_obs, None, final_obs, final_reward])  # last transition
+        
+        # filter trajs by min reward
+        if P.min_traj_reward is not None:
+            if total_reward < P.min_traj_reward:
+                return
         self.new_trajs.append(amend_traj)
 
     def merge_new_trajs(self, new_trajs): 
@@ -111,25 +107,4 @@ class Memory:
         merger increments to graph(s) by the head worker of learner
         """
         # add transitions to obs_next, obs_reward
-        return self.main.add_trajs(new_trajs)
-
-    def update_graph(self):
-        # 1. graph reconstruction
-        self.main.graph_construction()
-
-        # 2. check the vlidity of the graph
-        if P.graph_sanity_check:
-            self.main.sanity_check()
-
-        # 3. value iteration
-        self.main.node_value_iteration()
-        
-        # 4. update action of crossing obs
-        self.main.best_action_update()
-
-        # 5. draw graph (optinal)
-        if P.draw_graph:
-            self.main.draw_graph()
-        
-
- 
+        return self.graph.add_trajs(new_trajs)

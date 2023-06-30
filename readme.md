@@ -1,34 +1,14 @@
 # RL with graph memory
 
-## make a env of conda called rl
+## build docker image
 
-    conda create -n rl python=3.9 -y
+    sudo docker image build docker/pytorch --tag pytorch
+    sudo docker image build docker/pytorch/ml --tag ml
+    sudo docker image build docker/pytorch/ml/rl --build-arg UID=$(id -u) --tag rl
 
-## install components (note: install pytorch depends on your system)
-
-    conda install pytorch cudatoolkit=11.6 -c pytorch -c conda-forge -y
-    
-## install the dependencies
-
-    pip install -r requirements.txt
-
-## install roms for Atari games
-
-    AutoROM -y
-
-
-## set GPU to EXCLUSIVE_PROCESS compute mode (optional)
-
-    sudo nvidia-smi -i 0 -c EXCLUSIVE_PROCESS
-
-
-## run the code locally
+## run the code
 
     ./run.sh
-
-## set GPU to DEFAULT compute mode (optional)
-
-    sudo nvidia-smi -i 0 -c DEFAULT
 
 ## log explains:
 
@@ -41,7 +21,3 @@
     210627103621 6896 9987 evl_actor R: 1100.00 Fps: 2061.7 H: 100.0% L: 1296/1296
 
 each result of the testing actor just after the graph update should be ignored since the graph used for action generation is altered during this episode.
-
-## To remove `__pycache__`
-
-    find . -type d -name __pycache__ -exec rm -r {} \+

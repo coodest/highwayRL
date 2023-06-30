@@ -16,103 +16,109 @@ class MemRL:
         start_time = time.time()
 
         # 2. show args
-        Funcs.print_obj(P.C)
-        Funcs.print_obj(P)
+        Funcs.print_obj([P.C, P])
 
-        # 3. prepare queues for learner and actor
-        finish = Value("b", False)
-        actor_learner_queues = list()
-        for _ in range(P.num_actor):
-            actor_learner_queues.append(Queue())
-        learner_actor_queues = list()
-        for _ in range(P.num_actor):
-            learner_actor_queues.append(Queue())
+        # 3. staging
+        MemRL.staging()
 
-        # 4. launch
-        processes = []
-
-        learner_process = Process(target=MemRL.learner_run, args=(
-            actor_learner_queues,
-            learner_actor_queues,
-            finish
-        ))
-        learner_process.start()
-        processes.append(learner_process)
-
-        for id in range(P.num_actor):
-            p = Process(target=MemRL.actor_run, args=(
-                id,
-                actor_learner_queues[id],
-                learner_actor_queues[id],
-                finish
-            ))
-            p.start()
-            processes.append(p)
-
-        while True:
-            try:  # process exception detection
-                title_out = False
-                for ind, p in enumerate(processes):
-                    p.join()
-                    if ind == 0:
-                        Logger.log("learner exit")
-                        continue  # skip the learner process
-                    if not title_out:
-                        Logger.log("actor ", new_line=False)
-                        title_out = True
-                    Logger.log(f"{ind - 1} ", new_line=False, make_title=False)
-                Logger.log("exit", make_title=False)
-                break
-            except KeyboardInterrupt:
-                pass
-            except Exception:
-                Funcs.trace_exception()
-                break
-
-        # 5. report time
+        # 4. report time
         minutes = (time.time() - start_time) / 60
         Logger.log(f"up {minutes:.1f} min, exit")
 
     @staticmethod
+    def staging():
+        # 1. learn the graph
+        if P.start_stage <= 0:
+            finish = Value("b", False)
+            actor_learner_queues = list()
+            for _ in range(P.num_actor):
+                actor_learner_queues.append(Queue())
+            learner_actor_queues = list()
+            for _ in range(P.num_actor):
+                learner_actor_queues.append(Queue())
+
+            processes = []
+
+            learner_process = Process(target=MemRL.learner_run, args=(
+                actor_learner_queues,
+                learner_actor_queues,
+                finish
+            ))
+            learner_process.start()
+            processes.append(learner_process)
+
+            for id in range(P.num_actor):
+                p = Process(target=MemRL.actor_run, args=(
+                    id,
+                    actor_learner_queues[id],
+                    learner_actor_queues[id],
+                    finish
+                ))
+                p.start()
+                processes.append(p)
+
+            while True:
+                try:  # process exception detection
+                    title_out = False
+                    for ind, p in enumerate(processes):
+                        p.join()
+                        if ind == 0:
+                            Logger.log("learner exit")
+                            continue  # skip the learner process
+                        if not title_out:
+                            Logger.log("actor ", new_line=False)
+                            title_out = True
+                        Logger.log(f"{ind - 1} ", new_line=False, make_title=False)
+                    Logger.log("exit", make_title=False)
+                    break
+                except KeyboardInterrupt:
+                    pass
+                except Exception:
+                    Funcs.trace_exception()
+                    break
+            Logger.log("stage 1 finished")
+        # 2. parameterize the graph
+        if P.start_stage <= 1:
+            from src.module.agent.policy.model import Model
+            model = Model()
+            model.utilize_graph()
+            model.evaluate()
+            model.save()
+            Logger.log("stage 2 finished")
+        # 3. online updating the model
+        if P.start_stage <= 2:
+            Logger.log("stage 3 finished")
+
+    @staticmethod
     def learner_run(actor_learner_queues, learner_actor_queues, finish):
         try:
-            # 1. init
             from src.module.agent.learner import Learner
             os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
 
-            # 2. learn
             Funcs.run_cmd("nvidia-cuda-mps-control -d", 2)
             learner = Learner(actor_learner_queues, learner_actor_queues, finish)
             try:  # sub-process exception detection
-                optimal_policy = learner.learn()  # learn the policy
+                learner.learn()  # learn the graph
             except KeyboardInterrupt:
                 Logger.error("ctrl-c pressed")
                 learner.wait_to_finish()
             except FileNotFoundError:
-                Logger.error("optimal policy not found, learning failed")
+                Logger.error("no saved graph")
             except Exception:
                 Funcs.trace_exception()
             finally:
                 with finish.get_lock():
                     finish.value = True
-                Logger.log("learning finished")
             Funcs.run_cmd("echo quit | nvidia-cuda-mps-control", 2)
-
-            # 3. parameterization
-            # TODO: policy parameterization
-            Logger.log("dnn model saved")
         except Exception:
-            Funcs.trace_exception()
+            Funcs.trace_exception("(learner)")
         
     @staticmethod
     def actor_run(id, actor_learner_queues, learner_actor_queues, finish):
         try:
-            # 1. make env and actor
             from src.module.agent.actor import Actor
 
-            actor = Actor(id, MemRL.create_env, actor_learner_queues, learner_actor_queues, finish)
-
-            # 2. start interaction loop (actor loop)
+            actor = Actor(id, actor_learner_queues, learner_actor_queues, finish)
             while True:
                 try:  # sub-process exception detection
                     actor.interact()
@@ -124,26 +130,7 @@ class MemRL:
                     else:
                         Funcs.trace_exception()
         except Exception:
-            Funcs.trace_exception()
-
-    @staticmethod
-    def create_env(render=False, is_head=False):
-        if P.env_type == P.env_types[0]:
-            from src.module.env.atari import Atari
-            return Atari.make_env(render, is_head)
-        if P.env_type == P.env_types[1]:
-            from src.module.env.maze import Maze
-            return Maze.make_env(render, is_head)
-        if P.env_type == P.env_types[2]:
-            from src.module.env.toy_text import ToyText
-            return ToyText.make_env(render, is_head)
-        if P.env_type == P.env_types[3]:
-            from src.module.env.box_2d import Box2D
-            return Box2D.make_env(render, is_head)
-        if P.env_type == P.env_types[4]:
-            from src.module.env.sokoban import Sokoban
-            return Sokoban.make_env(render, is_head)
-        # TODO: add football and pybullet
+            Funcs.trace_exception(f"(actor {id})")
 
 
 if __name__ == "__main__":

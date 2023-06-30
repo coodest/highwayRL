@@ -10,7 +10,7 @@ import time
 class Box2D:
     @staticmethod
     def make_env(render=False, is_head=False):
-        env_path = P.sync_dir + "env.pkl"
+        env_path = P.env_dir + "env.pkl"
         env = None
         while True:
             try:

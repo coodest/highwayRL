@@ -17,8 +17,7 @@ from os.path import isfile, join
 import requests
 import zipfile
 from tqdm import tqdm
-from src.util.imports.random import *
-from src.util.imports.numpy import *
+from src.util.imports.numpy import np
 
 
 class Sokoban:
@@ -151,7 +150,7 @@ class FilteredTinyBoxobanEnv(SokobanEnv):
     def select_room(self):
         
         generated_files = [f for f in listdir(self.train_data_dir) if isfile(join(self.train_data_dir, f))]
-        source_file = join(self.train_data_dir, random.choice(generated_files[: self.max_file]))
+        source_file = join(self.train_data_dir, np.random.choice(generated_files[: self.max_file]))
 
         maps = []
         current_map = []
@@ -166,7 +165,7 @@ class FilteredTinyBoxobanEnv(SokobanEnv):
         
         maps.append(current_map)
 
-        selected_map = random.choice(maps[: self.max_level])
+        selected_map = np.random.choice(maps[: self.max_level])
 
         if self.verbose:
             print('Selected Level from File "{}"'.format(source_file))

@@ -1,0 +1,13 @@
+--maze maps--
+maze2d_3x3
+maze2d_5x5
+maze2d_10x10
+maze2d_100x100
+3
+5
+10
+100
+3_teleport
+5_teleport
+10_teleport
+100_teleport

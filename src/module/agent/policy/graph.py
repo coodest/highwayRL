@@ -13,16 +13,12 @@ from src.util.imports.numpy import np
 from src.util.tools import LinkedListElement
 from src.module.agent.policy.iterator import Iterator
 from tqdm import tqdm
+import scipy
 
 
 
 class Graph:
     def __init__(self):
-        self.obs_reward = dict()
-        self.obs_next = defaultdict(dict)
-        self.obs_prev = defaultdict(dict)
-        self.obs_best_action = dict()
-        
         self.general_info = dict()
         self.general_info["max_total_reward"] = - float("inf")
         self.general_info["max_total_reward_init_obs"] = None
@@ -30,8 +26,17 @@ class Graph:
 
         self.iterator = Iterator()
 
+        self.q = defaultdict(dict)
+
+        self.reset_obs()
         self.reset_node()
 
+    def reset_obs(self):
+        self.obs_reward = dict()
+        self.obs_next = defaultdict(dict)
+        self.obs_prev = defaultdict(dict)
+        self.obs_best_action = dict()
+    
     def reset_node(self):
         self.obs_node = dict()
         self.node_obs = defaultdict(list)
@@ -44,9 +49,9 @@ class Graph:
 
     def add_trajs(self, trajs):
         num_skip_traj = 0
+        skip_traj = False
         for traj_ind, traj in enumerate(trajs):
-            # filter randomness
-            skip_traj = False
+            # filter randomness and min_traj_reward
             for last_obs, prev_action, obs, last_reward in traj:
                 if prev_action is not None:
                     if prev_action in self.obs_next[last_obs]:
@@ -168,7 +173,12 @@ class Graph:
                 self.node_next[self.obs_node[prev_obs]][prev_action][highway_node_ind] += 1
             last_obs = fragments[first_obs][-1]
             if last_obs in self.obs_next:
-                next_action = list(self.obs_next[last_obs].keys())[0]
+                # TODO: IndexError: list index out of range
+                try:
+                    next_action = list(self.obs_next[last_obs].keys())[0]
+                except Exception:
+                    Logger.log(last_obs)
+                    Logger.log(list(self.obs_next[last_obs].keys()))
                 next_obs = list(self.obs_next[last_obs][next_action].keys())[0]
                 if next_action not in self.node_next[highway_node_ind]:
                     self.node_next[highway_node_ind][next_action] = defaultdict(int)
@@ -186,17 +196,19 @@ class Graph:
                         self.node_next[node][action][next_node] += 1
 
     def sanity_check(self):
+        # check forks for intersections
         for node in self.intersections:
             intersection_obs = self.node_obs[node][0]
             if intersection_obs in self.obs_next and node in self.node_next:
                 assert len(self.obs_next[intersection_obs]) == len(self.node_next[node]), f"incomplete intersection: {intersection_obs}"
 
+        # check merging states
         merging = 0
         for obs in self.obs_prev:
             prev_actions = list(self.obs_prev[obs].keys())
             if len(prev_actions) > 1:
                 merging += 1
-        Logger.log(f"graph is not a tree structure, {merging} mergings found", color="yellow")
+        Logger.log(f"{merging} mergings found in the graph", color="yellow")
 
     def node_value_iteration(self):
         """
@@ -227,8 +239,6 @@ class Graph:
         Logger.log(f"{m1:>4.1f}%|{m5:>4.1f}%|{m10:>4.1f}% nodes with >1|>5|>10 merging trails", color="yellow")  
         
         # value propagation
-        if P.build_dag:
-            adj = adj - self.iterator.build_dag(adj)
         val_n, iters, divider = self.iterator.iterate(adj, rew, gamma, val_0)
         Logger.log(f"learner value propagation: {iters} iters * {divider} batch", color="yellow")
         for ind, val in enumerate(val_n):
@@ -251,7 +261,10 @@ class Graph:
                     best_action = list(self.obs_next[obs].keys())[0]
                     self.obs_best_action[obs] = best_action
 
-    def get_obs_value(self, obs):
+        # self.q = self.get_q()
+        Logger.log("learner update action ready", color="yellow")
+
+    def get_obs_future_value(self, obs):
         node = self.obs_node[obs]
         value = self.node_value[node]
         for o in self.node_obs[node]:
@@ -260,8 +273,56 @@ class Graph:
                 break
         return value
 
+    def get_obs_value(self, obs):
+        return self.get_obs_future_value(obs) + self.obs_reward[obs]
+
+    def get_q(self):
+        q = defaultdict(dict)
+        for obs in self.obs_next:
+            for act in self.obs_next[obs]:
+                next_obs = list(self.obs_next[obs][act].keys())[0]
+                q[obs][act] = dict()
+                q[obs][act][next_obs] = self.get_obs_value(next_obs)
+        return q
+
+    def get_transition_dataset(self):
+        dataset = dict()
+
+        observations = list()
+        actions = list()
+        next_observations = list()
+        rewards = list()
+        terminals = list()
+
+        for obs in self.obs_reward:
+            for act in self.obs_next[obs]:
+                next_obs = list(self.obs_next[obs][act].keys())[0]
+                observations.append(obs)
+                actions.append(act)
+                next_observations.append(next_obs)
+                if next_obs in self.obs_reward:
+                    rewards.append(self.obs_reward[next_obs])
+                else:
+                    rewards.append(0.0)
+                if next_obs not in self.obs_next:
+                    terminals.append(True)
+                else:
+                    terminals.append(False)
+
+        dataset["observations"] = np.array(observations)
+        dataset["actions"] = np.array(actions)
+        dataset["next_observations"] = np.array(next_observations)
+        dataset["rewards"] = np.array(rewards)
+        dataset["terminals"] = np.array(terminals)
+
+        return dataset
+
     def draw_graph(self):
-        fig_path = f"{P.result_dir}graph"
+        if len(self.node_obs) > P.max_node_draw:
+            Logger.log("graph is too large to draw.")
+            return
+        
+        fig_path = f"{P.result_dir}graph.pdf"
 
         # 1. build networkx DiGraph
         dg = nx.DiGraph()
@@ -284,7 +345,7 @@ class Graph:
                 node_size.append(normal_node_size)
                 node_color.append(color_weight)
 
-            if P.env_type == P.env_types[5]:
+            if P.env_type == "maze":
                 coord = self.node_obs[node][0]
                 pos.append([coord[0], - coord[1]])
             else:
@@ -346,7 +407,42 @@ class Graph:
         sm._A = []
         cb = plt.colorbar(sm)
         cb.set_label('Node Value')
-        plt.savefig(fig_path + ".pdf", format="PDF")  # save as PDF file
+        plt.savefig(fig_path, format="PDF")  # save as PDF file
         plt.clf()
 
-    
+    def update_graph(self):
+        # 1. graph reconstruction
+        self.graph_construction()
+
+        # 2. check the vlidity of the graph
+        self.sanity_check()
+
+        # 3. value iteration
+        self.node_value_iteration()
+        
+        # 4. update action of crossing obs
+        self.best_action_update()
+
+        # 5. draw graph
+        self.draw_graph()
+
+    def get_action(self, obs):
+        if self.general_info["max_total_reward_traj"] is not None:
+            steps = len(self.general_info["max_total_reward_traj"])
+        else:
+            steps = 0
+            
+        if obs in self.obs_best_action:
+            action = self.obs_best_action[obs]
+            value = self.get_obs_future_value(obs)
+            return action, value, steps
+        return None, None, steps
+
+    def info(self):
+        return "G/N: {}/{}({:.1f}%) V: {:.2f}/{}".format(
+            len(self.obs_node),
+            len(self.node_obs),
+            100 * (len(self.node_obs) / (len(self.obs_node) + 1e-8)),
+            self.general_info["max_total_reward"],
+            str(self.general_info["max_total_reward_init_obs"])[-4:],
+        )

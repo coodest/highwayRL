@@ -15,49 +15,6 @@ class Iterator:
             self.device = torch.device(f"cuda:{ind}")
         else:
             self.device = torch.device("cpu")
-
-    def build_dag(self, np_adj):
-        with torch.no_grad():
-            adj0 = torch.tensor(np_adj, dtype=torch.float32).to(self.device)
-            edge_to_remove = None
-
-            fin = False
-            while not fin:
-                adj = adj0
-                for i in range(2, P.max_vp_iter):
-                    adj_new = torch.mm(adj, adj0)
-                    diag = torch.diagonal(adj_new)
-                    adj_new = torch.where(adj_new > 0, 1.0, 0.0)
-                    diag_bool = torch.where(diag > 0.5, 1.0, 0.0)
-                    prev_rows_t = diag_bool * torch.transpose(adj, 0, 1)
-                    prev_cols = diag_bool * adj0
-                    change = prev_rows_t * prev_cols
-
-                    abs_dist = torch.where((adj_new - adj) != 0, 1.0, 0.0)
-                    if torch.sum(change) == 0 and torch.sum(abs_dist) == 0:
-                        # nodes in adj can go no where, and no loop currently found
-                        # that is: adj_new = adj = a zero mat
-                        fin = True
-                        break
-
-                    if edge_to_remove is not None:
-                        edge_to_remove += change.cpu().detach().numpy()
-                    else:
-                        edge_to_remove = change.cpu().detach().numpy()
-
-                    if torch.sum(change) == 0:
-                        adj = adj_new
-                    else:
-                        adj0 = adj0 - change
-                        if P.start_over:
-                            break  # start over of adj mat mul
-                
-            # release resorces
-            del adj0, adj, adj_new, diag, diag_bool, prev_rows_t, prev_cols, change
-            torch.cuda.empty_cache()
-
-        return edge_to_remove
-
     
     def iterate(self, np_adj, np_rew, np_gamma, np_val_0):
         with torch.no_grad():

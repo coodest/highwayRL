@@ -10,23 +10,17 @@ class Projector:
     def __init__(self, id, is_head):
         if P.projector == "raw":
             self.projector = RawProjector(id)
-        if P.projector == "random":
-            self.projector = RandomProjector(id)
-        if P.projector == "rnn":
+        if P.projector == "random_rnn":
             self.projector = RNNProjector(id, is_head)
-        if P.projector == "n-rnn":
-            self.projector = NRNNProjector(id, is_head)
-        if P.projector == "sha256_hash":
+        if P.projector == "historical_hash":
             self.projector = HashProjector(id)
-        if P.projector == "multiple_hash":
-            self.projector = HashProjector(id)
-        if P.projector == "multi-scale_rnn":
-            self.projector = MultiscaleRNNProjector(id, is_head)
+        if P.projector == "ae":
+            self.projector = AEProjector(id, is_head)
+        if P.projector == "seq":
+            self.projector = SeqProjector(id)
 
-    def batch_project(self, inputs):
-        last_obs, obs = inputs
-
-        last_obs, obs = self.projector.batch_project([last_obs, obs])
+    def batch_project(self, transition):
+        last_obs, obs = self.projector.batch_project(transition)
 
         return last_obs, obs
 
@@ -44,6 +38,47 @@ class RandomMatrixLayer(torch.nn.Module):
     def forward(self, input):
         with torch.no_grad():
             return self.layer(input)
+        
+
+class Autoencoder(torch.nn.Module):
+    def __init__(self):
+        super(Autoencoder, self).__init__()
+
+        # 编码器
+        self.enc1 = torch.nn.Linear(in_features=3136, out_features=784)  # Input image (28*28 = 784)
+        self.enc2 = torch.nn.Linear(in_features=784, out_features=256)  # Input image (28*28 = 784)
+        self.enc3 = torch.nn.Linear(in_features=256, out_features=128)
+        self.enc4 = torch.nn.Linear(in_features=128, out_features=64)
+        self.enc5 = torch.nn.Linear(in_features=64, out_features=32)
+        self.enc6 = torch.nn.Linear(in_features=32, out_features=16)
+
+        # 解码器 
+        self.dec1 = torch.nn.Linear(in_features=16, out_features=32)
+        self.dec2 = torch.nn.Linear(in_features=32, out_features=64)
+        self.dec3 = torch.nn.Linear(in_features=64, out_features=128)
+        self.dec4 = torch.nn.Linear(in_features=128, out_features=256)
+        self.dec5 = torch.nn.Linear(in_features=256, out_features=784)  # Output image (28*28 = 784)
+        self.dec6 = torch.nn.Linear(in_features=784, out_features=3136)  # Output image (28*28 = 784)
+
+    def forward(self, x, preprocess=True):
+        input = x
+        x = torch.nn.functional.relu(self.enc1(x))
+        x = torch.nn.functional.relu(self.enc2(x))
+        x = torch.nn.functional.relu(self.enc3(x))
+        x = torch.nn.functional.relu(self.enc4(x))
+        x = torch.nn.functional.relu(self.enc5(x))
+
+        rep = self.enc6(x)
+        x = torch.nn.functional.relu(rep)
+
+        x = torch.nn.functional.relu(self.dec1(x))
+        x = torch.nn.functional.relu(self.dec2(x))
+        x = torch.nn.functional.relu(self.dec3(x))
+        x = torch.nn.functional.relu(self.dec4(x))
+        x = torch.nn.functional.relu(self.dec5(x))
+        x = torch.nn.functional.relu(self.dec6(x))
+
+        return input, rep, x
 
 
 class RawProjector:
@@ -59,10 +94,21 @@ class RawProjector:
             self.device = torch.device("cpu")
 
     def project(self, input):
-        pass
+        if isinstance(input, np.ndarray):
+            input = np.ndarray.flatten(input).tolist()
+        if isinstance(input, int):
+            return input
+    
+        if P.hashing:
+            rep = Funcs.matrix_hashing(input)
+        else:
+            rep = tuple(input)
 
-    def batch_project(self, inputs):
-        return tuple(inputs[0]), tuple(inputs[1])
+        return rep
+
+    def batch_project(self, transition):
+        last_obs, pre_action, obs, reward, done = transition    
+        return self.project(last_obs), self.project(obs)
 
     def reset(self):
         pass
@@ -70,22 +116,13 @@ class RawProjector:
 
 class HashProjector(RawProjector):
     def __init__(self, id) -> None:
-        self.hist_input = np.expand_dims(np.array([]), axis=0)
-        self.last_result = ""
+        self.reset()
 
     def project(self, input):
-        # input = input.tobytes()
-        if P.projector == "sha256_hash":
-            return Funcs.matrix_hashing(input)
-        if P.projector == "multiple_hash":
-            res = ""
-            res += Funcs.matrix_hashing(input, type="sha256")
-            res += Funcs.matrix_hashing(input, type="md5")
-            res += Funcs.matrix_hashing(input, type="shake_256")
-            return res
+        return Funcs.matrix_hashing(input)
 
-    def batch_project(self, inputs):
-        last_obs, obs = inputs
+    def batch_project(self, transition):
+        last_obs, pre_action, obs, reward, done = transition    
         if self.last_result == "":
             self.hist_input = np.array([obs])
         else:
@@ -98,25 +135,6 @@ class HashProjector(RawProjector):
     def reset(self):
         self.hist_input = np.expand_dims(np.array([]), axis=0)
         self.last_result = ""
-
-
-class RandomProjector(RawProjector):
-    def __init__(self, id):
-        super().__init__(id)
-        obs_dim = P.screen_size * P.screen_size * P.stack_frames
-        self.random_matrix = RandomMatrixLayer(obs_dim, P.projected_dim).to(self.device)
-
-    def batch_project(self, obs_list):     
-        batch = np.vstack(obs_list)  
-        input = None
-        with torch.no_grad():
-            # [2, obs_dim]
-            input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
-
-            output = self.random_matrix(input)
-            results = output.cpu().detach().numpy().tolist()
-
-        return Funcs.matrix_hashing(results[0]), Funcs.matrix_hashing(results[1])
 
 
 class RNNProjector(RawProjector):
@@ -137,17 +155,15 @@ class RNNProjector(RawProjector):
 
         self.random_matrix = self.random_matrix.to(self.device)
         self.hidden_0 = self.hidden_0.to(self.device)
-        self.last_result = ""
-        self.hidden = self.hidden_0
-        self.step = 0
+        self.reset()
 
     def reset(self):
         self.last_result = ""
         self.hidden = self.hidden_0
         self.step = 0
 
-    def project(self, obs):
-        batch = obs
+    def project(self, obs, hashing=P.hashing):
+        batch = np.ndarray.flatten(obs)
         input = None
         with torch.no_grad():  # no grad calculation
             # [obs_dim]
@@ -163,104 +179,118 @@ class RNNProjector(RawProjector):
             output = output[0, :P.projected_dim]
 
             result = output.cpu().detach().numpy().tolist()
-            result = np.concatenate([result, [self.step]])
-            result = Funcs.matrix_hashing(result)
+            result = tuple(np.concatenate([result, [self.step]]))
+            if hashing:
+                result = Funcs.matrix_hashing(result)
         self.last_result = result
         self.step += 1
 
         return result
 
-    def batch_project(self, obs_list):   
+    def batch_project(self, transition):
+        last_obs, pre_action, obs, reward, done = transition   
         results = []
         results.append(self.last_result)
-        results.append(self.project(obs_list[-1]))
+        results.append(self.project(obs))
         return results
 
 
-class NRNNProjector(RawProjector):
-    def __init__(self, id, is_head, steps=5, projector_path=f"{P.model_dir}{P.env_name}-projector.pkl"):
+class AEProjector(RawProjector):
+    def __init__(self, id, is_head):
         super().__init__(id)
-
-        if is_head:
-            obs_dim = P.screen_size * P.screen_size * P.stack_frames
-            self.hidden_share = torch.rand(P.projected_hidden_dim, requires_grad=False)
-            unit_weight = torch.rand([
-                P.projected_dim + P.projected_hidden_dim,  # number nerons (output dim)
-                obs_dim + P.projected_hidden_dim  # weight of neurons (input dim)
-            ], requires_grad=False)
-            IO.write_disk_dump(projector_path, [self.hidden_share, unit_weight])
-        else:
-            while True:
-                try:
-                    self.hidden_share, unit_weight = IO.read_disk_dump(projector_path)
-                    break
-                except Exception:
-                    time.sleep(0.1)
-
-        self.steps = steps
-        self.hidden_share = self.hidden_share.to(self.device)
-        self.hidden = torch.tile(self.hidden_share, (self.steps, 1)).to(self.device)
-        self.last_result = ""
-        self.random_matrix = torch.tile(unit_weight, (self.steps, 1, 1)).to(self.device)
-        self.step_status = torch.arange(self.steps).to(self.device)  # indicate current step
-
-    def reset(self):
-        self.hidden = torch.tile(self.hidden_share, (self.steps, 1))
-        self.last_result = ""
-        self.step_status = torch.arange(self.steps).to(self.device)
+        self.model = Autoencoder().to(self.device)
+        self.model.load_state_dict(torch.load(f"{P.asset_dir}/pretrained_projectors/ae/atari_stargunner.pt"))
+        self.last_result = None
 
     def project(self, obs):
-        with torch.no_grad():  # no grad calculation
-            # [obs_dim]
-            raw = torch.tensor(obs, dtype=torch.float32, requires_grad=False).to(self.device)
-            # [self.steps, obs_dim]
-            input = torch.tile(raw, (self.steps, 1))
-            # [self.steps, obs_dim + P.projected_hidden_dim]
-            input = torch.cat([input, self.hidden], dim=1)
-            # [self.steps, 1, obs_dim + P.projected_hidden_dim]
-            input = input.unsqueeze(dim=1)
+        batch = torch.from_numpy(np.array([obs], dtype=np.float32)).to(self.device)
+        self.model.eval()
+        input, rep, output = self.model(batch)
+        rep = rep.squeeze(0).detach().cpu().numpy()
 
-            output = torch.mul(self.random_matrix, input) 
-            output = torch.sum(output, dim=2)
-            self.hidden = output[:, P.projected_dim:]
-            output = output[:, :P.projected_dim]
+        self.last_result = tuple(rep)
+        return tuple(rep)
 
-            # find the index of full steps result
-            self.step_status += 1
-            self.step_status %= self.steps
-            output_index = torch.argmin(self.step_status)
-            
-            # select the result with full steps and reset its hidden
-            output = output[output_index]
-            self.hidden[output_index] = self.hidden_share
-
-            result = output.cpu().detach().numpy().tolist()
-        
-            result = Funcs.matrix_hashing(result)
-        self.last_result = result
-        return result
-
-    def batch_project(self, obs_list):   
+    def batch_project(self, transition):
+        last_obs, pre_action, obs, reward, done = transition     
         results = []
         results.append(self.last_result)
-        results.append(self.project(obs_list[-1]))
+        results.append(self.project(obs))
         return results
 
 
-class MultiscaleRNNProjector(RawProjector):
-    def __init__(self, id, is_head, steps=5):
+class SeqProjector(RawProjector):
+    def __init__(self, id):
         super().__init__(id)
-    
-        self.l1_rnn = RNNProjector(id, is_head=is_head, projector_path=f"{P.model_dir}{P.env_name}-projector-l1.pkl")
-        self.l2_rnn = NRNNProjector(id, is_head=is_head, projector_path=f"{P.model_dir}{P.env_name}-projector-l2.pkl", steps=steps)
+        from src.util.mingpt.model_atari import GPT, GPTConfig
+
+        self.max_timestep = 3884
+        self.model = GPT(GPTConfig(
+            18, 
+            90,
+            n_layer=6, 
+            n_head=8, 
+            n_embd=128, 
+            model_type="reward_conditioned", 
+            max_timestep=self.max_timestep
+        ))
+        self.model = torch.nn.DataParallel(self.model).to(self.device)
+        self.model.load_state_dict(torch.load(f"{P.asset_dir}pretrained_projectors/transformer/{P.env_type}_{str(P.env_name).lower()}.pt"))
+        self.model = self.model.module
+        self.model.eval()
+        self.reset()
 
     def reset(self):
-        self.l1_rnn.reset()
-        self.l2_rnn.reset()
+        self.actions = None
+        self.all_obss = None
+        self.last_result = None
+        self.rtgs = [10000]
+        self.step = -1
 
-    def batch_project(self, obs_list):   
-        results_l1 = self.l1_rnn.batch_project(obs_list)
-        results_l2 = self.l2_rnn.batch_project(obs_list)
-        # return [results_l1, results_l2]
-        # return results_l1
-        return results_l2  # TODO: combine two layers
+    def project(self, pre_action, obs, reward):
+        obs = torch.from_numpy(obs).unsqueeze(0).unsqueeze(0).to(self.device)
+
+        self.step += 1
+
+        if self.all_obss is None:
+            self.all_obss = obs
+        else:
+            if self.actions is None:
+                self.actions = []
+            self.actions += [pre_action]
+            self.all_obss = torch.cat([self.all_obss, obs], dim=1)
+            self.rtgs += [self.rtgs[-1] - reward]
+
+        rep = self.get_rep(
+            x=self.all_obss, 
+            actions=None if self.actions is None else torch.tensor(self.actions, dtype=torch.long).to(self.device).unsqueeze(1).unsqueeze(0), 
+            rtgs=torch.tensor(self.rtgs, dtype=torch.long).to(self.device).unsqueeze(0).unsqueeze(-1), 
+            timesteps=(min(self.step, self.max_timestep) * torch.ones((1, 1, 1), dtype=torch.int64).to(self.device))
+        )  
+        self.last_result = rep
+        return rep
+
+    def get_rep(self, x, actions=None, rtgs=None, timesteps=None, hashing=P.hashing):
+        block_size = self.model.get_block_size()
+        # x_cond = x if x.size(1) <= block_size else x[:, -block_size:] # crop context if needed
+        x_cond = x if x.size(1) <= block_size // 3 else x[:, -block_size // 3:]  # crop context if needed
+        if actions is not None:
+            actions = actions if actions.size(1) <= block_size // 3 else actions[:, -block_size // 3:]  # crop context if needed
+        rtgs = rtgs if rtgs.size(1) <= block_size // 3 else rtgs[:, -block_size // 3:]  # crop context if needed
+        rep, logits, _ = self.model(x_cond, actions=actions, targets=None, rtgs=rtgs, timesteps=timesteps)
+        rep = rep[0, -1]
+        rep = rep.detach().cpu().numpy()
+        if hashing:
+            rep = Funcs.matrix_hashing(rep)
+        else:
+            rep = tuple(rep)
+
+        return rep
+
+    def batch_project(self, transition):
+        last_obs, pre_action, obs, reward, done = transition
+
+        results = []
+        results.append(self.last_result)
+        results.append(self.project(pre_action, obs, reward))
+        return results

@@ -753,6 +753,76 @@ class Test:
                 Logger.log(f"total reward: {total_reward} steps: {epi_step}")
                 break
 
+    def read_graph(self):
+        optimal_graph = IO.read_disk_dump(P.optimal_graph_path)
+        breakpoint()
+
+    def mujoco(self):
+        import gym
+        import d4rl
+
+        # a = gym.make("halfcheetah-medium-expert-v2")
+        # from src.module.env.mujoco import Mujoco
+        # a = Mujoco.make_env(is_head=True)
+        # breakpoint()
+        # s = a.env.env.get_normalized_score(20)
+
+        env = gym.make("halfcheetah-medium-expert-v2")
+
+        dataset = d4rl.qlearning_dataset(env)
+        # ['observations', 'actions', 'next_observations', 'rewards', 'terminals']
+        # dataset["observations"].shape: (1998000, 17)
+        # dataset["actions"].shape: (1998000, 6), array([-0.22293739, -0.7359478 , -0.8599511 ,  0.29579234, -0.8416547 , 0.43432042], dtype=float32)
+        # dataset["next_observations"].shape: (1998000, 17)
+        # dataset["rewards"].shape: (1998000,)
+        # dataset["terminals"].shape: (1998000,)
+
+        breakpoint()
+
+    def load_gpt_model(self):
+        import torch
+        from src.util.dt.mingpt.model_atari import GPT, GPTConfig
+        self.max_timestep = 3884
+        self.model = GPT(GPTConfig(
+            18, 
+            90,
+            n_layer=6, 
+            n_head=8, 
+            n_embd=128, 
+            model_type="reward_conditioned", 
+            max_timestep=self.max_timestep
+        ))
+        self.model = torch.nn.DataParallel(self.model).cuda()
+        self.model.load_state_dict(torch.load("src/util/dt/model.pt"))
+        self.model = self.model.module
+        breakpoint()
+
+    def named_tuple(self):
+        import numpy as np
+        obs_visited = {4: 44, 1: 11, 6: 66, 3: 33, 2: 22, 5: 55}
+        max_obs_size = 5
+        if len(obs_visited) > max_obs_size:
+            s = sorted(obs_visited.items(), key=lambda i: i[1])    
+            filterred_obs = np.array(s)[max_obs_size:, 0]   
+            breakpoint()
+
+    def football_env(self):
+        from src.module.env.football import Football
+        env = Football.make_env(False, True)
+
+
+        # done = False
+        # while not done:
+        #     _, _, done, _ = env.step(0)
+        # env.render()
+
+        breakpoint()
+        # obs = env.reset()
+        # obs[0].shape
+
+    def print_table_param(self):
+        Funcs.print_obj([P.C, P])
+
 
 if __name__ == "__main__":
     test = Test()
@@ -772,13 +842,19 @@ if __name__ == "__main__":
     # test.hashing_test()
     # test.make_atari_alternative_env()
     # test.atari_play()
-    test.nrnn()
+    # test.nrnn()
     # test.rnn()
     # test.football()
     # test.test_pypullet()
     # test.test_sokoban()
     # test.test_tiny_sokoban()
     # test.read_highway_graph()
+    # test.read_graph()
+    # test.mujoco()
+    # test.load_gpt_model()
+    # test.named_tuple()
+    test.football_env()
+    # test.print_table_param()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

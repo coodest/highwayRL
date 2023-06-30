@@ -1,105 +1,109 @@
 import sys
-from src.util.tools import IO
+from src.util.tools import IO, Logger
 
 
 class Context:
     # common
-    work_dir = './'
+    work_dir = "./"
     asset_dir = work_dir + "assets/"
-    out_dir = work_dir + "output/"
+    out_dir = f"{work_dir}output/{Logger.get_date()}/"
     log_dir = out_dir + "log/"
     summary_dir = out_dir + "summary/"
     model_dir = out_dir + "model/"
     result_dir = out_dir + "result/"
     video_dir = out_dir + "video/"
-    sync_dir = out_dir + "sync/"
     env_dir = out_dir + "env/"
-    out_dirs = [out_dir, log_dir, model_dir, result_dir, video_dir, sync_dir, env_dir]
-    log_every = 20
+    out_dirs = [out_dir, log_dir, result_dir, model_dir, video_dir, env_dir]
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
+    start_stage = [0, 1, 2][0]
 
     # env
-    total_frames = [1e7, 2e5, 4e7][0]  # default 1e7
-    env_types = [
-        "atari",  # 0
-        "maze",  # 1
-        "toy_text",  # 2
-        "box_2d",  # 3
-        "sokoban",  # 4
-        "football",  # 5
+    total_frames = [1e7, 5e6, 1e6, 1e5][0]  # default 1e7
+    env_type = [
+        "maze",  # 0
+        "toy_text",  # 1
+        "football",  # 2
+        "atari",  # 3
+        "box_2d",  # 4
+        "sokoban",  # 5
         "bullet",  # 6
-    ]
-    env_type = env_types[0]
-    render = False  # whether test actor to render the env
+        "mujoco",  # 7
+    ][2]
+    render = [False, True][0]  # whether test actor to render the env
     render_every = 5
-    # atari
     env_name = None
-    max_train_episode_steps = [108000, 1000, 27000][0]
-    max_eval_episode_steps = [108000, 1000, 27000][0]
-    max_random_ops = [0, 10, 20, 30][0]  # 30, to control wheter the env is random initialized
+    deterministic = True  # env with/without randomness
     random_init_ops = [  # control wheter the env is random initialized
         {"max_random_ops": 0},  # diasble random ops
         {"max_random_ops": 30, "ops_option": [0]},
         {"max_random_ops": 30, "ops_option": "all"},
     ][0]
-    num_action_repeats = 2  # equivelent to frame skip
-    stack_frames = 2
-    screen_size = 84
-    sticky_action = False
+    num_action_repeats = 1
 
     # agent
     # agent:actor
-    num_actor = len(gpus) * 8
-    head_actor = num_actor - 1  # the last actor
+    num_actor = len(gpus) * 2
+    head_actor = num_actor - 1  # to report and evaluate
     stick_on_graph = 0.0
+    target_total_rewrad = None
+    average_window = 10
     # agent:policy:projector
-    projector = [
-        "raw",  # 0
-        "random",  # 1
-        "rnn",  # 2
-        "n-rnn",  # 3
-        "sha256_hash",  # 4
-        "multiple_hash",  # 5
-        "multi-scale_rnn",  # 6
-    ][2]
+    projector_types = [
+        "raw",  # 0(tuple of raw obs/state): for football, maze, toy_text, sokoban
+        "random_rnn",  # 1： for atari,
+        "historical_hash",  # 2： for atari,
+        "ae",  # 3: for atari,
+        "seq",   # 4: for atari,
+    ]
+    projector = projector_types[0]
     projected_dim = 8
     projected_hidden_dim = 32
+    hashing = [False, True][0]
     # agent:policy:graph
+    max_node_draw = 500
+    min_traj_reward = None
     gamma = [0.99, 1][1]  # discount factor
-    sync_every = log_every  # in second
+    sync_every = 20  # in trajectories
     e_greedy = [0.1, 1]
-    optimal_policy_path = None
-    statistic_crossing_obs = True
-    build_dag = False
-    start_over = True  # break loop and start over for adj mat multification
     max_vp_iter = 1e8  # num or float("inf")
-    draw_graph = False  # whether draw matplotlib figure for the graph
-    graph_sanity_check = True
 
 
 class Profile(Context):
     C = Context
-
-    profiles = dict()
-    for i in range(1, 27):
-        profiles[i] = str(i)
     
-    current_profile = sys.argv[1] if len(sys.argv) > 1 else "1"
-    
-    if C.env_type in C.env_types[0]:
-        C.env_name_list = IO.read_file(f"{C.asset_dir}atari.txt")
-        C.env_name = C.env_name_list[int(current_profile)]
-    if C.env_type in C.env_types[1]:
-        C.env_name = f"{C.env_type}_original"
-    if C.env_type in C.env_types[2]:
-        C.env_name_list = IO.read_file(f"{C.asset_dir}toy_text.txt")
-        C.env_name = C.env_name_list[int(current_profile)]
-    if C.env_type in C.env_types[3]:
-        C.env_name_list = IO.read_file(f"{C.asset_dir}box_2d.txt")
-        C.env_name = C.env_name_list[int(current_profile)]
-    if C.env_type in C.env_types[4]:
-        C.env_name_list = IO.read_file(f"{C.asset_dir}sokoban.txt")
-        C.env_name = C.env_name_list[int(current_profile)]
+    if len(sys.argv) < 1:
+        Logger.log("profile_id required")
+        exit(0)
 
-    C.optimal_policy_path = C.model_dir + f'{C.env_name}-optimal.pkl'
+    current_profile = sys.argv[1]
+
+    if C.env_type == "football":
+        C.num_actor = len(C.gpus) * 16
+        C.head_actor = C.num_actor - 1
+        C.projector = C.projector_types[0]
+        C.target_total_rewrad = 2.0
+        C.hashing = False
+        C.min_traj_reward = 1.2
+        C.gamma = 0.99
+        C.e_greedy = [0.1, 1]
+        C.deterministic = True
+        C.num_action_repeats = 1
+        reward_type = ["scoring", "scoring,checkpoints"][1]
+    if C.env_type == "atari":
+        C.num_action_repeats = 4  # equivelent to frame skip
+        C.num_actor = len(C.gpus) * 2
+        C.head_actor = C.num_actor - 1
+        C.projector = C.projector_types[4]
+        C.target_total_rewrad = None
+        C.min_traj_reward = 2000
+        C.gamma = [0.99, 1][1]
+        max_train_episode_steps = [108000, 1000, 27000][1]
+        max_eval_episode_steps = [108000, 1000, 27000][1]
+        stack_frames = 4
+        screen_size = 84
+        sticky_action = False
+    
+    C.env_name = IO.read_file(f"{C.asset_dir}{C.env_type}.txt")[int(current_profile)]
+
+    C.optimal_graph_path = f'{C.model_dir}{C.env_name}-optimal.pkl'

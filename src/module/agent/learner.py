@@ -51,10 +51,6 @@ class Learner:
             self.processes.append(p)
 
         self.wait_to_finish()
-        
-        optimal_policy = IO.read_disk_dump(P.optimal_policy_path)
-
-        return optimal_policy
 
     @staticmethod
     def is_head(index):
@@ -77,7 +73,7 @@ class Learner:
 
             last_report = time.time()
             last_frame = frames.value
-            last_sync = time.time()
+            episodes = 0
             memory = Memory(id, Learner.is_head(id))
             projector = Projector(id, Learner.is_head(id))
 
@@ -85,47 +81,44 @@ class Learner:
                 trajectory = []
                 proj_index_init_obs = None
                 while True:
-                    # sync memory
-                    if Learner.is_head(id) and (
-                        time.time() - last_sync > P.sync_every or 
-                        frames.value > P.total_frames
-                    ):
-                        sync.value = True
+                    if episodes > P.sync_every or frames.value > P.total_frames:
+                        if Learner.is_head(id):
+                            # check to sync
+                            with sync.get_lock():
+                                sync.value = True
+                        
                     if sync.value:
+                        # sync memory
                         memory.sync_by_pipe_disk(
                             head_slave_queues, 
                             slave_head_queues, 
                             sync
                         )
-                        last_sync = time.time()
-                    
-                    if Learner.is_head(id):
-                        # logging info
-                        cur_frame = frames.value
-                        now = time.time()
-                        if (
-                            now - last_report > P.log_every or 
-                            frames.value > P.total_frames
-                        ):
+                        if Learner.is_head(id):
+                            # logging info
+                            cur_frame = frames.value
+                            now = time.time()
                             Logger.log("learner frames: {:4.1f}M fps: {:6.1f} {}".format(
                                 cur_frame / 1e6,
                                 (cur_frame - last_frame) / (now - last_report),
-                                memory.info()
+                                memory.get_graph().info()
                             ), color="yellow")
                             last_report = now
                             last_frame = cur_frame
-                        # check to stop
-                        if frames.value > P.total_frames:
-                            memory.save()
-                            with finish.get_lock():
-                                finish.value = True
+                            episodes = 0
+                            if frames.value > P.total_frames:
+                                memory.save()
+                                with finish.get_lock():
+                                    finish.value = True
+
                     if finish.value:
                         return
 
                     info = actor_learner_queue.get()
-                    last_obs, pre_action, obs, reward, done, add = info
+                    raw_last_obs, pre_action, raw_obs, reward, done, add = info
 
-                    last_obs, obs = projector.batch_project([last_obs, obs])
+                    # project the raw obs into obs
+                    last_obs, obs = projector.batch_project([raw_last_obs, pre_action, raw_obs, reward, done])
 
                     if proj_index_init_obs is None:
                         # drop last_obs of the first interaction
@@ -142,11 +135,11 @@ class Learner:
                             memory.store_new_trajs(trajectory)
                         learner_actor_queue.put([proj_index_init_obs, None, 0])
                         projector.reset()
+                        episodes += 1
                         break
                     else:
-                        action, value, steps = memory.get_action(obs)
-                        learner_actor_queue.put([action, value, steps])
+                        learner_actor_queue.put(memory.get_graph().get_action(obs))
         except KeyboardInterrupt:
             Logger.log(f"learner worker {id} {'(head)' if Learner.is_head(id) else '(slave)'} returned with KeyboardInterrupt")
         except Exception:
-            Funcs.trace_exception()
+            Funcs.trace_exception(f"(learner {id})")

@@ -4,7 +4,7 @@ from gym.utils import seeding
 import pygame
 import os
 import gym
-from src.util.imports.random import *
+from src.util.imports.random import random
 from src.util.imports.numpy import np
 from src.module.context import Profile as P
 from src.util.tools import Funcs
@@ -18,22 +18,28 @@ class Maze:
         else:
             max_episode_steps = P.max_train_episode_steps
         
-        env = MazeEnv(
-            # for fixed mazes
-            # maze_file="assets/maze_files/maze2d_3x3.npy", 
-            # maze_file="assets/maze_files/maze2d_5x5.npy", 
-            # maze_file="assets/maze_files/maze2d_10x10.npy", 
-            # maze_file="assets/maze_files/maze2d_100x100.npy", 
-            # for random mazes
-            # maze_file=None, 
-            maze_size=(10, 10),
-            # modes
-            # mode="plus",
-            mode=None,
-            enable_render=render,
-            max_episode_steps=max_episode_steps,
-        )
-        env.seed(2022)  # set seed to be deterministic
+        if str(P.env_name).startswith("maze2d"):
+            env = MazeEnv(
+                # for fixed mazes
+                maze_file=f"assets/maze_files/{P.env_name}.npy", 
+                # modes
+                mode=None,
+                enable_render=render,
+                max_episode_steps=max_episode_steps,
+            )
+        else:
+            size = int(str(P.env_name).split("_")[0])
+            env = MazeEnv(
+                # for random mazes
+                maze_size=(size, size),
+                # modes
+                mode="plus" if str(P.env_name).find("teleport") > -1 else None,
+                enable_render=render,
+                max_episode_steps=max_episode_steps,
+            )
+        
+        if P.deterministic:
+            env.seed(2022)  # set seed to be deterministic
 
         return env
 
@@ -106,6 +112,9 @@ class MazeEnv(gym.Env):
         if self.enable_render is True:
             self.maze_view.quit_game()
 
+    def sample_action(self):
+        return np.random.choice(self.ACTION)
+
     def configure(self, display=None):
         self.display = display
 
@@ -132,6 +141,9 @@ class MazeEnv(gym.Env):
             done = True
 
         info = {}
+
+        if self.enable_render:
+            self.render()
 
         return tuple(self.state), reward, done, info
 
