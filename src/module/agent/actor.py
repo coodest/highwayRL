@@ -45,16 +45,10 @@ class Actor:
         if P.env_type == "football":
             from src.module.env.football import Football
             return Football.make_env(render, is_head)
-        if P.env_type == "bullet":
-            pass
-            # TODO: add pybullet
         if P.env_type == "mujoco":
             from src.module.env.mujoco import Mujoco
             return Mujoco.make_env(render, is_head)
 
-    def reset_random_ops(self):
-        self.random_ops = int(Funcs.rand_prob() * P.random_init_ops["max_random_ops"])
-            
     def is_head(self):
         return self.id == P.head_actor
     
@@ -66,10 +60,10 @@ class Actor:
         y = self.episodic_reward
 
         fig, ax = plt.subplots(1, 1, figsize=(8, 6), dpi=200)
-        ax.set_xlabel("Time (min)")
+        ax.set_xlabel("Episode")
         ax.set_xlim([np.min(x), np.max(x)])
         ax.set_ylim([np.min(y), np.max(y)])
-        ax.set_ylabel("Average Score per Episode")
+        ax.set_ylabel("Score")
         ax.grid(color="w", linestyle='-', linewidth=1)
         ax.set_facecolor("#eaeaf2")
         ax.spines["bottom"].set_visible(False)
@@ -81,7 +75,7 @@ class Actor:
         ax.plot(x, y)
 
         plt.savefig(P.result_dir + "training-curve.pdf", format="pdf") 
-
+        Logger.log("result curve saved.")
 
     def get_action(self, last_obs, pre_action, obs, reward, done, epi_step, receiver_init_obs=False):
         # query action from policy
@@ -135,7 +129,7 @@ class Actor:
         while True:  # episode loop
             # 0. init episode
             obs = last_obs = self.env.reset()
-            self.reset_random_ops()
+            self.random_ops = int(Funcs.rand_prob() * P.random_init_ops["max_random_ops"])
             self.total_reward = 0.0
             epi_step = 1
             pre_action = 0
@@ -202,6 +196,7 @@ class Actor:
                     Logger.write(f"Actor_{self.id}/Hit%", hit_rate, self.num_episode)
                     Logger.write(f"Actor_{self.id}/LostAt", f"{last_step_before_loss}/{len(self.hit)}", self.num_episode, type="text")
                     Logger.write(f"Actor_{self.id}/O_1", str(proj_index_init_obs)[-4:], self.num_episode, type="text")
+                    Logger.write("Actor/LostAt", last_step_before_loss, self.id)
 
                     break
             self.num_episode += 1

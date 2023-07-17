@@ -29,7 +29,7 @@ class Context:
         "sokoban",  # 5
         "bullet",  # 6
         "mujoco",  # 7
-    ][2]
+    ][3]
     render = [False, True][0]  # whether test actor to render the env
     render_every = 5
     env_name = None
@@ -45,7 +45,7 @@ class Context:
     # agent:actor
     num_actor = len(gpus) * 2
     head_actor = num_actor - 1  # to report and evaluate
-    stick_on_graph = 0.0
+    stick_on_graph = 0.0  # ratio to stick on current high-score traj
     target_total_rewrad = None
     average_window = 10
     # agent:policy:projector
@@ -91,15 +91,21 @@ class Profile(Context):
         C.num_action_repeats = 1
         reward_type = ["scoring", "scoring,checkpoints"][1]
     if C.env_type == "atari":
-        C.num_action_repeats = 4  # equivelent to frame skip
-        C.num_actor = len(C.gpus) * 2
+        C.total_frames = [1e7, 5e6, 1e6, 1e5][0]  # default 1e7
+        # C.num_actor = len(C.gpus) * 4
+        C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
-        C.projector = C.projector_types[4]
+        # C.projector = C.projector_types[4]
+        C.projector = C.projector_types[1]
         C.target_total_rewrad = None
-        C.min_traj_reward = 2000
-        C.gamma = [0.99, 1][1]
-        max_train_episode_steps = [108000, 1000, 27000][1]
-        max_eval_episode_steps = [108000, 1000, 27000][1]
+        C.hashing = True
+        C.min_traj_reward = None
+        C.gamma = [0.99, 1, 1 - 1e-8][1]
+        C.num_action_repeats = 4  # equivelent to frame skip
+        C.e_greedy = [0.1, 1]
+        C.stick_on_graph = 0.0
+        max_train_episode_steps = [108000, 1000, 27000][0]
+        max_eval_episode_steps = [108000, 1000, 27000][0]
         stack_frames = 4
         screen_size = 84
         sticky_action = False

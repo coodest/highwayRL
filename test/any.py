@@ -823,6 +823,45 @@ class Test:
     def print_table_param(self):
         Funcs.print_obj([P.C, P])
 
+    def test_join(self):
+        from multiprocessing import Process, Value, Queue
+        import time
+
+        def a():
+            Logger.log("exe. sth.")
+
+
+        p = Process(target=a)
+        p.start()
+
+        time.sleep(3)
+        p.join()
+        p.close()
+
+    def test_manager_queue(self):
+        from multiprocessing import Manager, Process
+
+        def a(q, i):
+            q.put(i)
+
+        q_list = []
+        p_list = []
+        for i in range(10):
+            q = Manager().Queue()
+            q_list.append(q)
+
+            p = Process(target=a, args=(q, i))
+            p_list.append(p)
+            p.start()
+
+        for p in p_list:
+            p.join()
+            p.close()
+
+        for q in q_list:
+            print(q.get())
+
+
 
 if __name__ == "__main__":
     test = Test()
@@ -853,8 +892,10 @@ if __name__ == "__main__":
     # test.mujoco()
     # test.load_gpt_model()
     # test.named_tuple()
-    test.football_env()
+    # test.football_env()
     # test.print_table_param()
+    # test.test_join()
+    test.test_manager_queue()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

@@ -10,7 +10,7 @@ xhost +"local:docker@"
 # docker run --runtime=nvidia --gpus all --volume $(pwd):/home --rm --publish 6006:6006 rl rm -rf ./output && tensorboard --logdir ./output/
 
 # profile ID
-PROFILE=1
+# PROFILE=1
 # PROFILE=2
 # PROFILE=3
 # PROFILE=4
@@ -33,7 +33,7 @@ PROFILE=1
 # PROFILE=21
 # PROFILE=22
 # PROFILE=23
-# PROFILE=24
+PROFILE=24
 # PROFILE=25
 # PROFILE=26
 

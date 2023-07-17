@@ -40,7 +40,7 @@ class Atari:
         if render:
             env = RecordVideo(env, f"{P.video_dir}{P.env_name}/", episode_trigger=lambda episode_id: episode_id % P.render_every == 0)  # output every episode
 
-        env = AtariPreprocessing(env, terminal_on_life_loss=not is_head)
+        env = AtariPreprocessing(env)
 
         return env
 

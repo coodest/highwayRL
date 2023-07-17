@@ -49,7 +49,7 @@ class Learner:
             )
             p.start()
             self.processes.append(p)
-
+        
         self.wait_to_finish()
 
     @staticmethod
@@ -140,6 +140,6 @@ class Learner:
                     else:
                         learner_actor_queue.put(memory.get_graph().get_action(obs))
         except KeyboardInterrupt:
-            Logger.log(f"learner worker {id} {'(head)' if Learner.is_head(id) else '(slave)'} returned with KeyboardInterrupt")
+            pass
         except Exception:
             Funcs.trace_exception(f"(learner {id})")

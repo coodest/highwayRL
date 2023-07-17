@@ -1,6 +1,7 @@
 from src.module.context import Profile as P
 from src.util.tools import Logger, Funcs, IO
-from multiprocessing import Process, Value, Queue
+from multiprocessing import Process, Value, Manager
+
 import time
 import os
 
@@ -32,12 +33,10 @@ class MemRL:
             finish = Value("b", False)
             actor_learner_queues = list()
             for _ in range(P.num_actor):
-                actor_learner_queues.append(Queue())
+                actor_learner_queues.append(Manager().Queue())
             learner_actor_queues = list()
             for _ in range(P.num_actor):
-                learner_actor_queues.append(Queue())
-
-            processes = []
+                learner_actor_queues.append(Manager().Queue())
 
             learner_process = Process(target=MemRL.learner_run, args=(
                 actor_learner_queues,
@@ -45,8 +44,8 @@ class MemRL:
                 finish
             ))
             learner_process.start()
-            processes.append(learner_process)
 
+            actor_processes = []
             for id in range(P.num_actor):
                 p = Process(target=MemRL.actor_run, args=(
                     id,
@@ -55,27 +54,25 @@ class MemRL:
                     finish
                 ))
                 p.start()
-                processes.append(p)
-
+                actor_processes.append(p)
+            
             while True:
-                try:  # process exception detection
+                try:
+                    learner_process.join()
+                    Logger.log("learner exit")
+
                     title_out = False
-                    for ind, p in enumerate(processes):
+                    for ind, p in enumerate(actor_processes, start=0):
                         p.join()
-                        if ind == 0:
-                            Logger.log("learner exit")
-                            continue  # skip the learner process
                         if not title_out:
                             Logger.log("actor ", new_line=False)
                             title_out = True
-                        Logger.log(f"{ind - 1} ", new_line=False, make_title=False)
+                        Logger.log(f"{ind} ", new_line=False, make_title=False)
                     Logger.log("exit", make_title=False)
                     break
                 except KeyboardInterrupt:
-                    pass
-                except Exception:
-                    Funcs.trace_exception()
-                    break
+                    Logger.error("ctrl-c pressed")
+
             Logger.log("stage 1 finished")
         # 2. parameterize the graph
         if P.start_stage <= 1:
@@ -100,8 +97,8 @@ class MemRL:
             try:  # sub-process exception detection
                 learner.learn()  # learn the graph
             except KeyboardInterrupt:
-                Logger.error("ctrl-c pressed")
                 learner.wait_to_finish()
+                pass
             except FileNotFoundError:
                 Logger.error("no saved graph")
             except Exception:
@@ -123,10 +120,10 @@ class MemRL:
                 try:  # sub-process exception detection
                     actor.interact()
                 except KeyboardInterrupt:
-                    break
+                    return
                 except Exception:
                     if finish.value:
-                        break
+                        return
                     else:
                         Funcs.trace_exception()
         except Exception:
