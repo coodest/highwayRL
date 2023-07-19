@@ -30,7 +30,7 @@ class Context:
         "sokoban",  # 5
         "bullet",  # 6
         "mujoco",  # 7
-    ][3]
+    ][0]
     render = [False, True][0]  # whether test actor to render the env
     render_every = 5
     env_name = None
@@ -76,10 +76,12 @@ class Profile(Context):
     C = Context
 
     parser = argparse.ArgumentParser(description='MemRL')
-    parser.add_argument('--profile', default=1, help='profile of the run')
+    parser.add_argument('--index', default=1, help='game index')
+    parser.add_argument('--env_type', default=C.env_type, help='type of the game')
     args, unk_args = parser.parse_known_args()
 
-    current_profile = int(args.profile)
+    current_index = int(args.index)
+    C.env_type = str(args.env_type)
 
     if C.env_type == "football":
         C.num_actor = len(C.gpus) * 16
@@ -94,7 +96,7 @@ class Profile(Context):
         C.num_action_repeats = 1
         reward_type = ["scoring", "scoring,checkpoints"][1]
     if C.env_type == "atari":
-        C.total_frames = [1e7, 5e6, 1e6, 1e5][2]  # default 1e7
+        C.total_frames = [1e7, 5e6, 1e6, 1e5][0]  # default 1e7
         C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[1]
@@ -112,7 +114,7 @@ class Profile(Context):
         screen_size = 84
         sticky_action = False
     
-    C.env_name = IO.read_file(f"{C.asset_dir}{C.env_type}.txt")[int(current_profile)]
+    C.env_name = IO.read_file(f"{C.asset_dir}{C.env_type}.txt")[int(current_index)]
     C.out_dir = f"{C.work_dir}output/{C.env_type}-{C.env_name}/"
     C.log_dir = C.out_dir + "log/"
     C.summary_dir = C.out_dir + "summary/"
