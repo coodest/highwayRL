@@ -158,11 +158,12 @@ class Graph:
                 self.obs_node[obs] = highway_node_ind
 
             if first_obs in self.obs_prev:
-                prev_action = list(self.obs_prev[first_obs].keys())[0]
-                prev_obs = list(self.obs_prev[first_obs][prev_action].keys())[0]
-                if prev_action not in self.node_next[self.obs_node[prev_obs]]:
-                    self.node_next[self.obs_node[prev_obs]][prev_action] = defaultdict(int)
-                self.node_next[self.obs_node[prev_obs]][prev_action][highway_node_ind] += 1
+                if len(list(self.obs_prev[first_obs].keys())) > 0:
+                    prev_action = list(self.obs_prev[first_obs].keys())[0]
+                    prev_obs = list(self.obs_prev[first_obs][prev_action].keys())[0]
+                    if prev_action not in self.node_next[self.obs_node[prev_obs]]:
+                        self.node_next[self.obs_node[prev_obs]][prev_action] = defaultdict(int)
+                    self.node_next[self.obs_node[prev_obs]][prev_action][highway_node_ind] += 1
             last_obs = fragments[first_obs][-1]
             if last_obs in self.obs_next:
                 if len(list(self.obs_next[last_obs].keys())) > 0:
@@ -246,8 +247,9 @@ class Graph:
                                 best_action = action
                     self.obs_best_action[obs] = best_action
                 else:
-                    best_action = list(self.obs_next[obs].keys())[0]
-                    self.obs_best_action[obs] = best_action
+                    if len(list(self.obs_next[obs].keys())) > 0:
+                        best_action = list(self.obs_next[obs].keys())[0]
+                        self.obs_best_action[obs] = best_action
 
         # self.q = self.get_q()
         Logger.log("learner update action ready", color="yellow")
