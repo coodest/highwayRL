@@ -7,7 +7,7 @@ find . -type d -name __pycache__ -exec rm -r {} \+
 xhost +"local:docker@" 
 
 # run tensorboard (run in a separate terminal)
-# docker run --runtime=nvidia --gpus all --volume $(pwd):/home --rm --publish 6006:6006 rl rm -rf ./output && tensorboard --logdir ./output/
+# tensorboard --logdir ./output/
 
 # profile ID
 # PROFILE=1
@@ -41,4 +41,4 @@ PROFILE=24
 docker run --user=user --volume $(pwd):/work --rm --interactive --tty rl rm -rf ./output
 
 # run code
-docker run --user=user --runtime=nvidia --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/work --rm --interactive --tty rl python -X pycache_prefix=./cache -m src.app.memrl $PROFILE
+docker run --user=user --runtime=nvidia --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/work --rm --interactive --tty rl python -X pycache_prefix=./cache -m src.app.memrl --profile $PROFILE

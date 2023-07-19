@@ -291,7 +291,7 @@ class Funcs:
         name_width = max_name_width
         value_width = 20
         for name in configs:
-            if str(name).startswith("__") or str(name) == "C":
+            if str(name).startswith("__") or str(name) in ["C", "args", "parser", "unk_args"]:
                 continue
             
             s += f"{str.rjust(str(name), name_width, ' ')}: "

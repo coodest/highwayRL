@@ -1,19 +1,11 @@
 from collections import defaultdict
-from distutils.command.config import dump_file
-# from types import prepare_class
-# from typing import Sized
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
-from collections import defaultdict
 import networkx as nx
-# import matplotlib as mpl
 import matplotlib.pyplot as plt
-# import time
 from src.util.imports.numpy import np
 from src.util.tools import LinkedListElement
 from src.module.agent.policy.iterator import Iterator
-from tqdm import tqdm
-import scipy
 
 
 
@@ -173,16 +165,12 @@ class Graph:
                 self.node_next[self.obs_node[prev_obs]][prev_action][highway_node_ind] += 1
             last_obs = fragments[first_obs][-1]
             if last_obs in self.obs_next:
-                # TODO: IndexError: list index out of range
-                try:
+                if len(list(self.obs_next[last_obs].keys())) > 0:
                     next_action = list(self.obs_next[last_obs].keys())[0]
-                except Exception:
-                    Logger.log(last_obs)
-                    Logger.log(list(self.obs_next[last_obs].keys()))
-                next_obs = list(self.obs_next[last_obs][next_action].keys())[0]
-                if next_action not in self.node_next[highway_node_ind]:
-                    self.node_next[highway_node_ind][next_action] = defaultdict(int)
-                self.node_next[highway_node_ind][next_action][self.obs_node[next_obs]] += 1
+                    next_obs = list(self.obs_next[last_obs][next_action].keys())[0]
+                    if next_action not in self.node_next[highway_node_ind]:
+                        self.node_next[highway_node_ind][next_action] = defaultdict(int)
+                    self.node_next[highway_node_ind][next_action][self.obs_node[next_obs]] += 1
 
         # last, connect intersection node
         for node in self.intersections:
@@ -319,7 +307,7 @@ class Graph:
 
     def draw_graph(self):
         if len(self.node_obs) > P.max_node_draw:
-            Logger.log("graph is too large to draw.")
+            Logger.log("graph is too large to draw")
             return
         
         fig_path = f"{P.result_dir}graph.pdf"

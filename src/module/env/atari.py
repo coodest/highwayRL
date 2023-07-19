@@ -1,16 +1,19 @@
 import gym
 from gym.spaces.box import Box
-from gym.spaces.discrete import Discrete
+# from gym.spaces.discrete import Discrete
 from gym.wrappers import TimeLimit, RecordVideo
 from src.util.imports.numpy import np
 from src.module.context import Profile as P
-from src.util.tools import Funcs, Logger, IO
+# from src.util.tools import Funcs, Logger, IO
 import cv2
-import time
+# import time
 
 # import atari_py
-from collections import deque
+# from collections import deque
 import random
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 class Atari:
@@ -63,6 +66,7 @@ class AtariPreprocessing(object):
         self.life_termination = False
 
         self.observation = None
+        self.seed_value = 0
 
     @property
     def observation_space(self):
@@ -75,6 +79,7 @@ class AtariPreprocessing(object):
 
     def seed(self, seed):
         self.environment.seed(seed)
+        self.seed_value = seed
 
     @property
     def action_space(self):
@@ -112,7 +117,7 @@ class AtariPreprocessing(object):
         else:
             # Reset internals
             self.observation = None
-            self.environment.reset()
+            self.environment.reset(seed=self.seed_value)
             self.update_observation(self.fetch_grayscale_frame())
         self.lives = self.environment.ale.lives()
 

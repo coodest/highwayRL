@@ -10,7 +10,7 @@ class MemRL:
     @staticmethod
     def start():
         # 1. init
-        Logger.log_path = f"{P.log_dir}{P.env_name}-{Logger.get_date()}.log"
+        Logger.log_path = f"{P.log_dir}{P.env_name}.log"
         Logger.summary_dir = f"{P.summary_dir}{P.env_name}/"
         for dir in P.out_dirs:
             IO.make_dir(dir)
@@ -99,8 +99,6 @@ class MemRL:
             except KeyboardInterrupt:
                 learner.wait_to_finish()
                 pass
-            except FileNotFoundError:
-                Logger.error("no saved graph")
             except Exception:
                 Funcs.trace_exception()
             finally:

@@ -1,4 +1,6 @@
-230716 traj serial 
+230719 add argparser 
+230719 add load graph 
+230716 exploration test ok 
 230630 major patch 
 230215 add projected atari env
 230213 reomve edge reliability

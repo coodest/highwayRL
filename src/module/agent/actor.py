@@ -196,7 +196,6 @@ class Actor:
                     Logger.write(f"Actor_{self.id}/Hit%", hit_rate, self.num_episode)
                     Logger.write(f"Actor_{self.id}/LostAt", f"{last_step_before_loss}/{len(self.hit)}", self.num_episode, type="text")
                     Logger.write(f"Actor_{self.id}/O_1", str(proj_index_init_obs)[-4:], self.num_episode, type="text")
-                    Logger.write("Actor/LostAt", last_step_before_loss, self.id)
 
                     break
             self.num_episode += 1

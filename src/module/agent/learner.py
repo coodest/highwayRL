@@ -73,7 +73,7 @@ class Learner:
 
             last_report = time.time()
             last_frame = frames.value
-            episodes = 0
+            sync_count_down = P.sync_every
             memory = Memory(id, Learner.is_head(id))
             projector = Projector(id, Learner.is_head(id))
 
@@ -81,7 +81,7 @@ class Learner:
                 trajectory = []
                 proj_index_init_obs = None
                 while True:
-                    if episodes > P.sync_every or frames.value > P.total_frames:
+                    if sync_count_down <= 0 or frames.value > P.total_frames:
                         if Learner.is_head(id):
                             # check to sync
                             with sync.get_lock():
@@ -105,9 +105,8 @@ class Learner:
                             ), color="yellow")
                             last_report = now
                             last_frame = cur_frame
-                            episodes = 0
+                            sync_count_down = P.sync_every
                             if frames.value > P.total_frames:
-                                memory.save()
                                 with finish.get_lock():
                                     finish.value = True
 
@@ -135,7 +134,7 @@ class Learner:
                             memory.store_new_trajs(trajectory)
                         learner_actor_queue.put([proj_index_init_obs, None, 0])
                         projector.reset()
-                        episodes += 1
+                        sync_count_down -= 1
                         break
                     else:
                         learner_actor_queue.put(memory.get_graph().get_action(obs))
