@@ -103,7 +103,7 @@ class Profile(Context):
         C.target_total_rewrad = None
         C.hashing = True
         C.min_traj_reward = None
-        C.gamma = [0.99, 1, 1 - 1e-8][2]
+        C.gamma = [0.99, 1, 1 - 1e-8, 0.999999][3]
         C.num_action_repeats = 4  # equivelent to frame skip
         C.e_greedy = [0.1, 1]
         C.stick_on_graph = 0.0

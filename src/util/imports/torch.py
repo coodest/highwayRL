@@ -7,6 +7,7 @@ torch.manual_seed(seed)  # cpu种子
 torch.cuda.manual_seed(seed)  # 当前GPU的种子
 torch.cuda.manual_seed_all(seed)  # 所有可用GPU的种子
 torch.backends.cudnn.deterministic = True  # 默认为False
+torch.backends.cudnn.benchmark = False
 # remove dataloader randomness
 # def worker_init_fn(worker_id):
 #     random.seed(SEED + worker_id)

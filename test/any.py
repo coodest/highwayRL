@@ -885,7 +885,6 @@ class Test:
             serial += str(action) + ","
             total_reward += reward
         print(f"{total_reward} --- {serial}")
-        print(P.current_profile)
 
 
 

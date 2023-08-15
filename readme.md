@@ -1,11 +1,13 @@
 # RL with graph memory
 
-## build docker image
+## build docker image (optional)
+One could build locally by:
 
-    sudo docker image build docker/pytorch --tag pytorch
-    sudo docker image build docker/pytorch/ml --tag ml
-    sudo docker image build docker/pytorch/ml/rl --build-arg UID=$(id -u) --tag rl
+    sudo docker image build docker/ml/pt_0.1 --tag meetingdocker/ml:pt_0.1 --build-arg UID=$(id -u)
+    sudo docker image build docker/rl/pt_0.1 --tag meetingdocker/rl:pt_0.1
 
+or download the built image when running the code.
+ 
 ## run the code
 
     ./run.sh

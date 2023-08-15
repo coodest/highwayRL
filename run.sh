@@ -10,10 +10,15 @@ xhost +"local:docker@"
 # tensorboard --logdir ./output/
 
 # delete output folder
-docker run --user=user --volume $(pwd):/work --rm --interactive --tty rl rm -rf ./output
+docker run --user=worker --volume $(pwd):/home/worker/work --rm --interactive --tty meetingdocker/rl:pt_0.1 rm -rf ./output
 
 # run code: like for PROFILE in {1..10} 24 25
-for INDEX in 2
+for INDEX in 24
 do
-docker run --user=user --runtime=nvidia --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/work --rm --interactive --tty rl python -X pycache_prefix=./cache -m src.app.memrl --env_type atari --index $INDEX
+docker run --user=worker --runtime=nvidia --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive --tty meetingdocker/rl:pt_0.1 python -X pycache_prefix=./cache -m src.app.memrl --env_type atari --index $INDEX
 done
+
+# for INDEX in 1
+# do
+# docker run --user=worker --runtime=nvidia --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive --tty meetingdocker/rl:pt_0.1 python -X pycache_prefix=./cache -m src.app.memrl --env_type football --index $INDEX
+# done
