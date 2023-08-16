@@ -15,6 +15,7 @@ class Football:
     @staticmethod
     def make_env(render=False, is_head=False, init_points=5):
         logging.set_verbosity("error")
+        assert init_points > 0, "init_points should be more than zero"
         envs = list()
         for env_id in range(init_points):
             env = create_environment(
