@@ -88,7 +88,7 @@ class Profile(Context):
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[0]
         C.target_total_rewrad = 2.0
-        C.hashing = False
+        C.hashing = True
         C.min_traj_reward = 1.2
         C.gamma = 0.99
         C.e_greedy = [0.1, 1]
