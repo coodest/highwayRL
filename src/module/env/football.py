@@ -3,7 +3,7 @@ from src.module.context import Profile as P
 import time
 import types
 import gym
-
+from src.util.imports.numpy import np
 from gfootball.env import *
 from gfootball.env.scenario_builder import *
 from gfootball.env.config import *
@@ -13,38 +13,41 @@ from absl import logging
 
 class Football:
     @staticmethod
-    def make_env(render=False, is_head=False):
+    def make_env(render=False, is_head=False, init_points=5):
         logging.set_verbosity("error")
-        env = create_environment(
-            env_name=P.env_name,
-            representation="extracted",
-            channel_dimensions={
-                "default": (96, 72),
-                "medium": (120, 90),
-                "large": (144, 108),
-            }["default"],
-            stacked=False,
-            rewards=P.reward_type,
-            logdir=f"{P.video_dir}",
-            write_goal_dumps=False,
-            write_full_episode_dumps=render and is_head,
-            write_video=render and is_head,
-            render=render and is_head,
-            dump_frequency=P.render_every,
-            number_of_left_players_agent_controls={
-                "custom_3_vs_2": 1,
-                "custom_5_vs_5": 1,
-                "custom_11_vs_11": 1,
-            }[P.env_name],  # must equal to num of controllable players, or randomly selected from them
-            number_of_right_players_agent_controls=0,
-            other_config_options={
-                'video_quality_level': 0,  # 0 - low, 1 - medium, 2 - high
-                "video_format": "avi",  
-                "display_game_stats": True,  # in the video
-            }
-        )
+        envs = list()
+        for env_id in range(init_points):
+            env = create_environment(
+                env_name=P.env_name,
+                representation="extracted",
+                channel_dimensions={
+                    "default": (96, 72),
+                    "medium": (120, 90),
+                    "large": (144, 108),
+                }["default"],
+                stacked=False,
+                rewards=P.reward_type,
+                logdir=f"{P.video_dir}",
+                write_goal_dumps=False,
+                write_full_episode_dumps=render and is_head,
+                write_video=render and is_head,
+                render=render and is_head,
+                dump_frequency=P.render_every,
+                number_of_left_players_agent_controls={
+                    "custom_3_vs_2": 1,
+                    "custom_5_vs_5": 1,
+                    "custom_11_vs_11": 1,
+                }[P.env_name],  # must equal to num of controllable players, or randomly selected from them
+                number_of_right_players_agent_controls=0,
+                other_config_options={
+                    'video_quality_level': 0,  # 0 - low, 1 - medium, 2 - high
+                    "video_format": "avi",  
+                    "display_game_stats": True,  # in the video
+                }
+            )
+            envs.append(env)
 
-        env = SyncEnv(env, is_head=is_head)
+        env = SyncEnv(env, envs, is_head=is_head, init_points=init_points)
 
         return env
     
@@ -54,26 +57,28 @@ class SyncEnv(gym.Wrapper):
     sync env between head and other actors
     """
 
-    def __init__(self, env, is_head):
+    def __init__(self, env, envs, is_head, init_points):
         gym.Wrapper.__init__(self, env)
+        self.init_points = init_points
         self.env = env
-        self.init_obs = None
-        self.constant_internal_state = None
+        self.init_obss = list()
+        self.constant_internal_states = list()
 
         env_dump_path = f"{P.env_dir}{P.env_name}.pkl"
         while True:
             try:
                 time.sleep(0.01)
-                self.constant_internal_state, self.init_obs = IO.read_disk_dump(
+                self.constant_internal_states, self.init_obss = IO.read_disk_dump(
                     env_dump_path
                 )
                 break
             except Exception:
                 if is_head:
-                    self.init_obs = self.env.reset()
-                    self.constant_internal_state = self.env.get_state()
+                    for env_id in range(self.init_points):
+                        self.init_obss.append(envs[env_id].reset())
+                        self.constant_internal_states.append(envs[env_id].get_state())
                     IO.write_disk_dump(
-                        env_dump_path, (self.constant_internal_state, self.init_obs)
+                        env_dump_path, (self.constant_internal_states, self.init_obss)
                     )
                     break
 
@@ -81,9 +86,10 @@ class SyncEnv(gym.Wrapper):
         return self.env.step(action)
 
     def reset(self):
+        env_id = np.random.choice(self.init_points)
         self.env.reset()
-        self.set_state(self.constant_internal_state)
-        return self.init_obs
+        self.set_state(self.constant_internal_states[env_id])
+        return self.init_obss[env_id]
     
     def sample_action(self):
         return self.env.action_space.sample()
@@ -560,6 +566,8 @@ class Scenario(object):
         self.config().end_episode_on_out_of_play = True
         self.config().end_episode_on_possession_change = True
 
+        random_offset = np.random.random() * 0.05
+
         # range of x: [-1, 1], y: [-0.44， 0.44]
         if P.env_name == "custom_3_vs_2":
             self.SetBallPosition(0.7, -0.28)
@@ -567,7 +575,7 @@ class Scenario(object):
             self.SetTeam(Team.e_Left)
             self.AddPlayer(-1.0, 0.0, e_PlayerRole_GK, controllable=False)  # keeper
             self.AddPlayer(0.7, -0.3, e_PlayerRole_CB)  # player sender
-            self.AddPlayer(0.7, 0.0, e_PlayerRole_CB)  # player receive
+            self.AddPlayer(0.65 + random_offset, 0.0, e_PlayerRole_CB)  # player receive
 
             self.SetTeam(Team.e_Right)
             self.AddPlayer(-1.0, 0.0, e_PlayerRole_GK, controllable=False)  # keeper
@@ -579,7 +587,7 @@ class Scenario(object):
             self.SetTeam(Team.e_Left)
             self.AddPlayer(-1.0, 0.0, e_PlayerRole_GK, controllable=False)  # keeper
             self.AddPlayer(0.7, -0.3, e_PlayerRole_CB)  # offender
-            self.AddPlayer(0.7, 0.0, e_PlayerRole_CB)
+            self.AddPlayer(0.65 + random_offset, 0.0, e_PlayerRole_CB)
             self.AddPlayer(0.69, 0.0, e_PlayerRole_CB)
             self.AddPlayer(0.68, 0.0, e_PlayerRole_CB)
 
@@ -599,7 +607,7 @@ class Scenario(object):
             self.AddPlayer(0.000000, 0.020000, e_PlayerRole_RM)
             self.AddPlayer(0.000000, -0.020000, e_PlayerRole_CF)
             self.AddPlayer(-0.422000, -0.19576, e_PlayerRole_LB)
-            self.AddPlayer(-0.500000, -0.06356, e_PlayerRole_CB)
+            self.AddPlayer(-0.450000 + random_offset, -0.06356, e_PlayerRole_CB)
             self.AddPlayer(-0.500000, 0.063559, e_PlayerRole_CB)
             self.AddPlayer(-0.422000, 0.195760, e_PlayerRole_RB)
             self.AddPlayer(-0.184212, -0.10568, e_PlayerRole_CM)
