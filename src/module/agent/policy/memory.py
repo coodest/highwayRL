@@ -27,7 +27,7 @@ class Memory:
             self.graph = Graph()
         self.new_trajs = list()
 
-    def sync_by_pipe_disk(self, head_slave_queues, slave_head_queues, sync):
+    def sync_by_pipe_disk(self, head_slave_queues, slave_head_queues, sync, update):
         if not self.is_head:
             # write trajs (slave)
             slave_head_queues[self.id].put(self.new_trajs)
@@ -52,11 +52,13 @@ class Memory:
 
             Logger.log(f"skip / all traj.s: {num_skip_traj} / {num_all_traj}", color="blue")
             
-            self.graph.update_graph()
+            if update.value:
+                self.graph.update_graph()
 
             # write latest graph (head)
             IO.write_disk_dump(self.graph_path, self.graph)
-            sync.value = False
+            with sync.get_lock():
+                sync.value = False
             for i in range(P.num_actor):
                 if self.id == i:
                     continue

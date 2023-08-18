@@ -13,6 +13,23 @@ from src.util.tools import Funcs
 class Maze:
     @staticmethod
     def make_env(render=False, is_head=False):
+        """
+        env:
+        
+        maze2d_3x3
+        maze2d_5x5
+        maze2d_10x10
+        maze2d_100x100
+        3
+        5
+        10
+        100
+        3_teleport
+        5_teleport
+        10_teleport
+        100_teleport
+        
+        """
         if is_head:
             max_episode_steps = P.max_eval_episode_steps
         else:

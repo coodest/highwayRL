@@ -5,8 +5,9 @@ from multiprocessing import Process, Value, Queue
 
 
 class Learner:
-    def __init__(self, actor_learner_queues, learner_actor_queues, finish):
-        self.frames = Value("d", 0)
+    def __init__(self, actor_learner_queues, learner_actor_queues, finish, frames, update):
+        self.frames = frames
+        self.update = update
         self.sync = Value("b", False)
         self.actor_learner_queues = actor_learner_queues
         self.learner_actor_queues = learner_actor_queues
@@ -45,6 +46,7 @@ class Learner:
                     self.frames,
                     self.sync,
                     self.finish,
+                    self.update,
                 ],
             )
             p.start()
@@ -65,7 +67,8 @@ class Learner:
         slave_head_queues, 
         frames, 
         sync, 
-        finish
+        finish,
+        update,
     ):
         try:  # sub-sub-process exception
             from src.module.agent.policy.projector import Projector
@@ -92,7 +95,8 @@ class Learner:
                         memory.sync_by_pipe_disk(
                             head_slave_queues, 
                             slave_head_queues, 
-                            sync
+                            sync,
+                            update,
                         )
                         if Learner.is_head(id):
                             # logging info

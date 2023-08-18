@@ -6,10 +6,12 @@ from collections import deque
 from src.util.imports.random import random
 from src.util.imports.numpy import np
 import matplotlib.pyplot as plt
+import wandb
+import signal
 
 
 class Actor:
-    def __init__(self, id, actor_learner_queue: Queue, learner_actor_queues: Queue, finish):
+    def __init__(self, id, actor_learner_queue: Queue, learner_actor_queues: Queue, finish, frames, update):
         random.seed(id)
         np.random.seed(id)
         self.id = id  # actor identifier
@@ -25,6 +27,25 @@ class Actor:
         self.p = (P.e_greedy[1] - P.e_greedy[0]) / (P.num_actor - 1) * self.id + P.e_greedy[0]
         self.hit = None
         self.total_reward = None
+        self.frames = frames
+        self.update = update
+        self.loop_start_time = None
+        if self.is_head() and P.wandb_enabled:
+            # delete previous run(s)
+            api = wandb.Api()
+            runs = api.runs('centergoodroid/mrl')
+            for run in runs:
+                if run.job_type==f"{P.env_name}" and run.group=="HG" and run.name==f"run-{P.run}":
+                    run.delete()
+            
+            # init current run
+            wandb.init(
+                project="mrl",
+                job_type=f"{P.env_name}",
+                group="HG",
+                name=f"run-{P.run}",
+                # config=vars(args),
+            )
 
     def create_env(self, render=False, is_head=False):
         if P.env_type == "atari":
@@ -94,6 +115,16 @@ class Actor:
                 if self.finish.value:
                     if self.is_head():
                         self.save_results()
+                    
+                    if P.wandb_enabled:
+                        def interrupted(signum, frame):
+                            raise Exception("time out")
+
+                        signal.signal(signal.SIGALRM, interrupted)
+                        signal.alarm(120)
+
+                        wandb.log(data={"Total_Reward": self.episodic_reward[-1], "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))
+                        wandb.finish()
                     raise Exception()
 
         if receiver_init_obs:  # the projected and indexed init obs
@@ -126,6 +157,7 @@ class Actor:
             return action
 
     def interact(self):
+        self.loop_start_time = time.time()
         while True:  # episode loop
             # 0. init episode
             obs = last_obs = self.env.reset()
@@ -187,8 +219,13 @@ class Actor:
                         ))
                         if P.target_total_rewrad is not None:
                             if abs(latest_avg_reward - P.target_total_rewrad) < 0.01:
-                                with self.finish.get_lock():
-                                    self.finish.value = True
+                                with self.update.get_lock():
+                                    self.update.value = False
+                        if P.wandb_enabled:
+                            try:
+                                wandb.log(data={"Total_Reward": self.episodic_reward[-1], "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))
+                            except Exception:
+                                pass
                     Logger.write(f"Actor_{self.id}/R", self.episodic_reward[-1], self.num_episode)
                     Logger.write(f"Actor_{self.id}/AvgR", latest_avg_reward, self.num_episode)
                     Logger.write(f"Actor_{self.id}/MaxR", self.max_episodic_reward, self.num_episode)

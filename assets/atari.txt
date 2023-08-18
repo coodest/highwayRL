@@ -1,27 +1,7 @@
 --Atari games--
 Alien
-Amidar
-Assault
-Atlantis
-BankHeist
 BattleZone
-BeamRider
-Boxing
-ChopperCommand
-CrazyClimber
 Defender
-DemonAttack
-Enduro
-FishingDerby
-Frostbite
-Hero
 Jamesbond
-Krull
-KungFuMaster
-Riverraid
-RoadRunner
-Robotank
-Seaquest
 StarGunner
-Tutankham
 YarsRevenge

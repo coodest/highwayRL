@@ -18,19 +18,11 @@ class Context:
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
     start_stage = [0, 1, 2][0]
+    wandb_enabled = [True, False][0]
 
     # env
-    total_frames = [1e7, 5e6, 1e6, 1e5][0]  # default 1e7
-    env_type = [
-        "maze",  # 0
-        "toy_text",  # 1
-        "football",  # 2
-        "atari",  # 3
-        "box_2d",  # 4
-        "sokoban",  # 5
-        "bullet",  # 6
-        "mujoco",  # 7
-    ][0]
+    total_frames = None  # default 1e7
+    env_type = None
     render = [False, True][0]  # whether test actor to render the env
     render_every = 5
     env_name = None
@@ -67,7 +59,7 @@ class Context:
     min_traj_reward = None
     reward_filter_ratio = None
     gamma = None  # discount factor
-    sync_every = 20  # in trajectories
+    sync_every = 10  # in trajectories
     e_greedy = [0.1, 1]
     max_vp_iter = 1e8  # num or float("inf")
 
@@ -76,15 +68,47 @@ class Profile(Context):
     C = Context
 
     parser = argparse.ArgumentParser(description='MemRL')
-    parser.add_argument('--index', default=1, help='game index')
-    parser.add_argument('--env_type', default=C.env_type, help='type of the game')
+    parser.add_argument('--run', default=0, help='game index')
+    parser.add_argument('--env_name', default="", help='env name')
+    parser.add_argument('--env_type', default=C.env_type, choices=[
+        "maze",  # 0
+        "toy_text",  # 1
+        "football",  # 2
+        "atari",  # 3
+        "box_2d",  # 4
+        "sokoban",  # 5
+        "bullet",  # 6
+        "mujoco",  # 7
+    ], help='type of the env')
     args, unk_args = parser.parse_known_args()
 
-    current_index = int(args.index)
     C.env_type = str(args.env_type)
 
+    if C.env_type == "maze":
+        C.total_frames = [1e6, 1e8][0]
+        C.num_actor = len(C.gpus) * 8
+        C.head_actor = C.num_actor - 1
+        C.projector = C.projector_types[0]
+        C.gamma = 0.99
+        C.deterministic = True
+        C.sync_every = 10
+        max_train_episode_steps = [2000, 8000, 10000][0]
+        max_eval_episode_steps = [2000, 8000, 10000][0]
+    if C.env_type == "toy_text":
+        C.total_frames = [1e6, 1e8][0]
+        C.num_actor = len(C.gpus) * 8
+        C.head_actor = C.num_actor - 1
+        C.projector = C.projector_types[0]
+        C.gamma = 0.99
+        C.hashing = True
+        C.deterministic = True
+        C.sync_every = 50
+        C.render = False
+        max_train_episode_steps = [2000, 8000, 10000][0]
+        max_eval_episode_steps = [2000, 8000, 10000][0]
     if C.env_type == "football":
-        C.num_actor = len(C.gpus) * 16
+        C.total_frames = [1e6][0]
+        C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[0]
         C.target_total_rewrad = 2.0
@@ -96,7 +120,7 @@ class Profile(Context):
         C.num_action_repeats = 1
         reward_type = ["scoring", "scoring,checkpoints"][1]
     if C.env_type == "atari":
-        C.total_frames = [1e7, 5e6, 1e6, 1e5][0]  # default 1e7
+        C.total_frames = [1e7, 5e6, 1e6, 1e5][2]  # default 1e7
         C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[1]
@@ -114,7 +138,8 @@ class Profile(Context):
         screen_size = 84
         sticky_action = False
     
-    C.env_name = IO.read_file(f"{C.asset_dir}{C.env_type}.txt")[int(current_index)]
+    run = args.run
+    C.env_name = args.env_name
     C.out_dir = f"{C.work_dir}output/{C.env_type}-{C.env_name}/"
     C.log_dir = C.out_dir + "log/"
     C.summary_dir = C.out_dir + "summary/"

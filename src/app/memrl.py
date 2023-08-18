@@ -31,6 +31,8 @@ class MemRL:
         # 1. learn the graph
         if P.start_stage <= 0:
             finish = Value("b", False)
+            frames = Value("d", 0)
+            update = Value("b", True)
             actor_learner_queues = list()
             for _ in range(P.num_actor):
                 actor_learner_queues.append(Manager().Queue())
@@ -41,7 +43,9 @@ class MemRL:
             learner_process = Process(target=MemRL.learner_run, args=(
                 actor_learner_queues,
                 learner_actor_queues,
-                finish
+                finish,
+                frames,
+                update,
             ))
             learner_process.start()
 
@@ -51,7 +55,9 @@ class MemRL:
                     id,
                     actor_learner_queues[id],
                     learner_actor_queues[id],
-                    finish
+                    finish,
+                    frames,
+                    update,
                 ))
                 p.start()
                 actor_processes.append(p)
@@ -87,13 +93,13 @@ class MemRL:
             Logger.log("stage 3 finished")
 
     @staticmethod
-    def learner_run(actor_learner_queues, learner_actor_queues, finish):
+    def learner_run(actor_learner_queues, learner_actor_queues, finish, frames, update):
         try:
             from src.module.agent.learner import Learner
             os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
 
             Funcs.run_cmd("nvidia-cuda-mps-control -d", 2)
-            learner = Learner(actor_learner_queues, learner_actor_queues, finish)
+            learner = Learner(actor_learner_queues, learner_actor_queues, finish, frames, update)
             try:  # sub-process exception detection
                 learner.learn()  # learn the graph
             except KeyboardInterrupt:
@@ -109,11 +115,11 @@ class MemRL:
             Funcs.trace_exception("(learner)")
         
     @staticmethod
-    def actor_run(id, actor_learner_queues, learner_actor_queues, finish):
+    def actor_run(id, actor_learner_queues, learner_actor_queues, finish, frames, update):
         try:
             from src.module.agent.actor import Actor
 
-            actor = Actor(id, actor_learner_queues, learner_actor_queues, finish)
+            actor = Actor(id, actor_learner_queues, learner_actor_queues, finish, frames, update)
             while True:
                 try:  # sub-process exception detection
                     actor.interact()

@@ -1,0 +1,1 @@
+wandb sync ./wandb/run*

@@ -23,7 +23,7 @@ class ToyText:
                 if is_head:
                     Logger.log("head_actor create the env")
                     env = gym.make(P.env_name)
-                    # env.reset(seed=2022)
+                    env.reset(seed=123)
                     IO.write_disk_dump(env_path, env)
                     break
 
