@@ -886,6 +886,85 @@ class Test:
             total_reward += reward
         print(f"{total_reward} --- {serial}")
 
+    def save_maze_image(self):
+        from src.module.env.maze import MazeEnv
+        
+        import cv2
+        
+
+        env_names = [
+            "maze2d_3x3",
+            "maze2d_5x5",
+            "maze2d_10x10",
+            "maze2d_100x100",
+            "maze2d_15x15",
+            "maze2d_20x20",
+            "maze2d_25x25",
+            "maze2d_30x30",
+            "maze2d_50x50",
+            "maze2d_15x15_teleport",
+            "maze2d_20x20_teleport",
+            "maze2d_25x25_teleport",
+            "maze2d_30x30_teleport",
+            "maze2d_50x50_teleport",
+        ]
+        for env_name in env_names:
+            env = MazeEnv(
+                # for fixed mazes
+                maze_file=f"assets/maze_files/{env_name}.npy", 
+                enable_render=True,
+                max_episode_steps=100,
+            )
+
+            env.reset()
+            screen_shot = env.render()
+            env.close()
+
+            success = cv2.imwrite(f"./{env_name}.png", screen_shot)
+
+            print(success)
+
+    def maze_generator(self):
+        from src.module.env.maze import MazeBody
+
+        env_names = [
+            "maze2d_15x15",
+            "maze2d_20x20",
+            "maze2d_25x25",
+            "maze2d_30x30",
+            "maze2d_50x50",
+            "maze2d_15x15_teleport",
+            "maze2d_20x20_teleport",
+            "maze2d_25x25_teleport",
+            "maze2d_30x30_teleport",
+            "maze2d_50x50_teleport",
+        ]
+        for env_name in env_names:
+            maze_size = int(env_name.split("_")[1].split("x")[0])
+            mode = None
+            try:
+                mode = env_name.split("_")[2]
+            except Exception:
+                pass
+
+            if mode == "teleport":
+                print("teleport env")
+                has_loops = True
+                num_portals = int(round(maze_size / 3))
+            else:
+                has_loops = False
+                num_portals = 0
+
+            mb = MazeBody(
+                maze_size=(maze_size, maze_size), 
+                has_loops=has_loops,
+                num_portals=num_portals
+            )
+
+            mb.save_maze(f"./assets/maze_files/{env_name}.npy")
+
+
+
 
 
 
@@ -922,7 +1001,9 @@ if __name__ == "__main__":
     # test.football_env()
     # test.print_table_param()
     # test.test_join()
-    test.env_reproduce()
+    # test.env_reproduce()
+    test.save_maze_image()
+    # test.maze_generator()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

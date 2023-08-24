@@ -39,8 +39,6 @@ class Maze:
             env = MazeEnv(
                 # for fixed mazes
                 maze_file=f"assets/maze_files/{P.env_name}.npy", 
-                # modes
-                mode=None,
                 enable_render=render,
                 max_episode_steps=max_episode_steps,
             )
@@ -112,7 +110,9 @@ class MazeEnv(gym.Env):
         high = np.array(self.maze_size, dtype=int) - np.ones(
             len(self.maze_size), dtype=int
         )
-        self.observation_space = spaces.Box(low, high, dtype=np.int64)
+        # self.observation_space = spaces.Box(low, high, dtype=np.int64)
+        self.observation_space = spaces.MultiDiscrete(self.maze_size)
+
 
         # initial condition
         self.state = None
@@ -125,7 +125,7 @@ class MazeEnv(gym.Env):
         # Just need to initialize the relevant attributes
         self.configure()
 
-    def __del__(self):
+    def close(self):
         if self.enable_render is True:
             self.maze_view.quit_game()
 
@@ -177,8 +177,8 @@ class MazeEnv(gym.Env):
     def render(self, mode="human", close=False):
         if close:
             self.maze_view.quit_game()
-
-        return self.maze_view.update(mode)
+        screen_shot = self.maze_view.update(mode)
+        return screen_shot
 
 
 class MazeEnvSample5x5(MazeEnv):
@@ -332,6 +332,12 @@ class MazeView2D:
             self.__draw_goal()
 
     def update(self, mode="human"):
+        """
+        try: 正常情况下，程序计划执行的语句。
+        except: 程序异常是执行的语句。
+        else: 程序无异常即try段代码正常执行后会执行该语句。
+        finally: 不管有没有异常，都会执行的语句。
+        """
         try:
             img_output = self.__view_update(mode)
             self.__controller_update()

@@ -18,12 +18,12 @@ class Context:
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
     start_stage = [0, 1, 2][0]
-    wandb_enabled = [True, False][0]
+    wandb_enabled = [True, False][1]
 
     # env
     total_frames = None  # default 1e7
     env_type = None
-    render = [False, True][0]  # whether test actor to render the env
+    render = [False, True][1]  # whether test actor to render the env, disable no-respoding-dialog: gsettings set org.gnome.mutter check-alive-timeout 60000
     render_every = 5
     env_name = None
     deterministic = True  # env with/without randomness

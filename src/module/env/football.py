@@ -13,7 +13,7 @@ from absl import logging
 
 class Football:
     @staticmethod
-    def make_env(render=False, is_head=False, init_points=2):
+    def make_env(render=False, is_head=False, init_points=2 if not P.render else 1):
         logging.set_verbosity("error")
         assert init_points > 0, "init_points should be more than zero"
         envs = list()
