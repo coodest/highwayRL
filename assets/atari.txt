@@ -1,7 +1,4 @@
 --Atari games--
-Alien
 BattleZone
 Defender
-Jamesbond
 StarGunner
-YarsRevenge

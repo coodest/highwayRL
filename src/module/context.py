@@ -15,15 +15,16 @@ class Context:
     video_dir = None
     env_dir = None
     out_dirs = None
+    dataset_dir = None
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
     start_stage = [0, 1, 2][0]
-    wandb_enabled = [True, False][1]
+    wandb_enabled = [True, False][0]
 
     # env
     total_frames = None  # default 1e7
     env_type = None
-    render = [False, True][1]  # whether test actor to render the env, disable no-respoding-dialog: gsettings set org.gnome.mutter check-alive-timeout 60000
+    render = [False, True][0]  # whether test actor to render the env, disable no-respoding-dialog: gsettings set org.gnome.mutter check-alive-timeout 60000
     render_every = 5
     env_name = None
     deterministic = True  # env with/without randomness
@@ -36,7 +37,7 @@ class Context:
 
     # agent
     # agent:actor
-    num_actor = len(gpus) * 2
+    num_actor = len(gpus) * 8
     head_actor = num_actor - 1  # to report and evaluate
     stick_on_graph = 0.0  # ratio to stick on current high-score traj
     target_total_rewrad = None
@@ -92,8 +93,8 @@ class Profile(Context):
         C.gamma = 0.99
         C.deterministic = True
         C.sync_every = 10
-        max_train_episode_steps = [2000, 8000, 10000][0]
-        max_eval_episode_steps = [2000, 8000, 10000][0]
+        max_train_episode_steps = [2000, 4000, 10000][1]
+        max_eval_episode_steps = [2000, 4000, 10000][1]
     if C.env_type == "toy_text":
         C.total_frames = [1e6, 1e8][0]
         C.num_actor = len(C.gpus) * 8
@@ -120,7 +121,7 @@ class Profile(Context):
         C.num_action_repeats = 1
         reward_type = ["scoring", "scoring,checkpoints"][1]
     if C.env_type == "atari":
-        C.total_frames = [1e7, 5e6, 1e6, 1e5][2]  # default 1e7
+        C.total_frames = [1e7, 2e6, 1e6, 1e5][2]  # default 1e7
         C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[1]
@@ -137,6 +138,7 @@ class Profile(Context):
         stack_frames = 4
         screen_size = 84
         sticky_action = False
+        load_model = True
     
     run = args.run
     C.env_name = args.env_name
@@ -147,4 +149,5 @@ class Profile(Context):
     C.result_dir = C.out_dir + "result/"
     C.video_dir = C.out_dir + "video/"
     C.env_dir = C.out_dir + "env/"
-    C.out_dirs = [C.out_dir, C.log_dir, C.result_dir, C.model_dir, C.video_dir, C.env_dir]
+    C.dataset_dir = C.out_dir + "dataset/"
+    C.out_dirs = [C.out_dir, C.log_dir, C.result_dir, C.model_dir, C.video_dir, C.env_dir, C.dataset_dir]

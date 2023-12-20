@@ -80,12 +80,11 @@ class MemRL:
                     Logger.error("ctrl-c pressed")
 
             Logger.log("stage 1 finished")
-        # 2. parameterize the graph
+        # 2. highway graph to offline rl
         if P.start_stage <= 1:
             from src.module.agent.policy.model import Model
             model = Model()
-            model.utilize_graph()
-            model.evaluate()
+            model.utilize_graph_data()
             model.save()
             Logger.log("stage 2 finished")
         # 3. online updating the model

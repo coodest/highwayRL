@@ -1,5 +1,4 @@
 --maze maps--
-maze2d_3x3
-maze2d_5x5
-maze2d_10x10
-maze2d_100x100
+maze2d_15x15
+maze2d_20x20
+maze2d_30x30

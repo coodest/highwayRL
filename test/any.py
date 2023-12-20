@@ -963,6 +963,25 @@ class Test:
 
             mb.save_maze(f"./assets/maze_files/{env_name}.npy")
 
+    def offline_dataset(self):
+        from src.util.mingpt.dataset import OfflineDataset
+
+        a = OfflineDataset()
+        a.load_all([f"{P.dataset_dir}{i}" for i in IO.list_dir(P.dataset_dir)])
+        print(len(a.obss))
+        print(len(a.actions))
+        print(len(a.rewards))
+        print(len(a.dones))
+        print("--------")
+        a.make()
+        print(a.obss[0].shape)
+        print(a.actions.shape)
+        print(a.rtgs.shape)
+        print(a.done_idxs.shape)
+        print(a.timesteps.shape)
+        print(a.timesteps[-100:])
+        breakpoint()
+
 
 
 
@@ -1002,8 +1021,9 @@ if __name__ == "__main__":
     # test.print_table_param()
     # test.test_join()
     # test.env_reproduce()
-    test.save_maze_image()
+    # test.save_maze_image()
     # test.maze_generator()
+    test.offline_dataset()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np
