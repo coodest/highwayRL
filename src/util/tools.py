@@ -353,9 +353,17 @@ class IO:
 
     @staticmethod
     def read_disk_dump(path):
-        with open(path, "rb") as object_persistent:
-            restore = pickle.load(object_persistent)
-        return restore
+        num_retry = 3
+        while True:
+            try:
+                with open(path, "rb") as object_persistent:
+                    return pickle.load(object_persistent)
+            except:
+                num_retry -= 1
+                time.sleep(1)
+                if num_retry <= 0:
+                    break
+        raise Exception("can not read file")
 
     @staticmethod
     def file_exist(path):
