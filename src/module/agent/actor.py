@@ -48,6 +48,7 @@ class Actor:
                 job_type=f"{P.env_name}",
                 group="HG",
                 name=f"run-{P.run}",
+                dir=f"{P.out_dir}",
                 # config=vars(args),
             )
 

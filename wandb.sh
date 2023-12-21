@@ -1,1 +1,1 @@
-wandb sync ./wandb/run*
+wandb sync ./output/wandb/offline*

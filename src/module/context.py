@@ -19,7 +19,7 @@ class Context:
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
     stages = [True, False, False]
-    wandb_enabled = [True, False][1]
+    wandb_enabled = [True, False][0]
 
     # env
     total_frames = None  # default 1e7
