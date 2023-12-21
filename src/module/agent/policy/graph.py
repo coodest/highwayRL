@@ -307,12 +307,13 @@ class Graph:
 
         return dataset
 
-    def draw_graph(self):
+    def draw_graph(self, add_label=False, self_loop=False):
         if len(self.node_obs) > P.max_node_draw:
             Logger.log("graph is too large to draw")
             return
         
         fig_path = f"{P.result_dir}graph.pdf"
+        fig, ax = plt.subplots(figsize=(6, 4.5), dpi=300)
 
         # 1. build networkx DiGraph
         dg = nx.DiGraph()
@@ -340,11 +341,17 @@ class Graph:
                 pos.append([coord[0], - coord[1]])
             else:
                 pos.append(np.random.rand(2,))
-            node_label[ind] = node
+            if add_label:
+                node_label[ind] = node
+            else:
+                node_label[ind] = ""
+
 
         for ind, from_node in enumerate(self.node_next):
             for action in self.node_next[from_node]:
                 for to_node in self.node_next[from_node][action]:
+                    if not self_loop and from_node == to_node:
+                        continue
                     dg.add_edge(from_node, to_node, weight=action)
                     edge_list.append([from_node, to_node])
                     color_weight = (self.node_value[from_node] + self.node_value[to_node]) / 2.0
@@ -375,7 +382,7 @@ class Graph:
             cmap=cmap,
             vmin=vmin,
             vmax=vmax,
-            alpha=0.9,
+            alpha=1,
         )
         nx.draw_networkx_edges(
             dg, 
@@ -391,12 +398,15 @@ class Graph:
             width=0.5,
             style="solid",
             connectionstyle="arc3,rad=0.1",
-            alpha=0.5
+            alpha=1,
         )
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
         sm._A = []
         cb = plt.colorbar(sm)
         cb.set_label('Node Value')
+
+        ax.set_axis_off()
+
         plt.savefig(fig_path, format="PDF")  # save as PDF file
         plt.clf()
 

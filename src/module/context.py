@@ -18,8 +18,8 @@ class Context:
     dataset_dir = None
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
-    start_stage = [0, 1, 2][0]
-    wandb_enabled = [True, False][0]
+    stages = [True, False, False]
+    wandb_enabled = [True, False][1]
 
     # env
     total_frames = None  # default 1e7
@@ -68,7 +68,7 @@ class Context:
 class Profile(Context):
     C = Context
 
-    parser = argparse.ArgumentParser(description='MemRL')
+    parser = argparse.ArgumentParser(description='HighwayRL')
     parser.add_argument('--run', default=0, help='game index')
     parser.add_argument('--env_name', default="", help='env name')
     parser.add_argument('--env_type', default=C.env_type, choices=[
@@ -93,8 +93,8 @@ class Profile(Context):
         C.gamma = 0.99
         C.deterministic = True
         C.sync_every = 10
-        max_train_episode_steps = [2000, 4000, 10000][1]
-        max_eval_episode_steps = [2000, 4000, 10000][1]
+        max_train_episode_steps = [2000, 4000, 6000, 10000][2]
+        max_eval_episode_steps = [2000, 4000, 6000, 10000][2]
     if C.env_type == "toy_text":
         C.total_frames = [1e6, 1e8][0]
         C.num_actor = len(C.gpus) * 8

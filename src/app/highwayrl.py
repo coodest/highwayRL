@@ -6,7 +6,7 @@ import time
 import os
 
 
-class MemRL:
+class HighwayRL:
     @staticmethod
     def start():
         # 1. init
@@ -20,7 +20,7 @@ class MemRL:
         Funcs.print_obj([P.C, P])
 
         # 3. staging
-        MemRL.staging()
+        HighwayRL.staging()
 
         # 4. report time
         minutes = (time.time() - start_time) / 60
@@ -29,7 +29,7 @@ class MemRL:
     @staticmethod
     def staging():
         # 1. learn the graph
-        if P.start_stage <= 0:
+        if P.stages[0] is True:
             finish = Value("b", False)
             frames = Value("d", 0)
             update = Value("b", True)
@@ -40,7 +40,7 @@ class MemRL:
             for _ in range(P.num_actor):
                 learner_actor_queues.append(Manager().Queue())
 
-            learner_process = Process(target=MemRL.learner_run, args=(
+            learner_process = Process(target=HighwayRL.learner_run, args=(
                 actor_learner_queues,
                 learner_actor_queues,
                 finish,
@@ -51,7 +51,7 @@ class MemRL:
 
             actor_processes = []
             for id in range(P.num_actor):
-                p = Process(target=MemRL.actor_run, args=(
+                p = Process(target=HighwayRL.actor_run, args=(
                     id,
                     actor_learner_queues[id],
                     learner_actor_queues[id],
@@ -81,14 +81,14 @@ class MemRL:
 
             Logger.log("stage 1 finished")
         # 2. highway graph to offline rl
-        if P.start_stage <= 1:
+        if P.stages[1] is True:
             from src.module.agent.policy.model import Model
             model = Model()
             model.utilize_graph_data()
             model.save()
             Logger.log("stage 2 finished")
         # 3. online updating the model
-        if P.start_stage <= 2:
+        if P.stages[2] is True:
             Logger.log("stage 3 finished")
 
     @staticmethod
@@ -97,7 +97,7 @@ class MemRL:
             from src.module.agent.learner import Learner
             os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
 
-            Funcs.run_cmd("nvidia-cuda-mps-control -d", 2)
+            # Funcs.run_cmd("nvidia-cuda-mps-control -d", 2)
             learner = Learner(actor_learner_queues, learner_actor_queues, finish, frames, update)
             try:  # sub-process exception detection
                 learner.learn()  # learn the graph
@@ -109,7 +109,7 @@ class MemRL:
             finally:
                 with finish.get_lock():
                     finish.value = True
-            Funcs.run_cmd("echo quit | nvidia-cuda-mps-control", 2)
+            # Funcs.run_cmd("echo quit | nvidia-cuda-mps-control", 2)
         except Exception:
             Funcs.trace_exception("(learner)")
         
@@ -134,4 +134,4 @@ class MemRL:
 
 
 if __name__ == "__main__":
-    MemRL.start()
+    HighwayRL.start()
