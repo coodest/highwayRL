@@ -10,6 +10,7 @@ from src.util.offline.dataset import OfflineDataset
 import wandb
 import signal
 import os
+import math
 
 
 class Actor:
@@ -24,6 +25,7 @@ class Actor:
         self.actor_learner_queue = actor_learner_queue
         self.learner_actor_queues = learner_actor_queues
         self.episodic_reward = list()
+        self.episodic_return = list()
         self.record_time = list()
         self.max_episodic_reward = None
         self.p = (P.e_greedy[1] - P.e_greedy[0]) / (P.num_actor - 1) * self.id + P.e_greedy[0]
@@ -172,6 +174,7 @@ class Actor:
             obs = last_obs = self.env.reset()
             self.random_ops = int(Funcs.rand_prob() * P.random_init_ops["max_random_ops"])
             self.total_reward = 0.0
+            self.expected_return = 0.0
             epi_step = 1
             pre_action = 0
             done = False
@@ -191,6 +194,7 @@ class Actor:
                 # 3. post ops
                 pre_action = action
                 self.total_reward += reward
+                self.expected_return += math.pow(P.gamma, epi_step) * reward
                 epi_step += 1
 
                 # 4. done ops
@@ -201,6 +205,7 @@ class Actor:
                     )
                     # 4.1 reward
                     self.episodic_reward.append(self.total_reward)
+                    self.episodic_return.append(self.expected_return)
                     self.record_time.append(time.time())
                     if self.max_episodic_reward is None:
                         self.max_episodic_reward = self.total_reward
@@ -215,11 +220,14 @@ class Actor:
                         last_step_before_loss = len(self.hit)
                     # 4.4 report
                     latest_avg_reward = np.mean(self.episodic_reward[-P.average_window:])
+                    latest_avg_return = np.mean(self.episodic_return[-P.average_window:])
                     if self.is_head():
-                        Logger.log("evl_actor R: {:6.2f} AR: {:6.2f} MR: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
+                        Logger.log("evl_actor R: {:6.2f} AR: {:6.2f} MR: {:6.2f} RTN: {:6.2f} ARTN: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
                             self.episodic_reward[-1],
                             latest_avg_reward,
                             self.max_episodic_reward,
+                            self.episodic_return[-1],
+                            latest_avg_return,
                             self.fps[-1],
                             hit_rate,
                             last_step_before_loss,
@@ -232,10 +240,11 @@ class Actor:
                                     self.update.value = False
                         if P.wandb_enabled:
                             try:
-                                wandb.log(data={"Total_Reward": self.episodic_reward[-1], "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))
+                                wandb.log(data={"Expected_Return": self.episodic_return[-1], "Total_Reward": self.episodic_reward[-1], "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))
                             except Exception:
                                 pass
                     Logger.write(f"Actor_{self.id}/R", self.episodic_reward[-1], self.num_episode)
+                    Logger.write(f"Actor_{self.id}/Rtn", self.episodic_return[-1], self.num_episode)
                     Logger.write(f"Actor_{self.id}/AvgR", latest_avg_reward, self.num_episode)
                     Logger.write(f"Actor_{self.id}/MaxR", self.max_episodic_reward, self.num_episode)
                     Logger.write(f"Actor_{self.id}/FPS", self.fps[-1], self.num_episode)

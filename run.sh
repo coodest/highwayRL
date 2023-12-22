@@ -10,13 +10,13 @@ xhost +"local:docker@"
 # tensorboard --logdir ./output/
 
 # delete output folder
-# docker run --user=worker --volume $(pwd):/home/worker/work --rm --interactive --tty meetingdocker/rl:pt_0.1 rm -rf ./output
+docker run --user=worker --volume $(pwd):/home/worker/work --rm --interactive --tty meetingdocker/rl:pt_0.1 rm -rf ./output
 
-# PARALLEL=--tty
-PARALLEL=--detach
+PARALLEL=--tty
+# PARALLEL=--detach
 
 # for ENV_TYPE in maze toy_text football atari
-for ENV_TYPE in toy_text football
+for ENV_TYPE in atari
 do
     for ENV in $(sed 1d ./assets/${ENV_TYPE}.txt)
     do
