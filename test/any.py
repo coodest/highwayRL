@@ -982,6 +982,14 @@ class Test:
         print(a.timesteps[-100:])
         breakpoint()
 
+    def toy_text(self):
+        from src.module.env.toy_text import ToyText
+
+        a = ToyText.make_env(is_head=False)
+
+        breakpoint()
+
+
 
 
 
@@ -1023,7 +1031,8 @@ if __name__ == "__main__":
     # test.env_reproduce()
     # test.save_maze_image()
     # test.maze_generator()
-    test.offline_dataset()
+    # test.offline_dataset()
+    test.toy_text()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

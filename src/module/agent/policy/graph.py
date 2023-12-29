@@ -8,7 +8,6 @@ from src.util.tools import LinkedListElement
 from src.module.agent.policy.iterator import Iterator
 
 
-
 class Graph:
     def __init__(self):
         self.general_info = dict()
@@ -307,7 +306,7 @@ class Graph:
 
         return dataset
 
-    def draw_graph(self, add_label=False, self_loop=False):
+    def draw_graph(self, add_label=["id", "value", "none"][1], self_loop=False):
         if len(self.node_obs) > P.max_node_draw:
             Logger.log("graph is too large to draw")
             return
@@ -339,10 +338,15 @@ class Graph:
             if P.env_type == "maze":
                 coord = self.node_obs[node][0]
                 pos.append([coord[0], - coord[1]])
+            elif P.env_name == "CliffWalking-v0":
+                coord = self.node_obs[node][0]
+                pos.append([coord % 12, -int(coord / 12)])
             else:
                 pos.append(np.random.rand(2,))
-            if add_label:
+            if add_label == "id":
                 node_label[ind] = node
+            elif add_label == "value":
+                node_label[ind] = self.node_value[node]
             else:
                 node_label[ind] = ""
 

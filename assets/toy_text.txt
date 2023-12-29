@@ -1,5 +1,5 @@
 --Toy Text games--
-Blackjack-v1
-Taxi-v3
 CliffWalking-v0
+Blackjack-v1
 FrozenLake-v1
+Taxi-v3

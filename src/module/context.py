@@ -83,7 +83,18 @@ class Profile(Context):
     ], help='type of the env')
     args, unk_args = parser.parse_known_args()
 
+    run = args.run
+    C.env_name = args.env_name
     C.env_type = str(args.env_type)
+    C.out_dir = f"{C.work_dir}output/{C.env_type}-{C.env_name}/"
+    C.log_dir = C.out_dir + "log/"
+    C.summary_dir = C.out_dir + "summary/"
+    C.model_dir = C.out_dir + "model/"
+    C.result_dir = C.out_dir + "result/"
+    C.video_dir = C.out_dir + "video/"
+    C.env_dir = C.out_dir + "env/"
+    C.dataset_dir = C.out_dir + "dataset/"
+    C.out_dirs = [C.out_dir, C.log_dir, C.result_dir, C.model_dir, C.video_dir, C.env_dir, C.dataset_dir]
 
     if C.env_type == "maze":
         C.total_frames = [1e6, 1e8][0]
@@ -101,12 +112,17 @@ class Profile(Context):
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[0]
         C.gamma = 0.99
-        C.hashing = True
+        C.hashing = False
         C.deterministic = True
         C.sync_every = 50
         C.render = False
-        max_train_episode_steps = [2000, 8000, 10000][0]
-        max_eval_episode_steps = [2000, 8000, 10000][0]
+        if C.env_name == "FrozenLake-v1":
+            min_traj_reward = 0.5
+        if C.env_name == "Blackjack-v1":
+            min_traj_reward = 0.9
+        if C.env_name == "CliffWalking-v0":
+            min_traj_reward = -100
+        max_episode_steps = [200, 400, 600, 1000][0]
     if C.env_type == "football":
         C.total_frames = [1e6][0]
         C.num_actor = len(C.gpus) * 8
@@ -139,15 +155,3 @@ class Profile(Context):
         screen_size = 84
         sticky_action = False
         load_model = True
-    
-    run = args.run
-    C.env_name = args.env_name
-    C.out_dir = f"{C.work_dir}output/{C.env_type}-{C.env_name}/"
-    C.log_dir = C.out_dir + "log/"
-    C.summary_dir = C.out_dir + "summary/"
-    C.model_dir = C.out_dir + "model/"
-    C.result_dir = C.out_dir + "result/"
-    C.video_dir = C.out_dir + "video/"
-    C.env_dir = C.out_dir + "env/"
-    C.dataset_dir = C.out_dir + "dataset/"
-    C.out_dirs = [C.out_dir, C.log_dir, C.result_dir, C.model_dir, C.video_dir, C.env_dir, C.dataset_dir]

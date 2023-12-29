@@ -23,6 +23,7 @@ class ToyText:
                 if is_head:
                     Logger.log("head_actor create the env")
                     env = gym.make(P.env_name)
+                    env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
                     env.reset(seed=123)
                     IO.write_disk_dump(env_path, env)
                     break

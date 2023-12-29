@@ -134,7 +134,7 @@ class Actor:
                         signal.signal(signal.SIGALRM, interrupted)
                         signal.alarm(120)
 
-                        wandb.log(data={"Total_Reward": self.episodic_reward[-1], "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))
+                        wandb.log(data={"Expected_Return": self.episodic_return[-1], "Total_Reward": self.episodic_reward[-1], "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))
                         wandb.finish()
                     raise Exception()
 
