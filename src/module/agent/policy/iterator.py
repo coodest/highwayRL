@@ -31,36 +31,39 @@ class Iterator:
                 iters += 1
                 last_val = val
 
-                mul = None
-                pro = None
+                # mul = None
+                # pro = None
                 divider = 1
-                while True:
-                    try:
-                        last_position = 0
-                        divided_len = int(len(adj) / divider)
-                        mul = torch.tensor([], dtype=val.dtype, device=val.device)
-                        while True:
-                            pro = torch.max(adj[last_position:last_position + divided_len] * val, dim=1).values
-                            mul = torch.concat([mul, pro])
-                            last_position += divided_len
-                            if last_position + divided_len > len(adj):
-                                if last_position < len(adj):
-                                    pro = torch.max(adj[last_position:] * val, dim=1).values
-                                    mul = torch.concat([mul, pro])
-                                break
-                        break
-                    except RuntimeError:
-                        mul = None
-                        pro = None
-                        divider *= 2
+                # while True:
+                #     try:
+                #         last_position = 0
+                #         divided_len = int(len(adj) / divider)
+                #         mul = torch.tensor([], dtype=val.dtype, device=val.device)
+                #         while True:
+                #             pro = torch.max(adj[last_position:last_position + divided_len] * val, dim=1).values
+                #             mul = torch.concat([mul, pro])
+                #             last_position += divided_len
+                #             if last_position + divided_len > len(adj):
+                #                 if last_position < len(adj):
+                #                     pro = torch.max(adj[last_position:] * val, dim=1).values
+                #                     mul = torch.concat([mul, pro])
+                #                 break
+                #         break
+                #     except RuntimeError:
+                #         mul = None
+                #         pro = None
+                #         divider *= 2
 
-                val = mul * gamma + rew
+                # val = mul * gamma + rew
+                
+                val = torch.max((adj - 1) * 1e31 + torch.mul(adj, val * gamma), dim=1).values + rew
+
                 if torch.sum(last_val - val) == 0:
                     break
             result = val.cpu().detach().numpy().tolist()
 
             # release resorces
-            del adj, rew, val, last_val, mul
+            del adj, rew, val, last_val
             torch.cuda.empty_cache()
 
         return result, iters, divider

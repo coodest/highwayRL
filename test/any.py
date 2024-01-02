@@ -989,11 +989,30 @@ class Test:
 
         breakpoint()
 
+    def graph_value_iteration(self):
+
+        graph = IO.read_disk_dump("output/toy_text-CliffWalking-v0/model/graph.pkl")
+
+        print(graph.node_value)
+        graph.node_value_iteration()
+        print(graph.node_value)
+
+        # import gym
+
+        # a = gym.make("CliffWalking-v0", render_mode="human")
+
+        # done = False
+        # a.reset()
+        # # print(a.action.sample()) # 0: up, 1: right, 2: down, 3: left
+        # while not done:
+        #     action = int(input("action: "))
+        #     obs, rew, done, info = a.step(action)
+        #     print(f"{obs}-{rew}")
 
 
 
 
-
+        breakpoint()
 
 
 if __name__ == "__main__":
@@ -1032,7 +1051,8 @@ if __name__ == "__main__":
     # test.save_maze_image()
     # test.maze_generator()
     # test.offline_dataset()
-    test.toy_text()
+    # test.toy_text()
+    test.graph_value_iteration()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np
