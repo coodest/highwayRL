@@ -34,9 +34,8 @@ class RandomMatrixLayer(torch.nn.Module):
         with torch.no_grad():
             self.layer = torch.nn.Linear(in_features=inf, out_features=outf)
             torch.nn.init.xavier_uniform_(self.layer.weight)
+            # should be c7da for atari games
             Logger.log(f"random matrix weights hash: {Funcs.matrix_hashing(self.layer.weight)[-4:]}")
-            if P.deterministic:
-                assert Funcs.matrix_hashing(self.layer.weight)[-4:] == "c7da"
 
     def forward(self, input):
         with torch.no_grad():

@@ -39,18 +39,20 @@ class Memory:
             slave_head_queues[self.id].put(["finish"])
         else:
             # read trajs (head)
-            num_skip_traj = 0
+            num_skip_trans = 0
+            num_total_trans = 0
             num_all_traj = 0
             for i in range(P.num_actor):
                 if self.id == i:
                     continue  # head has no trajs stored
                 new_trajs = slave_head_queues[i].get()
-                skip_traj, all_traj = self.merge_new_trajs(new_trajs)
+                skip_trans, total_trans, all_traj = self.merge_new_trajs(new_trajs)
                 del new_trajs
-                num_skip_traj += skip_traj
+                num_skip_trans += skip_trans
+                num_total_trans += total_trans
                 num_all_traj += all_traj
 
-            Logger.log(f"skip / all traj.s: {num_skip_traj} / {num_all_traj}", color="blue")
+            Logger.log(f"skip trans. / all trans. / all traj.: {num_skip_trans} / {num_total_trans} / {num_all_traj}", color="blue")
             
             if update.value:
                 self.graph.update_graph()
@@ -76,24 +78,12 @@ class Memory:
 
     def store_new_trajs(self, trajectory):
         """
-        amend and store the trajectory by the non-head process.
-        trajectory: o0, a0, o1, r1 --> o1, a1, o2, r2 --> ... --> on-1, an-1, on, rn
-        amend_traj: o0, a0, o1, r0 --> o1, a1, o2, r1 --> ... --> on-1, an-1, on, rn-1 --> on, None, on, rn
+        store the trajectory.
+        trajectory: o0, a0, o1, r(o0, a0) --> o1, a1, o2, r(o1, a1) --> ... --> on-1, an-1, on, r(on-1, an-1)
         """
-        amend_traj = list()
-        last_reward = 0.0
-        final_obs = None
-        final_reward = None
-
         total_reward = 0
-        for last_obs, prev_action, obs, reward in trajectory:
-            amend_traj.append([last_obs, prev_action, obs, last_reward])
-            last_reward = reward
-            final_obs = obs
-            final_reward = reward
-
-            total_reward += reward
-        amend_traj.append([final_obs, None, final_obs, final_reward])  # last transition
+        for last_obs, prev_action, obs, last_reward in trajectory:
+            total_reward += last_reward
         
         # filter trajs by min reward
         if P.min_traj_reward is not None:
@@ -103,7 +93,7 @@ class Memory:
         if P.reward_filter_ratio is not None:
             if total_reward < P.reward_filter_ratio * self.graph.general_info["max_total_reward"]:
                 return
-        self.new_trajs.append(amend_traj)
+        self.new_trajs.append(trajectory)
 
     def merge_new_trajs(self, new_trajs): 
         """

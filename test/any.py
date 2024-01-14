@@ -991,11 +991,11 @@ class Test:
 
     def graph_value_iteration(self):
 
-        graph = IO.read_disk_dump("output/toy_text-CliffWalking-v0/model/graph.pkl")
+        # graph = IO.read_disk_dump("output/football-custom_3_vs_2/model/graph.pkl")
+        graph = IO.read_disk_dump("output/maze-maze2d_3x3/model/graph.pkl")
 
-        print(graph.node_value)
-        graph.node_value_iteration()
-        print(graph.node_value)
+        graph.update_graph()
+        breakpoint()
 
         # import gym
 
@@ -1013,6 +1013,51 @@ class Test:
 
 
         breakpoint()
+
+    def networkx_graph(self):
+        import networkx as nx
+        import matplotlib.pyplot as plt
+
+        dg = nx.MultiDiGraph()
+        dg.add_node(0)
+        dg.add_node(1)
+        dg.add_node(2)
+        dg.add_edge(0, 2)
+        dg.add_edge(2, 1)
+        edge_list = [[0, 2], [2, 1], [0, 2], [0, 2], [0, 2], [0, 2]]
+
+        node_label = {0:"a", 1:"b", 2:"c"}
+
+        nx.draw_networkx_labels(
+            dg, 
+            [[1,2],[3,4],[5,6]], 
+            labels=node_label,
+            font_color="grey",
+            font_size=10, 
+            font_family='sans-serif',
+            verticalalignment="bottom"
+        )
+        nx.draw_networkx_nodes(
+            dg, 
+            [[1,2],[3,4],[5,6]], 
+            node_size=100, 
+            alpha=1,
+        )
+        nx.draw_networkx_edges(
+            dg, 
+            [[1,2],[3,4],[5,6]], 
+            edgelist=edge_list,
+            node_size=100, 
+            arrowstyle='->',
+            arrowsize=5, 
+            width=0.5,
+            style="solid",
+            connectionstyle="arc3,rad=0.1",
+            alpha=0.2,
+        )
+        plt.show()
+
+
 
 
 if __name__ == "__main__":
@@ -1053,6 +1098,7 @@ if __name__ == "__main__":
     # test.offline_dataset()
     # test.toy_text()
     test.graph_value_iteration()
+    # test.networkx_graph()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

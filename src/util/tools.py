@@ -80,10 +80,6 @@ class Logger:
     summary_writer = None
 
     @staticmethod
-    def error(msg):
-        Logger.log(msg, color="cyan")
-
-    @staticmethod
     def show(num="Insersion"):
         Logger.log(f"---- {num} ----")
 
@@ -102,6 +98,14 @@ class Logger:
             Logger.summary_writer.add_histogram(tag, value, step)
             return
         Logger.log("type error.")
+
+    @staticmethod
+    def warning(raw_msg, color="yellow", style=None, new_line=True, make_title=True):
+        Logger.log(raw_msg, color, style, new_line, make_title)
+
+    @staticmethod
+    def error(raw_msg, color="cyan", style=None, new_line=True, make_title=True):
+        Logger.log(raw_msg, color, style, new_line, make_title)
 
     @staticmethod
     def log(raw_msg, color=None, style=None, new_line=True, make_title=True):
@@ -353,17 +357,8 @@ class IO:
 
     @staticmethod
     def read_disk_dump(path):
-        num_retry = 3
-        while True:
-            try:
-                with open(path, "rb") as object_persistent:
-                    return pickle.load(object_persistent)
-            except:
-                num_retry -= 1
-                time.sleep(1)
-                if num_retry <= 0:
-                    break
-        raise Exception("can not read file")
+        with open(path, "rb") as object_persistent:
+            return pickle.load(object_persistent)
 
     @staticmethod
     def file_exist(path):

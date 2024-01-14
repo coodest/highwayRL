@@ -16,19 +16,19 @@ class Iterator:
         else:
             self.device = torch.device("cpu")
     
-    def iterate(self, np_adj, np_rew, np_gamma, np_val_0):
+    def iterate(self, np_rew, np_gamma, np_val_0, np_adj):
         with torch.no_grad():
             # debug: limit the VRam size
             # torch.cuda.set_per_process_memory_fraction(0.5)
 
-            adj = torch.from_numpy(np_adj).to(self.device)
             rew = torch.from_numpy(np_rew).to(self.device)
             gamma = torch.from_numpy(np_gamma).to(self.device)
             val = torch.from_numpy(np_val_0).to(self.device)
+            adj = torch.from_numpy(np_adj).to(self.device)
 
-            iters = 0
-            while iters < P.max_vp_iter:
-                iters += 1
+            n_iters = 0
+            while n_iters < P.max_vp_iter:
+                n_iters += 1
                 last_val = val
 
                 # mul = None
@@ -41,13 +41,7 @@ class Iterator:
                 #         mul = torch.tensor([], dtype=val.dtype, device=val.device)
                 #         while True:
                 #             pro = torch.max(adj[last_position:last_position + divided_len] * val, dim=1).values
-                #             mul = torch.concat([mul, pro])
-                #             last_position += divided_len
-                #             if last_position + divided_len > len(adj):
-                #                 if last_position < len(adj):
-                #                     pro = torch.max(adj[last_position:] * val, dim=1).values
-                #                     mul = torch.concat([mul, pro])
-                #                 break
+                #                  break
                 #         break
                 #     except RuntimeError:
                 #         mul = None
@@ -55,15 +49,15 @@ class Iterator:
                 #         divider *= 2
 
                 # val = mul * gamma + rew
-                
-                val = torch.max((adj - 1) * 1e31 + torch.mul(adj, val * gamma), dim=1).values + rew
+                max_inherit_value = torch.max((adj - 1) * 1e31 + torch.mul(adj, val) * gamma.view([-1, 1]), dim=1).values
+                val = torch.where(max_inherit_value == -1e31, 0.0, max_inherit_value) + rew
 
-                if torch.sum(last_val - val) == 0:
+                if torch.abs(torch.sum(last_val - val)) < 1e-4:
                     break
-            result = val.cpu().detach().numpy().tolist()
+            val_n = val.cpu().detach().numpy().tolist()
 
             # release resorces
-            del adj, rew, val, last_val
+            del rew, gamma, val, adj, last_val
             torch.cuda.empty_cache()
 
-        return result, iters, divider
+        return val_n, n_iters, divider

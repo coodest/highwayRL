@@ -118,10 +118,6 @@ class Profile(Context):
         C.render = False
         if C.env_name == "FrozenLake-v1":
             min_traj_reward = 0.5
-        if C.env_name == "Blackjack-v1":
-            min_traj_reward = 0.9
-        # if C.env_name == "CliffWalking-v0":
-        #     min_traj_reward = -100
         max_episode_steps = [200, 400, 600, 1000][0]
     if C.env_type == "football":
         C.total_frames = [1e6][0]
