@@ -73,12 +73,14 @@ class Learner:
         try:  # sub-sub-process exception
             from src.module.agent.policy.projector import Projector
             from src.module.agent.policy.memory import Memory
+            from src.module.agent.policy.neural.dataset import OfflineDataset
 
             last_report = time.time()
             last_frame = frames.value
             sync_count_down = P.sync_every
             memory = Memory(id, Learner.is_head(id))
             projector = Projector(id, Learner.is_head(id))
+            offline_dataset = OfflineDataset(f"{P.env_name}-{id}")
 
             while True:
                 trajectory = []
@@ -115,6 +117,8 @@ class Learner:
                                     finish.value = True
 
                     if finish.value:
+                        if not Learner.is_head(id):
+                            offline_dataset.save()
                         return
 
                     info = actor_learner_queue.get()
@@ -129,6 +133,8 @@ class Learner:
 
                     if add:  # does not add traj from head actor, and first transition from other actors
                         trajectory.append([last_obs, pre_action, obs, reward])
+                        if not Learner.is_head(id):
+                            offline_dataset.add(obs=raw_obs, proj_obs=obs)
                     if done:
                         if add:
                             with frames.get_lock():

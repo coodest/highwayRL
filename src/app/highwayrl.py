@@ -80,16 +80,12 @@ class HighwayRL:
                     Logger.error("ctrl-c pressed")
 
             Logger.log("stage 1 finished")
-        # 2. highway graph to offline rl
+        # 2. parameterize the highway graph to the dnn model
         if P.stages[1] is True:
-            from src.module.agent.policy.model import Model
-            model = Model()
+            from src.module.agent.policy.neural.parameterizer import Parameterizer
+            model = Parameterizer()
             model.utilize_graph_data()
-            model.save()
             Logger.log("stage 2 finished")
-        # 3. online updating the model
-        if P.stages[2] is True:
-            Logger.log("stage 3 finished")
 
     @staticmethod
     def learner_run(actor_learner_queues, learner_actor_queues, finish, frames, update):

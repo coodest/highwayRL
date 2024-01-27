@@ -6,7 +6,6 @@ from collections import deque
 from src.util.imports.random import random
 from src.util.imports.numpy import np
 import matplotlib.pyplot as plt
-from src.util.offline.dataset import OfflineDataset
 import wandb
 import signal
 import os
@@ -34,7 +33,6 @@ class Actor:
         self.frames = frames
         self.update = update
         self.loop_start_time = None
-        self.offline_dataset = OfflineDataset(f"{P.env_name}-{self.id}")
         if self.is_head() and P.wandb_enabled:
             # delete previous run(s)
             os.environ["WANDB_MODE"] = "offline"
@@ -111,9 +109,7 @@ class Actor:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, False])
         else:
             self.actor_learner_queue.put([last_obs, pre_action, obs, reward, done, not self.is_head()])
-            if not self.is_head():
-                self.offline_dataset.add(obs=last_obs, action=pre_action, reward=reward, done=done)
-
+            
         while True:
             try:  # sub-process exception
                 action, value, steps = self.learner_actor_queues.get(timeout=0.1)
@@ -124,8 +120,6 @@ class Actor:
                 if self.finish.value:
                     if self.is_head():
                         self.save_results()
-                    else:
-                        self.offline_dataset.save()
                     
                     if P.wandb_enabled:
                         def interrupted(signum, frame):

@@ -1,4 +1,3 @@
-from collections import defaultdict
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 import networkx as nx
@@ -58,6 +57,7 @@ class Graph:
 
                 switch_to_new_trans = False
                 old_obs = None
+                abc = True
                 if last_obs not in self.obs_next:
                     self.obs_next[last_obs] = dict()
                 if prev_action in self.obs_next[last_obs]:
@@ -77,6 +77,7 @@ class Graph:
                                     self.obs_next[last_obs][prev_action] = obs
                 else:
                     self.obs_next[last_obs][prev_action] = obs
+                    abc = False
 
                 if last_obs not in self.obs_action_reward:
                     self.obs_action_reward[last_obs] = dict()
@@ -89,6 +90,11 @@ class Graph:
                     self.obs_prev[obs][prev_action] = set()
                 if switch_to_new_trans or old_obs is None:
                     self.obs_prev[obs][prev_action].add(last_obs)
+
+                if not abc:
+                    if len(list(self.obs_prev[obs][prev_action])) == 0:
+                        Logger.log(f"switch_to_new_trans or old_obs is None {switch_to_new_trans} {old_obs is None}")
+                        Logger.log(f"self.obs_next[last_obs][prev_action]{self.obs_next[last_obs][prev_action]}")
 
             # update general info
             if total_reward > self.general_info["max_total_reward"]:
@@ -266,38 +272,6 @@ class Graph:
                             break
 
         Logger.log("learner update action ready", color="yellow")
-
-    def get_transition_dataset(self):
-        dataset = dict()
-
-        observations = list()
-        actions = list()
-        next_observations = list()
-        rewards = list()
-        terminals = list()
-
-        for obs in self.obs_action_reward:
-            for act in self.obs_action_reward[obs]:
-                next_obs = self.obs_next[obs][act]
-                observations.append(obs)
-                actions.append(act)
-                next_observations.append(next_obs)
-                rewards.append(self.obs_action_reward[obs][act])
-                if next_obs not in self.obs_next:
-                    terminals.append(True)
-                else:
-                    if len(list(self.obs_next[next_obs].keys())) > 0:
-                        terminals.append(False)
-                    else:
-                        terminals.append(True)
-
-        dataset["observations"] = np.array(observations)
-        dataset["actions"] = np.array(actions)
-        dataset["next_observations"] = np.array(next_observations)
-        dataset["rewards"] = np.array(rewards)
-        dataset["terminals"] = np.array(terminals)
-
-        return dataset
 
     def draw_graph(self, add_label=["id+value", "none"][0], self_loop=True):
         if len(self.node) > P.max_node_draw:

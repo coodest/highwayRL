@@ -18,7 +18,7 @@ class Context:
     dataset_dir = None
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
-    stages = [True, False, False]
+    stages = [True, False]
     wandb_enabled = [True, False][0]
 
     # env
@@ -63,6 +63,12 @@ class Context:
     sync_every = 10  # in trajectories
     e_greedy = [0.1, 1]
     max_vp_iter = 1e8  # num or float("inf")
+    # agent:policy:dnn
+    dnn_types = [
+        "dqn",
+        "random_rnn_dqn",
+    ]
+    dnn = None
 
 
 class Profile(Context):
@@ -138,7 +144,7 @@ class Profile(Context):
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[1]
         C.target_total_rewrad = None
-        C.hashing = True
+        C.hashing = False
         C.min_traj_reward = None
         C.gamma = [0.99, 1, 1 - 1e-8, 0.999999][3]
         C.num_action_repeats = 4  # equivelent to frame skip
@@ -151,3 +157,4 @@ class Profile(Context):
         screen_size = 84
         sticky_action = False
         load_model = True
+        dnn = C.dnn_types[1]
