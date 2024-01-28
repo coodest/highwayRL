@@ -10,7 +10,7 @@ xhost +"local:docker@"
 # tensorboard --logdir ./output/
 
 # delete output folder
-# docker run --user=worker --volume $(pwd):/home/worker/work --rm --interactive --tty meetingdocker/rl:pt_0.1 rm -rf ./output
+docker run --user=worker --volume $(pwd):/home/worker/work --rm --interactive --tty meetingdocker/rl:pt_0.1 rm -rf ./output
 
 PARALLEL=--tty
 # PARALLEL=--detach

@@ -18,7 +18,10 @@ class Context:
     dataset_dir = None
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
-    stages = [True, False]
+    stages = [
+        [True, False][0],
+        [True, False][1],
+    ]
     wandb_enabled = [True, False][0]
 
     # env
