@@ -3,7 +3,6 @@ from src.module.context import Profile as P
 import networkx as nx
 import matplotlib.pyplot as plt
 from src.util.imports.numpy import np
-from src.util.tools import LinkedListElement
 from src.module.agent.policy.iterator import Iterator
 
 
@@ -41,7 +40,7 @@ class Graph:
         self.general_info["max_total_reward_init_obs"] = None
         self.general_info["max_total_reward_traj"] = None
 
-    def add_trajs(self, trajs):
+    def add_trajs(self, trajs, edge_spliting_support=True):
         num_skip_trans = 0
         total_trans = 0
         for traj in trajs:
@@ -56,45 +55,41 @@ class Graph:
                 current_value = current_value * P.gamma + last_reward
 
                 switch_to_new_trans = False
-                old_obs = None
-                abc = True
+                first_time_transition = True
                 if last_obs not in self.obs_next:
                     self.obs_next[last_obs] = dict()
                 if prev_action in self.obs_next[last_obs]:
-                    old_obs = self.obs_next[last_obs][prev_action]
-                    if old_obs != obs:
-                        # switch to obs with higher value
-                        if last_obs in self.Q:
-                            if prev_action in self.Q[last_obs]:
-                                if self.Q[last_obs][prev_action] < current_value:
-                                    switch_to_new_trans = True
-                                    num_skip_trans += 1
+                    first_time_transition = False
+                    if edge_spliting_support:  # if randomness occured, switch to obs with higher value
+                        old_obs = self.obs_next[last_obs][prev_action]
+                        if old_obs != obs:
+                            # switch
+                            if last_obs in self.Q:
+                                if prev_action in self.Q[last_obs]:
+                                    if self.Q[last_obs][prev_action] > current_value:
+                                        switch_to_new_trans = True
+                                        num_skip_trans += 1
 
-                                    if old_obs in self.obs_prev:
-                                        if prev_action in self.obs_prev[old_obs]:
-                                            if last_obs in self.obs_prev[old_obs][prev_action]:
-                                                self.obs_prev[old_obs][prev_action].remove(last_obs)
-                                    self.obs_next[last_obs][prev_action] = obs
+                                        if old_obs in self.obs_prev:
+                                            if prev_action in self.obs_prev[old_obs]:
+                                                if last_obs in self.obs_prev[old_obs][prev_action]:
+                                                    self.obs_prev[old_obs][prev_action].remove(last_obs)
+                                                    if len(self.obs_prev[old_obs][prev_action]) == 0:
+                                                        self.obs_prev[old_obs].pop(prev_action)
+                                        self.obs_next[last_obs][prev_action] = obs
                 else:
                     self.obs_next[last_obs][prev_action] = obs
-                    abc = False
 
-                if last_obs not in self.obs_action_reward:
-                    self.obs_action_reward[last_obs] = dict()
-                if prev_action not in self.obs_action_reward[last_obs] or switch_to_new_trans:
+                if first_time_transition or switch_to_new_trans:
+                    if last_obs not in self.obs_action_reward:
+                        self.obs_action_reward[last_obs] = dict()
                     self.obs_action_reward[last_obs][prev_action] = float(last_reward)
 
-                if obs not in self.obs_prev:
-                    self.obs_prev[obs] = dict()
-                if prev_action not in self.obs_prev[obs]:
-                    self.obs_prev[obs][prev_action] = set()
-                if switch_to_new_trans or old_obs is None:
+                    if obs not in self.obs_prev:
+                        self.obs_prev[obs] = dict()
+                    if prev_action not in self.obs_prev[obs]:
+                        self.obs_prev[obs][prev_action] = set()
                     self.obs_prev[obs][prev_action].add(last_obs)
-
-                if not abc:
-                    if len(list(self.obs_prev[obs][prev_action])) == 0:
-                        Logger.log(f"switch_to_new_trans or old_obs is None {switch_to_new_trans} {old_obs is None}")
-                        Logger.log(f"self.obs_next[last_obs][prev_action]{self.obs_next[last_obs][prev_action]}")
 
             # update general info
             if total_reward > self.general_info["max_total_reward"]:

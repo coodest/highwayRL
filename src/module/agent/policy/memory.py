@@ -81,6 +81,9 @@ class Memory:
         store the trajectory.
         trajectory: o0, a0, o1, r(o0, a0) --> o1, a1, o2, r(o1, a1) --> ... --> on-1, an-1, on, r(on-1, an-1)
         """
+        if len(trajectory) == 0:
+            return
+
         total_reward = 0
         for last_obs, prev_action, obs, last_reward in trajectory:
             total_reward += last_reward

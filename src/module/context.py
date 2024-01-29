@@ -1,4 +1,3 @@
-import sys
 from src.util.tools import IO, Logger
 import argparse
 
@@ -19,10 +18,10 @@ class Context:
     gpus = [0]  # [0, 1]
     prio_gpu = gpus[0]  # first device in gpu list
     stages = [
-        [True, False][0],
-        [True, False][1],
+        [False, True][1],
+        [False, True][0],
     ]
-    wandb_enabled = [True, False][0]
+    wandb_enabled = [False, True][1]
 
     # env
     total_frames = None  # default 1e7
@@ -145,9 +144,10 @@ class Profile(Context):
         C.total_frames = [1e7, 2e6, 1e6, 1e5][2]  # default 1e7
         C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
+        C.sync_every = 5
         C.projector = C.projector_types[1]
         C.target_total_rewrad = None
-        C.hashing = False
+        C.hashing = True
         C.min_traj_reward = None
         C.gamma = [0.99, 1, 1 - 1e-8, 0.999999][3]
         C.num_action_repeats = 4  # equivelent to frame skip
@@ -159,5 +159,4 @@ class Profile(Context):
         stack_frames = 4
         screen_size = 84
         sticky_action = False
-        load_model = True
         dnn = C.dnn_types[1]
