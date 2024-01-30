@@ -11,6 +11,8 @@ class HighwayRL:
         # 1. init
         Logger.log_path = f"{P.log_dir}{P.env_name}.log"
         Logger.summary_dir = f"{P.summary_dir}{P.env_name}/"
+        if not P.keep_dir:
+            IO.renew_dir(P.out_dir)
         for dir in P.out_dirs:
             IO.make_dir(dir)
         start_time = time.time()

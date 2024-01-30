@@ -78,6 +78,7 @@ class Profile(Context):
     parser = argparse.ArgumentParser(description='HighwayRL')
     parser.add_argument('--run', default=0, help='game index')
     parser.add_argument('--env_name', default="", help='env name')
+    parser.add_argument('--keep_dir', action='store_true', help='renew output dir or not')
     parser.add_argument('--env_type', default=C.env_type, choices=[
         "maze",  # 0
         "toy_text",  # 1
@@ -91,6 +92,7 @@ class Profile(Context):
     args, unk_args = parser.parse_known_args()
 
     run = args.run
+    keep_dir = args.keep_dir
     C.env_name = args.env_name
     C.env_type = str(args.env_type)
     C.out_dir = f"{C.work_dir}output/{C.env_type}-{C.env_name}/run-{run}/"
