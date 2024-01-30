@@ -1,7 +1,6 @@
 from src.module.context import Profile as P
 from src.util.tools import Logger, Funcs, IO
 from multiprocessing import Process, Value, Manager
-
 import time
 import os
 
@@ -67,14 +66,9 @@ class HighwayRL:
                     learner_process.join()
                     Logger.log("learner exit")
 
-                    title_out = False
                     for ind, p in enumerate(actor_processes, start=0):
                         p.join()
-                        if not title_out:
-                            Logger.log("actor ", new_line=False)
-                            title_out = True
-                        Logger.log(f"{ind} ", new_line=False, make_title=False)
-                    Logger.log("exit", make_title=False)
+                    Logger.log("actor exit")
                     break
                 except KeyboardInterrupt:
                     Logger.error("ctrl-c pressed")

@@ -1,7 +1,6 @@
 from src.util.tools import Logger, IO
 from src.module.context import Profile as P
 import time
-import types
 import gym
 from src.util.imports.numpy import np
 from gfootball.env import *

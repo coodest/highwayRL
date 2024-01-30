@@ -1,7 +1,5 @@
 from src.util.imports.torch import torch
-from src.util.imports.numpy import np
 from src.module.context import Profile as P
-from src.util.tools import Logger
 
 
 class Iterator:

@@ -93,7 +93,7 @@ class Profile(Context):
     run = args.run
     C.env_name = args.env_name
     C.env_type = str(args.env_type)
-    C.out_dir = f"{C.work_dir}output/{C.env_type}-{C.env_name}/{run}/"
+    C.out_dir = f"{C.work_dir}output/{C.env_type}-{C.env_name}/run-{run}/"
     C.log_dir = C.out_dir + "log/"
     C.summary_dir = C.out_dir + "summary/"
     C.model_dir = C.out_dir + "model/"
@@ -143,7 +143,7 @@ class Profile(Context):
         C.total_frames = [1e7, 2e6, 1e6, 1e5][2]  # default 1e7
         C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
-        C.sync_every = 5
+        C.sync_every = 10
         C.projector = C.projector_types[1]
         C.target_total_rewrad = None
         C.hashing = False

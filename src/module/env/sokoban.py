@@ -5,9 +5,6 @@ from gym.wrappers import TimeLimit, RecordVideo
 from src.util.imports.numpy import np
 from src.module.context import Profile as P
 from src.util.tools import Funcs, Logger, IO
-import time
-import gym_sokoban
-import copy
 from gym_sokoban.envs.boxoban_env import BoxobanEnv
 from gym_sokoban.envs.sokoban_env import SokobanEnv
 from gym_sokoban.envs.render_utils import room_to_rgb

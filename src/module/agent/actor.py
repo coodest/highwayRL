@@ -5,11 +5,10 @@ from multiprocessing import Queue
 from collections import deque
 from src.util.imports.random import random
 from src.util.imports.numpy import np
-import matplotlib.pyplot as plt
 import wandb
-import signal
 import os
 import math
+from src.module.agent.policy.projector import Projector
 
 
 class Actor:
@@ -78,30 +77,31 @@ class Actor:
     def is_head(self):
         return self.id == P.head_actor
     
-    def save_results(self):
-        record_time = np.array(self.record_time) - min(self.record_time)  # start from 0
-        IO.write_disk_dump(P.result_dir + "training-curve.pkl", [record_time, self.episodic_reward])
+    def final_eval(self):
+        projector = Projector(0, False)
+        graph = IO.read_disk_dump(f"{P.model_dir}graph.pkl")
+        done = False
+        obs = self.env.reset()
+        total_reward = 0
+        expected_return = 0
+        step = 0
+        projector.reset()
+        while not done:
+            _, proj_obs = projector.batch_project([None, None, obs, None, None])
+            action, value, steps = graph.get_action(proj_obs)
+            obs, reward, done, info = self.env.step(action)
+            total_reward += reward
+            expected_return += reward * np.power(P.gamma, step)
+            step += 1
 
-        x = record_time
-        y = self.episodic_reward
+        Logger.log(f"Highway graph R: {total_reward:6.2f} RTN: {expected_return:6.2f} Step: {step}", color="green")
 
-        fig, ax = plt.subplots(1, 1, figsize=(8, 6), dpi=200)
-        ax.set_xlabel("Episode")
-        ax.set_xlim([np.min(x), np.max(x)])
-        ax.set_ylim([np.min(y), np.max(y)])
-        ax.set_ylabel("Score")
-        ax.grid(color="w", linestyle='-', linewidth=1)
-        ax.set_facecolor("#eaeaf2")
-        ax.spines["bottom"].set_visible(False)
-        ax.spines["top"].set_visible(False)
-        ax.spines["left"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        ax.tick_params(which='major', length=4, color='w')
-
-        ax.plot(x, y)
-
-        plt.savefig(P.result_dir + "training-curve.pdf", format="pdf") 
-        Logger.log("result curve saved.")
+        if P.wandb_enabled:
+            try:
+                wandb.log(data={"Expected_Return": expected_return, "Total_Reward": total_reward, "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))
+            except Exception:
+                pass
+            wandb.finish()
 
     def get_action(self, last_obs, pre_action, obs, reward, done, epi_step, receiver_init_obs=False):
         # query action from policy
@@ -119,17 +119,7 @@ class Actor:
             except Exception:
                 if self.finish.value:
                     if self.is_head():
-                        self.save_results()
-                    
-                    if P.wandb_enabled:
-                        def interrupted(signum, frame):
-                            raise Exception("time out")
-
-                        signal.signal(signal.SIGALRM, interrupted)
-                        signal.alarm(120)
-
-                        wandb.log(data={"Expected_Return": self.episodic_return[-1], "Total_Reward": self.episodic_reward[-1], "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))
-                        wandb.finish()
+                        self.final_eval()
                     raise Exception()
 
         if receiver_init_obs:  # the projected and indexed init obs
@@ -216,6 +206,10 @@ class Actor:
                     latest_avg_reward = np.mean(self.episodic_reward[-P.average_window:])
                     latest_avg_return = np.mean(self.episodic_return[-P.average_window:])
                     if self.is_head():
+                        if P.target_total_rewrad is not None:
+                            if abs(latest_avg_reward - P.target_total_rewrad) < 0.01:
+                                with self.update.get_lock():
+                                    self.update.value = False
                         Logger.log("evl_actor R: {:6.2f} AR: {:6.2f} MR: {:6.2f} RTN: {:6.2f} ARTN: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
                             self.episodic_reward[-1],
                             latest_avg_reward,
@@ -228,10 +222,6 @@ class Actor:
                             len(self.hit),
                             str(proj_index_init_obs)[-4:]
                         ))
-                        if P.target_total_rewrad is not None:
-                            if abs(latest_avg_reward - P.target_total_rewrad) < 0.01:
-                                with self.update.get_lock():
-                                    self.update.value = False
                         if P.wandb_enabled:
                             try:
                                 wandb.log(data={"Expected_Return": self.episodic_return[-1], "Total_Reward": self.episodic_reward[-1], "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))

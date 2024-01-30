@@ -278,7 +278,6 @@ class Graph:
 
     def draw_graph(self, add_label=["id+value", "none"][0], self_loop=True):
         if len(self.node) > P.max_node_draw:
-            Logger.log("graph is too large to draw")
             return
         
         fig_path = f"{P.result_dir}graph.pdf"
@@ -371,6 +370,8 @@ class Graph:
 
         plt.savefig(fig_path, format="PDF")  # save as PDF file
         plt.clf()
+
+        Logger.log("graph figure saved", color="yellow")
 
     def update_graph(self):
         # 1. graph reconstruction

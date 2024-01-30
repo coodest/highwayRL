@@ -93,22 +93,6 @@ class Parameterizer:
         dnn_model.load_state_dict(torch.load(f"{P.model_dir}dnn_model.pt"))
         Logger.log("best dnn model loaded")
 
-        # score of highway graph
-        graph = IO.read_disk_dump(f"{P.model_dir}graph.pkl")
-        best_traj = graph.general_info["max_total_reward_traj"]
-        done = False
-        obs = env.reset()
-        highway_graph_total_reward = 0
-        highway_graph_expected_return = 0
-        step = 0
-        projector.reset()
-        while not done:
-            highway_graph_action = best_traj[step][1]
-            obs, reward, done, info = env.step(highway_graph_action)
-            highway_graph_total_reward += reward
-            highway_graph_expected_return += reward * np.power(P.gamma, step)
-            step += 1
-
         total_rewards = []
         expected_returns = []
         for _ in range(evals):
@@ -135,7 +119,7 @@ class Parameterizer:
                 step += 1
             total_rewards.append(total_reward)
             expected_returns.append(expected_return)
-        Logger.log(f"highway_graph R: {highway_graph_total_reward} RTN: {highway_graph_expected_return}\ndnn {evals} evals AR:{np.average(total_rewards):6.2f} ARTN: {np.average(expected_returns):6.2f}", color="green")
+        Logger.log(f"dnn {evals} evals AR:{np.average(total_rewards):6.2f} ARTN: {np.average(expected_returns):6.2f}", color="green")
 
     @staticmethod
     def parameterize(id, master_slave_queue, slave_master_queue, highscore, epochs, batch_size=2560, learning_rate=1e-4):
@@ -157,7 +141,7 @@ class Parameterizer:
         if P.deterministic:
             # remove dataloader randomness
             seed = (int(P.run) + 1) * id
-            Logger.log(f"slave-{id} seed: {seed}")
+            Logger.log(f"slave_{id} seed: {seed}")
             def worker_init_fn(worker_id):
                 random.seed(seed + worker_id)
             g = torch.Generator()
@@ -216,7 +200,7 @@ class Parameterizer:
                     highscore.value = total_reward
                     torch.save(dnn_model.state_dict(), f"{P.model_dir}dnn_model.pt")
 
-            Logger.log(f"slave-{id}#{e} lr: {scheduler.get_last_lr()[0]:.2e} loss: {loss.item():6.2f} R: {total_reward:6.2f} RTN:{expected_return:6.2f} S: {step} highscore: {highscore.value}")
+            Logger.log(f"slave_{id} #{e} lr: {scheduler.get_last_lr()[0]:.2e} loss: {loss.item():6.2f} R: {total_reward:6.2f} RTN:{expected_return:6.2f} S: {step} highscore: {highscore.value}")
 
             new_dict = dict()
             sd = dnn_model.state_dict()

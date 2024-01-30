@@ -3,8 +3,6 @@
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 from src.module.agent.policy.graph import Graph
-from tqdm import tqdm
-# from src.util.imports.numpy import np  # influence the hit rate of actor
 
 
 class Memory:
@@ -56,6 +54,8 @@ class Memory:
             
             if update.value:
                 self.graph.update_graph()
+            else:
+                Logger.log("graph update skipped")
 
             # write latest graph (head)
             IO.write_disk_dump(self.graph_path, self.graph)

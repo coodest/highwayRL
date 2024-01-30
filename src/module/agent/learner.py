@@ -24,14 +24,9 @@ class Learner:
 
     def wait_to_finish(self):
         Logger.log("leaner master wait for worker (head and slaves) to join")
-        title_out = False
         for ind, p in enumerate(self.processes):
             p.join()
-            if not title_out:
-                Logger.log("learner worker ", new_line=False)
-                title_out = True
-            Logger.log(f"{ind} ", new_line=False, make_title=False)
-        Logger.log("joined", make_title=False)
+        Logger.log("learner worker joined")
 
     def learn(self):
         for id in range(P.num_actor):
