@@ -51,17 +51,40 @@ class Parameterizer:
 
         self.eval_dnn_model()
 
+    @staticmethod
+    def create_env(render=False, is_head=False):
+        if P.env_type == "atari":
+            from src.module.env.atari import Atari
+            return Atari.make_env(render, is_head)
+        if P.env_type == "maze":
+            from src.module.env.maze import Maze
+            return Maze.make_env(render, is_head)
+        if P.env_type == "toy_text":
+            from src.module.env.toy_text import ToyText
+            return ToyText.make_env(render, is_head)
+        if P.env_type == "box_2d":
+            from src.module.env.box_2d import Box2D
+            return Box2D.make_env(render, is_head)
+        if P.env_type == "sokoban":
+            from src.module.env.sokoban import Sokoban
+            return Sokoban.make_env(render, is_head)
+        if P.env_type == "football":
+            from src.module.env.football import Football
+            return Football.make_env(render, is_head)
+        if P.env_type == "mujoco":
+            from src.module.env.mujoco import Mujoco
+            return Mujoco.make_env(render, is_head)
+
     def eval_dnn_model(self, evals=10):
         from src.util.tools import Logger, Funcs, IO
         from src.module.agent.policy.projector import Projector
         from src.module.context import Profile as P
         from src.util.imports.torch import torch
-        from src.module.env.atari import Atari
         from src.module.agent.policy.neural.q_network import QNetwork
         from src.util.imports.numpy import np
 
         device = torch.device("cuda" if torch.cuda.is_available() and f"cuda:{P.prio_gpu}" else "cpu")
-        env = Atari.make_env()
+        env = Parameterizer.create_env()
         if P.dnn == "random_rnn_dqn":
             projector = Projector(0, False)
             dnn_model = QNetwork(env, encode=False).to(device)
@@ -123,7 +146,6 @@ class Parameterizer:
         from torch.utils.data import DataLoader
         from src.util.imports.torch import torch
         from src.module.agent.policy.neural.q_network import QNetwork
-        from src.module.env.atari import Atari
         from src.util.imports.numpy import np
         from src.util.imports.random import random
         import copy
@@ -143,7 +165,7 @@ class Parameterizer:
             dataloader = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=4, worker_init_fn=worker_init_fn, generator=g, pin_memory=True)
         else:
             dataloader = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=4, pin_memory=True)
-        env = Atari.make_env()
+        env = Parameterizer.create_env()
         device = torch.device("cuda" if torch.cuda.is_available() and f"cuda:{P.prio_gpu}" else "cpu")
         if P.dnn == "random_rnn_dqn":
             projector = Projector(0, False)

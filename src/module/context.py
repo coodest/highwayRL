@@ -93,7 +93,7 @@ class Profile(Context):
     run = args.run
     C.env_name = args.env_name
     C.env_type = str(args.env_type)
-    C.out_dir = f"{C.work_dir}output/{C.env_type}-{C.env_name}/"
+    C.out_dir = f"{C.work_dir}output/{C.env_type}-{C.env_name}/{run}/"
     C.log_dir = C.out_dir + "log/"
     C.summary_dir = C.out_dir + "summary/"
     C.model_dir = C.out_dir + "model/"

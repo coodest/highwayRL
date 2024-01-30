@@ -51,7 +51,6 @@ class Learner:
             )
             p.start()
             self.processes.append(p)
-        
         self.wait_to_finish()
 
     @staticmethod
