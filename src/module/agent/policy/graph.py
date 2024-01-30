@@ -41,17 +41,21 @@ class Graph:
         self.general_info["max_total_reward_traj"] = None
 
     def add_trajs(self, trajs, edge_spliting_support=True):
-        num_skip_trans = 0
+        num_switched_trans = 0
         total_trans = 0
-        for traj in trajs:
+        for traj, total_reward in trajs:
             # add transition
-            total_reward = 0.0
+            # update general info
+            if total_reward > self.general_info["max_total_reward"]:
+                self.general_info["max_total_reward"] = total_reward
+                self.general_info["max_total_reward_init_obs"] = traj[0][0]
+                self.general_info["max_total_reward_traj"] = traj
+
             self.starting_obs.add(traj[0][0])
             self.terminal_obs.add(traj[-1][2])
             current_value = 0.0
             for last_obs, prev_action, obs, last_reward in traj[::-1]:
                 total_trans += 1
-                total_reward += last_reward
                 current_value = current_value * P.gamma + last_reward
 
                 switch_to_new_trans = False
@@ -60,23 +64,33 @@ class Graph:
                     self.obs_next[last_obs] = dict()
                 if prev_action in self.obs_next[last_obs]:
                     first_time_transition = False
-                    if edge_spliting_support:  # if randomness occured, switch to obs with lower value
+                    if edge_spliting_support:  
+                        # if randomness occured, switch to obs with lower value
+                        # except highscore traj
                         old_obs = self.obs_next[last_obs][prev_action]
                         if old_obs != obs:
-                            # switch
-                            if last_obs in self.Q:
-                                if prev_action in self.Q[last_obs]:
-                                    if self.Q[last_obs][prev_action] > current_value:
-                                        switch_to_new_trans = True
-                                        num_skip_trans += 1
+                            # new trans is in highscore traj
+                            if [last_obs, prev_action, obs, last_reward] in self.general_info["max_total_reward_traj"]:
+                                switch_to_new_trans = True
+                            
+                            # old trans is not in highscore traj
+                            old_reward = self.obs_action_reward[last_obs][prev_action]
+                            if [last_obs, prev_action, old_obs, old_reward] not in self.general_info["max_total_reward_traj"]:
+                                if last_obs in self.Q:
+                                    if prev_action in self.Q[last_obs]:
+                                        if self.Q[last_obs][prev_action] > current_value:
+                                            switch_to_new_trans = True
 
-                                        if old_obs in self.obs_prev:
-                                            if prev_action in self.obs_prev[old_obs]:
-                                                if last_obs in self.obs_prev[old_obs][prev_action]:
-                                                    self.obs_prev[old_obs][prev_action].remove(last_obs)
-                                                    if len(self.obs_prev[old_obs][prev_action]) == 0:
-                                                        self.obs_prev[old_obs].pop(prev_action)
-                                        self.obs_next[last_obs][prev_action] = obs
+                        if switch_to_new_trans:
+                            # switch
+                            num_switched_trans += 1
+                            if old_obs in self.obs_prev:
+                                if prev_action in self.obs_prev[old_obs]:
+                                    if last_obs in self.obs_prev[old_obs][prev_action]:
+                                        self.obs_prev[old_obs][prev_action].remove(last_obs)
+                                        if len(self.obs_prev[old_obs][prev_action]) == 0:
+                                            self.obs_prev[old_obs].pop(prev_action)
+                            self.obs_next[last_obs][prev_action] = obs
                 else:
                     self.obs_next[last_obs][prev_action] = obs
 
@@ -91,13 +105,7 @@ class Graph:
                         self.obs_prev[obs][prev_action] = set()
                     self.obs_prev[obs][prev_action].add(last_obs)
 
-            # update general info
-            if total_reward > self.general_info["max_total_reward"]:
-                self.general_info["max_total_reward"] = total_reward
-                self.general_info["max_total_reward_init_obs"] = traj[0][0]
-                self.general_info["max_total_reward_traj"] = traj
-
-        return num_skip_trans, total_trans, len(trajs)
+        return num_switched_trans, total_trans, len(trajs)
 
     def reset_graph(self):
         """

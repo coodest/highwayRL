@@ -39,20 +39,20 @@ class Memory:
             slave_head_queues[self.id].put(["finish"])
         else:
             # read trajs (head)
-            num_skip_trans = 0
+            num_switched_trans = 0
             num_total_trans = 0
             num_all_traj = 0
             for i in range(P.num_actor):
                 if self.id == i:
                     continue  # head has no trajs stored
                 new_trajs = slave_head_queues[i].get()
-                skip_trans, total_trans, all_traj = self.merge_new_trajs(new_trajs)
+                switched_trans, total_trans, all_traj = self.merge_new_trajs(new_trajs)
                 del new_trajs
-                num_skip_trans += skip_trans
+                num_switched_trans += switched_trans
                 num_total_trans += total_trans
                 num_all_traj += all_traj
 
-            Logger.log(f"skip trans. / all trans. / all traj.: {num_skip_trans} / {num_total_trans} / {num_all_traj}", color="blue")
+            Logger.log(f"switched trans. / all trans. / all traj.: {num_switched_trans} / {num_total_trans} / {num_all_traj}", color="blue")
             
             if update.value:
                 self.graph.update_graph()
@@ -96,7 +96,7 @@ class Memory:
         if P.reward_filter_ratio is not None:
             if total_reward < P.reward_filter_ratio * self.graph.general_info["max_total_reward"]:
                 return
-        self.new_trajs.append(trajectory)
+        self.new_trajs.append([trajectory, total_reward])
 
     def merge_new_trajs(self, new_trajs): 
         """
