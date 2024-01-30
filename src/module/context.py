@@ -1,4 +1,3 @@
-from src.util.tools import IO, Logger
 import argparse
 
 
@@ -19,7 +18,7 @@ class Context:
     prio_gpu = gpus[0]  # first device in gpu list
     stages = [
         [False, True][1],
-        [False, True][0],
+        [False, True][1],
     ]
     wandb_enabled = [False, True][1]
 
@@ -147,7 +146,8 @@ class Profile(Context):
         C.sync_every = 5
         C.projector = C.projector_types[1]
         C.target_total_rewrad = None
-        C.hashing = True
+        C.hashing = False
+        C.deterministic = True
         C.min_traj_reward = None
         C.gamma = [0.99, 1, 1 - 1e-8, 0.999999][3]
         C.num_action_repeats = 4  # equivelent to frame skip

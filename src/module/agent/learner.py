@@ -119,6 +119,7 @@ class Learner:
                     if finish.value:
                         if not Learner.is_head(id):
                             offline_dataset.save()
+                            Logger.log(f"dataset-{id} saved.")
                         return
 
                     info = actor_learner_queue.get()

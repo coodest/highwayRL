@@ -60,7 +60,7 @@ class Graph:
                     self.obs_next[last_obs] = dict()
                 if prev_action in self.obs_next[last_obs]:
                     first_time_transition = False
-                    if edge_spliting_support:  # if randomness occured, switch to obs with higher value
+                    if edge_spliting_support:  # if randomness occured, switch to obs with lower value
                         old_obs = self.obs_next[last_obs][prev_action]
                         if old_obs != obs:
                             # switch

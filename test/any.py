@@ -1057,7 +1057,73 @@ class Test:
         )
         plt.show()
 
+    def drop_off(self):
+        from src.module.env.atari import Atari
+        from src.module.agent.policy.projector import Projector
+        import numpy as np
 
+        env = Atari.make_env()
+        projector = Projector(0, False)
+        graph = IO.read_disk_dump(f"{P.model_dir}graph.pkl")
+        best_traj = graph.general_info["max_total_reward_traj"]
+
+        def eval(best=False):
+            done = False
+            obs = env.reset()
+            total_reward = 0
+            expected_return = 0
+            step = 0
+            projector.reset()
+            while not done:
+                best_action = best_traj[step][1]
+                _, projected_obs = projector.batch_project([None, None, obs, None, None])
+                action, value, steps = graph.get_action(projected_obs)
+
+                if best_action != action:
+                    # if np.var(list(graph.Q[projected_obs].values())) != 0:
+                    if step >= 114:
+                        print(f"obs: {projected_obs}")
+                        print(f"{graph.obs_next[projected_obs]}")
+                        print(f"#{step} best action: {best_action} action {action}")
+                        print(graph.Q[projected_obs])
+                        breakpoint()
+                        action = int(input(f"{total_reward} action:"))
+                obs, reward, done, info = env.step(action)
+                total_reward += reward
+                expected_return += reward * np.power(P.gamma, step)
+                step += 1
+
+            print(f"r:{total_reward} R:{expected_return}")
+        
+        eval()
+        breakpoint()
+        # state merging example:
+        # #69 best action: 5 action 0
+        # {5: 2197.269775390625, 10: 1898.1715087890625, 8: 2497.167724609375, 9: 2297.265380859375, 17: 1898.1741943359375, 11: 2297.198486328125, 13: 2097.27294921875, 16: 2097.272705078125, 12: 1799.1192626953125, 1: 1598.794189453125, 4: 1898.1646728515625, 7: 2197.259765625, 0: 2497.194091796875, 15: 2297.19873046875, 2: 1997.059814453125, 14: 2397.236328125, 6: 1599.171630859375, 3: 2497.167724609375}
+        # 0.0 action:0
+        # #70 best action: 2 action 6
+        # {5: 899.1239013671875, 4: 299.83795166015625, 6: 2497.196533203125, 17: 1698.8778076171875, 12: 1099.2501220703125, 13: 799.5050048828125, 15: 1598.72119140625}
+        # 0.0 action:6
+        # #71 best action: 1 action 5
+        # {5: 2497.198974609375, 17: 299.70770263671875, 9: 1099.127197265625}
+        # 0.0 action:5
+        # #114 best action: 9 action 5
+        # {5: 2297.302001953125, 15: 699.5432739257812, 6: 2297.302001953125}
+        # 200.0 action:5
+        # #173 best action: 15 action 7
+        # {5: 699.58447265625, 14: 699.58447265625, 7: 699.5845336914062}
+        # 200.0 action:7
+        # #178 best action: 2 action 3
+        # {15: 599.6827392578125, 3: 699.588134765625, 13: 599.6827392578125, 6: 599.6827392578125}
+        # 200.0 action:3
+        # #179 best action: 16 action 12
+        # {6: 299.8919372558594, 10: 399.8994140625, 12: 599.683349609375}
+        # 200.0 action:12
+        # r:500.0 R:499.820050989631
+        # ---------
+        # #69 bd2e627f4e572022c4194b85ccd11b2c42c84d45549a40a97b836b43a07655f7 5: 2197.269775390625(2200) _0: 2497.194091796875 (500)
+        #114 
+        # 5: a0600ec240e4e295e51b7115ed95863808b5db0a16a0021f6117fceee115b08f 2297
 
 
 if __name__ == "__main__":
@@ -1097,8 +1163,9 @@ if __name__ == "__main__":
     # test.maze_generator()
     # test.offline_dataset()
     # test.toy_text()
-    test.graph_value_iteration()
+    # test.graph_value_iteration()
     # test.networkx_graph()
+    test.drop_off()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

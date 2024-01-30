@@ -20,12 +20,10 @@ for ENV_TYPE in atari
 do
     for ENV in $(sed 1d ./assets/${ENV_TYPE}.txt)
     do
-        # for RUN in {0..1}
-        for RUN in {0}
+        for RUN in {0..9}
         do
             docker run --user=worker --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --shm-size=40gb --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive $PARALLEL meetingdocker/rl:pt_0.1 python -X pycache_prefix=./cache -m src.app.highwayrl --env_type $ENV_TYPE --env_name $ENV --run $RUN
         done
-        break
     done
     while [ `docker ps --all | wc -l` -gt 1 ]
     do 

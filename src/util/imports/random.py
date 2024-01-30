@@ -1,3 +1,5 @@
 import random
+from src.module.context import Profile as P
 
-random.seed(1234)
+if P.deterministic:
+    random.seed(int(P.run))

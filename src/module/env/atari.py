@@ -1,14 +1,10 @@
 import gym
-# from gym.spaces.discrete import Discrete
 from gym.wrappers import TimeLimit, RecordVideo
 from src.util.imports.numpy import np
 from src.module.context import Profile as P
 from src.util.tools import Funcs, Logger, IO
 import cv2
-
-# import atari_py
 from collections import deque
-# import random
 
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)

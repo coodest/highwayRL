@@ -1,13 +1,13 @@
 from src.module.context import Profile as P
 from multiprocessing import Process, Value, Manager
-import numpy as np
+from src.util.imports.numpy import np
 
 
 class Parameterizer:
     def __init__(self) -> None:
         self.highscore = Value("f", -float("inf"))
 
-    def utilize_graph_data(self, slaves=P.num_actor):
+    def utilize_graph_data(self, slaves=P.num_actor, total_epoch=1000):
         master_slave_queues = list()
         for _ in range(slaves):
             master_slave_queues.append(Manager().Queue())
@@ -22,6 +22,7 @@ class Parameterizer:
                 master_slave_queues[id],
                 slave_master_queues[id],
                 self.highscore, 
+                int(total_epoch/slaves),
             ))
             p.start()
             processes.append(p)
@@ -57,7 +58,7 @@ class Parameterizer:
         from src.util.imports.torch import torch
         from src.module.env.atari import Atari
         from src.module.agent.policy.neural.q_network import QNetwork
-        import numpy as np
+        from src.util.imports.numpy import np
 
         device = torch.device("cuda" if torch.cuda.is_available() and f"cuda:{P.prio_gpu}" else "cpu")
         env = Atari.make_env()
@@ -98,7 +99,7 @@ class Parameterizer:
         Logger.log(f"{evals} evals AR:{np.average(total_rewards):6.2f} ARTN: {np.average(expected_returns):6.2f}", color="green")
 
     @staticmethod
-    def parameterize(id, master_slave_queue, slave_master_queue, highscore, epochs=50, batch_size=2560, learning_rate=1e-4):
+    def parameterize(id, master_slave_queue, slave_master_queue, highscore, epochs, batch_size=2560, learning_rate=1e-4):
         from src.util.tools import Logger, Funcs, IO
         from src.module.agent.policy.neural.dataset import OfflineDataset
         from src.module.agent.policy.projector import Projector
@@ -107,23 +108,25 @@ class Parameterizer:
         from src.util.imports.torch import torch
         from src.module.agent.policy.neural.q_network import QNetwork
         from src.module.env.atari import Atari
-        import numpy as np
+        from src.util.imports.numpy import np
+        from src.util.imports.random import random
         import copy
-        import random
-
-        seed = random.randint(0, 10000)
-        Logger.log(f"{id} seed: {seed}")
-        torch.manual_seed(seed)  # cpu种子
-        torch.cuda.manual_seed(seed)  # 当前GPU的种子
-        torch.cuda.manual_seed_all(seed)  # 所有可用GPU的种子
-        torch.backends.cudnn.deterministic = True  # 默认为False
-        torch.backends.cudnn.benchmark = False
 
         train_dataset = OfflineDataset()
         train_dataset.load_all([f"{P.dataset_dir}{i}" for i in IO.list_dir(f"{P.dataset_dir}")])
         graph = IO.read_disk_dump(f"{P.model_dir}graph.pkl")
         train_dataset.make(graph.Q)
-        dataloader = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=4, pin_memory=True)
+        if P.deterministic:
+            # remove dataloader randomness
+            seed = (int(P.run) + 1) * id
+            Logger.log(f"slave-{id} seed: {seed}")
+            def worker_init_fn(worker_id):
+                random.seed(seed + worker_id)
+            g = torch.Generator()
+            g.manual_seed(seed)
+            dataloader = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=4, worker_init_fn=worker_init_fn, generator=g, pin_memory=True)
+        else:
+            dataloader = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=4, pin_memory=True)
         env = Atari.make_env()
         device = torch.device("cuda" if torch.cuda.is_available() and f"cuda:{P.prio_gpu}" else "cpu")
         if P.dnn == "random_rnn_dqn":
@@ -175,7 +178,7 @@ class Parameterizer:
                     highscore.value = total_reward
                     torch.save(dnn_model.state_dict(), f"{P.model_dir}dnn_model.pt")
 
-            Logger.log(f"{id}#{e} lr: {scheduler.get_last_lr()[0]:.2e} loss: {loss.item():6.2f} R: {total_reward:6.2f} RTN:{expected_return:6.2f} S: {step} highscore: {highscore.value}")
+            Logger.log(f"slave-{id}#{e} lr: {scheduler.get_last_lr()[0]:.2e} loss: {loss.item():6.2f} R: {total_reward:6.2f} RTN:{expected_return:6.2f} S: {step} highscore: {highscore.value}")
 
             new_dict = dict()
             sd = dnn_model.state_dict()
