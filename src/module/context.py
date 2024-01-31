@@ -131,7 +131,7 @@ class Profile(Context):
         max_episode_steps = [200, 400, 600, 1000][0]
         dnn = C.dnn_types[1]
     if C.env_type == "football":
-        C.total_frames = [1e6, 1e5][1]
+        C.total_frames = [1e6, 1e5][0]
         C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[5]
