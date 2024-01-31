@@ -26,7 +26,7 @@ class Parameterizer:
             lr = 1e-4
             early_stop = float("inf")
         if P.env_type == "football":
-            total_epoch = 500
+            total_epoch = 2000
             batch_size = 2560
             lr = 1e-4
             early_stop = 1.95

@@ -135,6 +135,7 @@ class Profile(Context):
         C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[5]
+        C.projected_dim = 128
         C.sync_every = 50
         C.target_total_rewrad = 2.0
         C.hashing = False

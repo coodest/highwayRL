@@ -87,7 +87,7 @@ class Actor:
         step = 0
         projector.reset()
         while not done:
-            _, proj_obs = projector.batch_project([None, None, obs, None, None])
+            _, proj_obs = projector.batch_project([obs, None, obs, None, None])
             action, value, steps = graph.get_action(proj_obs)
             obs, reward, done, info = self.env.step(action)
             total_reward += reward

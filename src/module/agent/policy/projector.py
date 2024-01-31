@@ -118,11 +118,11 @@ class RawProjector:
         pass
 
 
-class LinearProjector:
+class LinearProjector(RawProjector):
     def __init__(self, id, is_head, projector_path=f"{P.model_dir}{P.env_name}-projector.pkl"):
         super().__init__(id)
         if is_head:
-            obs_dim = 115
+            obs_dim = 72 * 96 * 4
             self.random_matrix = RandomMatrixLayer(obs_dim, P.projected_dim)
             IO.write_disk_dump(projector_path, self.random_matrix)
         else:
@@ -142,9 +142,6 @@ class LinearProjector:
 
     def project(self, obs, hashing=P.hashing):
         batch = np.ndarray.flatten(obs)
-        Logger.log(batch)
-        Logger.log(batch.shape)
-        input = None
         with torch.no_grad():  # no grad calculation
             # [obs_dim]
             input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
@@ -154,7 +151,7 @@ class LinearProjector:
             # [1, projected_dim]
             output = self.random_matrix(input)
 
-            result = output.cpu().detach().numpy().tolist()
+            result = output.cpu().detach().numpy().tolist()[0]
             result = tuple(np.concatenate([result, [self.step]]))
             if hashing:
                 result = Funcs.matrix_hashing(result)
