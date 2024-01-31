@@ -9,6 +9,9 @@ xhost +"local:docker@"
 # run tensorboard (run in a separate terminal)
 # tensorboard --logdir ./output/
 
+# clean existing container
+docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)
+
 PARALLEL=--tty
 # PARALLEL=--detach
 
@@ -28,5 +31,4 @@ do
     echo "${ENV_TYPE} done"
 done
 
-# docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)
 # ./wandb.sh
