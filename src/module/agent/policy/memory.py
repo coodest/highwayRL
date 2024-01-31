@@ -1,5 +1,3 @@
-# from types import prepare_class
-# from typing import Sized
 from src.util.tools import IO, Logger
 from src.module.context import Profile as P
 from src.module.agent.policy.graph import Graph
@@ -87,6 +85,9 @@ class Memory:
         total_reward = 0
         for last_obs, prev_action, obs, last_reward in trajectory:
             total_reward += last_reward
+            if last_obs is None or obs is None:
+                Logger.log(f"None in transition: {[last_obs, prev_action, obs, last_reward]}")
+                return
         
         # filter trajs by min reward
         if P.min_traj_reward is not None:

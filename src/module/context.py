@@ -67,7 +67,7 @@ class Context:
     # agent:policy:dnn
     dnn_types = [
         "dqn",
-        "random_rnn_dqn",
+        "dqn-q",
     ]
     dnn = None
 
@@ -92,7 +92,7 @@ class Profile(Context):
     args, unk_args = parser.parse_known_args()
 
     run = args.run
-    keep_dir = args.keep_dir
+    keep_dir = [args.keep_dir, True][0]
     C.env_name = args.env_name
     C.env_type = str(args.env_type)
     C.out_dir = f"{C.work_dir}output/{C.env_type}-{C.env_name}/run-{run}/"
@@ -111,10 +111,12 @@ class Profile(Context):
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[0]
         C.gamma = 0.99
+        C.hashing = False
         C.deterministic = True
-        C.sync_every = 10
+        C.sync_every = 100
         max_train_episode_steps = [2000, 4000, 6000, 10000][2]
         max_eval_episode_steps = [2000, 4000, 6000, 10000][2]
+        dnn = C.dnn_types[1]
     if C.env_type == "toy_text":
         C.total_frames = [1e6, 1e8][0]
         C.num_actor = len(C.gpus) * 8
@@ -123,24 +125,25 @@ class Profile(Context):
         C.gamma = 0.99
         C.hashing = False
         C.deterministic = True
-        C.sync_every = 50
+        C.sync_every = 100
         C.render = False
-        if C.env_name == "FrozenLake-v1":
-            min_traj_reward = 0.5
         max_episode_steps = [200, 400, 600, 1000][0]
+        dnn = C.dnn_types[1]
     if C.env_type == "football":
-        C.total_frames = [1e6][0]
+        C.total_frames = [1e6, 1e5][1]
         C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
         C.projector = C.projector_types[0]
+        C.sync_every = 50
         C.target_total_rewrad = 2.0
-        C.hashing = True
+        C.hashing = False
         C.min_traj_reward = 1.2
         C.gamma = 0.99
         C.e_greedy = [0.1, 1]
         C.deterministic = True
         C.num_action_repeats = 1
         reward_type = ["scoring", "scoring,checkpoints"][1]
+        dnn = C.dnn_types[1]
     if C.env_type == "atari":
         C.total_frames = [1e7, 2e6, 1e6, 1e5][2]  # default 1e7
         C.num_actor = len(C.gpus) * 8

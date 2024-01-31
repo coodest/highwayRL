@@ -23,6 +23,7 @@ class ToyText:
                     Logger.log("head_actor create the env")
                     env = gym.make(P.env_name)
                     env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
+                    env = TTEnv(env)
                     env.reset(seed=123)
                     IO.write_disk_dump(env_path, env)
                     break
@@ -36,3 +37,17 @@ class ToyText:
         env.sample_action = types.MethodType(sample_action, env)
 
         return env
+    
+class TTEnv(gym.Wrapper):
+    def __init__(self, env: gym.Env):
+        super().__init__(env)
+
+    def step(self, action):
+        observation, reward, terminated, info = super().step(action)
+        observation = np.array(observation)
+        return observation, reward, terminated, info
+    
+    def reset(self, **kwargs):
+        observation = super().reset(**kwargs)
+        observation = np.array(observation)
+        return observation

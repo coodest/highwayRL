@@ -128,7 +128,8 @@ class MazeEnv(gym.Env):
             self.maze_view.quit_game()
 
     def sample_action(self):
-        return np.random.choice(self.ACTION)
+        # return np.random.choice(self.ACTION)
+        return np.random.choice([0, 1, 2, 3])
 
     def configure(self, display=None):
         self.display = display
@@ -138,10 +139,7 @@ class MazeEnv(gym.Env):
         return [seed]
 
     def step(self, action):
-        if isinstance(action, int):
-            self.maze_view.move_robot(self.ACTION[action])
-        else:
-            self.maze_view.move_robot(action)
+        self.maze_view.move_robot(self.ACTION[int(action)])
 
         if np.array_equal(self.maze_view.robot, self.maze_view.goal):
             reward = 1
@@ -330,12 +328,6 @@ class MazeView2D:
             self.__draw_goal()
 
     def update(self, mode="human"):
-        """
-        try: 正常情况下，程序计划执行的语句。
-        except: 程序异常是执行的语句。
-        else: 程序无异常即try段代码正常执行后会执行该语句。
-        finally: 不管有没有异常，都会执行的语句。
-        """
         try:
             img_output = self.__view_update(mode)
             self.__controller_update()

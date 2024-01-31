@@ -1648,3 +1648,10 @@ if __name__ == "__main__":
 # from src.module.env. import Maze
 # env = Maze.make_env()
 # breakpoint()
+    
+# """
+#     try: 正常情况下，程序计划执行的语句。
+#     except: 程序异常是执行的语句。
+#     else: 程序无异常即try段代码正常执行后会执行该语句。
+#     finally: 不管有没有异常，都会执行的语句。
+#"""

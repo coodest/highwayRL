@@ -7,13 +7,34 @@ class Parameterizer:
     def __init__(self) -> None:
         self.highscore = Value("f", -float("inf"))
 
-    def utilize_graph_data(self, slaves=P.num_actor, total_epoch=1000):
+    def utilize_graph_data(self, slaves=P.num_actor):
         master_slave_queues = list()
         for _ in range(slaves):
             master_slave_queues.append(Manager().Queue())
         slave_master_queues = list()
         for _ in range(slaves):
             slave_master_queues.append(Manager().Queue())
+
+        if P.env_type == "maze":
+            total_epoch = 1000
+            batch_size = 32
+            lr = 1e-2
+            early_stop = 0.90
+        if P.env_type == "toy_text":
+            total_epoch = 2000
+            batch_size = 48
+            lr = 1e-4
+            early_stop = float("inf")
+        if P.env_type == "football":
+            total_epoch = 500
+            batch_size = 2560
+            lr = 1e-4
+            early_stop = 1.95
+        if P.env_type == "atari":
+            total_epoch = 1000
+            batch_size = 2560
+            lr = 1e-4
+            early_stop = float("inf")
         
         processes = []
         for id in range(slaves):
@@ -23,6 +44,9 @@ class Parameterizer:
                 slave_master_queues[id],
                 self.highscore, 
                 int(total_epoch/slaves),
+                batch_size,
+                lr,
+                early_stop,
             ))
             p.start()
             processes.append(p)
@@ -85,7 +109,7 @@ class Parameterizer:
 
         device = torch.device("cuda" if torch.cuda.is_available() and f"cuda:{P.prio_gpu}" else "cpu")
         env = Parameterizer.create_env()
-        if P.dnn == "random_rnn_dqn":
+        if P.dnn == "dqn-q":
             projector = Projector(0, False)
             dnn_model = QNetwork(env, encode=False).to(device)
         if P.dnn == "dqn":
@@ -101,12 +125,12 @@ class Parameterizer:
             total_reward = 0
             expected_return = 0
             step = 0
-            if P.dnn == "random_rnn_dqn":
+            if P.dnn == "dqn-q":
                 projector.reset()
             while not done:
                 with torch.no_grad():
-                    if P.dnn == "random_rnn_dqn":
-                        _, projected_obs = projector.batch_project([None, None, obs, None, None])
+                    if P.dnn == "dqn-q":
+                        _, projected_obs = projector.batch_project([obs, None, obs, None, None])
                         projected_obs = torch.tensor(projected_obs, dtype=torch.float32).unsqueeze(0).to(device, non_blocking=True)
                         q_values = dnn_model(projected_obs)
                     if P.dnn == "dqn":
@@ -122,7 +146,7 @@ class Parameterizer:
         Logger.log(f"dnn {evals} evals AR:{np.average(total_rewards):6.2f} ARTN: {np.average(expected_returns):6.2f}", color="green")
 
     @staticmethod
-    def parameterize(id, master_slave_queue, slave_master_queue, highscore, epochs, batch_size=2560, learning_rate=1e-4):
+    def parameterize(id, master_slave_queue, slave_master_queue, highscore, epochs, batch_size, learning_rate, early_stop):
         from src.util.tools import Logger, Funcs, IO
         from src.module.agent.policy.neural.dataset import OfflineDataset
         from src.module.agent.policy.projector import Projector
@@ -141,17 +165,18 @@ class Parameterizer:
         if P.deterministic:
             # remove dataloader randomness
             seed = (int(P.run) + 1) * id
-            Logger.log(f"slave_{id} seed: {seed}")
             def worker_init_fn(worker_id):
                 random.seed(seed + worker_id)
             g = torch.Generator()
             g.manual_seed(seed)
             dataloader = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=4, worker_init_fn=worker_init_fn, generator=g, pin_memory=True)
+            Logger.log(f"slave_{id} seed: {seed} dl_size: {len(train_dataset)}")
         else:
             dataloader = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=4, pin_memory=True)
+            Logger.log(f"slave_{id} dl_size: {len(train_dataset)}")
         env = Parameterizer.create_env()
         device = torch.device("cuda" if torch.cuda.is_available() and f"cuda:{P.prio_gpu}" else "cpu")
-        if P.dnn == "random_rnn_dqn":
+        if P.dnn == "dqn-q":
             projector = Projector(0, False)
             dnn_model = QNetwork(env, encode=False).to(device)
         if P.dnn == "dqn":
@@ -178,12 +203,12 @@ class Parameterizer:
             total_reward = 0
             expected_return = 0
             step = 0
-            if P.dnn == "random_rnn_dqn":
+            if P.dnn == "dqn-q":
                 projector.reset()
             while not done:
                 with torch.no_grad():
-                    if P.dnn == "random_rnn_dqn":
-                        _, projected_obs = projector.batch_project([None, None, obs, None, None])
+                    if P.dnn == "dqn-q":
+                        _, projected_obs = projector.batch_project([obs, None, obs, None, None])
                         projected_obs = torch.tensor(projected_obs, dtype=torch.float32).unsqueeze(0).to(device, non_blocking=True)
                         q_values = dnn_model(projected_obs)
                     if P.dnn == "dqn":
@@ -201,6 +226,10 @@ class Parameterizer:
                     torch.save(dnn_model.state_dict(), f"{P.model_dir}dnn_model.pt")
 
             Logger.log(f"slave_{id} #{e} lr: {scheduler.get_last_lr()[0]:.2e} loss: {loss.item():6.2f} R: {total_reward:6.2f} RTN:{expected_return:6.2f} S: {step} highscore: {highscore.value}")
+
+            if highscore.value >= early_stop:
+                slave_master_queue.put(None)
+                return
 
             new_dict = dict()
             sd = dnn_model.state_dict()

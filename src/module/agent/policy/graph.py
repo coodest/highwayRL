@@ -300,7 +300,7 @@ class Graph:
                 coord = self.node_obs[node]
                 pos[node] = [coord[0], - coord[1]]
             elif P.env_name == "CliffWalking-v0":
-                coord = self.node_obs[node]
+                coord = self.node_obs[node][0]
                 pos[node] = [coord % 12, -int(coord / 12)]
             else:
                 pos[node] = np.random.rand(2,)

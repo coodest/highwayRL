@@ -47,7 +47,7 @@ class OfflineDataset(Dataset):
         if P.dnn == "dqn":
             obs = self.obss[proj_obs]
             obs = torch.tensor(np.array(obs).transpose(2, 1, 0), dtype=torch.float32)
-        if P.dnn == "random_rnn_dqn":
+        if P.dnn == "dqn-q":
             obs = proj_obs
             obs = torch.tensor(np.array(obs), dtype=torch.float32)
         
