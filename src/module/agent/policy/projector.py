@@ -18,6 +18,8 @@ class Projector:
             self.projector = AEProjector(id, is_head)
         if P.projector == "seq":
             self.projector = SeqProjector(id)
+        if P.projector == "linear":
+            self.projector = LinearProjector(id, is_head)
 
     def batch_project(self, transition):
         last_obs, obs = self.projector.batch_project(transition)
@@ -114,6 +116,59 @@ class RawProjector:
 
     def reset(self):
         pass
+
+
+class LinearProjector:
+    def __init__(self, id, is_head, projector_path=f"{P.model_dir}{P.env_name}-projector.pkl"):
+        super().__init__(id)
+        if is_head:
+            obs_dim = 115
+            self.random_matrix = RandomMatrixLayer(obs_dim, P.projected_dim)
+            IO.write_disk_dump(projector_path, self.random_matrix)
+        else:
+            while True:
+                try:
+                    self.random_matrix = IO.read_disk_dump(projector_path)
+                    break
+                except Exception:
+                    time.sleep(0.1)
+
+        self.random_matrix = self.random_matrix.to(self.device)
+        self.reset()
+
+    def reset(self):
+        self.last_result = ""
+        self.step = 0
+
+    def project(self, obs, hashing=P.hashing):
+        batch = np.ndarray.flatten(obs)
+        Logger.log(batch)
+        Logger.log(batch.shape)
+        input = None
+        with torch.no_grad():  # no grad calculation
+            # [obs_dim]
+            input = torch.tensor(batch, dtype=torch.float, requires_grad=False).to(self.device)
+            # [1, obs_dim]
+            input = input.unsqueeze(0)
+
+            # [1, projected_dim]
+            output = self.random_matrix(input)
+
+            result = output.cpu().detach().numpy().tolist()
+            result = tuple(np.concatenate([result, [self.step]]))
+            if hashing:
+                result = Funcs.matrix_hashing(result)
+        self.last_result = result
+        self.step += 1
+
+        return result
+
+    def batch_project(self, transition):
+        last_obs, pre_action, obs, reward, done = transition   
+        results = []
+        results.append(self.last_result)
+        results.append(self.project(obs))
+        return results
 
 
 class HashProjector(RawProjector):

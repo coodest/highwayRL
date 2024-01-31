@@ -50,6 +50,7 @@ class Context:
         "historical_hash",  # 2： for atari,
         "ae",  # 3: for atari,
         "seq",   # 4: for atari,
+        "linear",  # 5: for football
     ]
     projector = projector_types[0]
     projected_dim = 8
@@ -133,7 +134,7 @@ class Profile(Context):
         C.total_frames = [1e6, 1e5][1]
         C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
-        C.projector = C.projector_types[0]
+        C.projector = C.projector_types[5]
         C.sync_every = 50
         C.target_total_rewrad = 2.0
         C.hashing = False

@@ -40,7 +40,7 @@ class QNetwork(torch.nn.Module):
                 torch.nn.Linear(512, env.action_space.n),
             )
         if P.env_type == "football":
-            input_dim = 115
+            input_dim = P.projected_dim + 1
             self.Q = torch.nn.Sequential(
                 torch.nn.Linear(input_dim, 512),
                 torch.nn.LeakyReLU(),
