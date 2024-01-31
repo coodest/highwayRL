@@ -31,51 +31,52 @@ class HighwayRL:
     def staging():
         # 1. learn the graph
         if P.stages[0] is True:
-            finish = Value("b", False)
-            frames = Value("d", 0)
-            update = Value("b", True)
-            actor_learner_queues = list()
-            for _ in range(P.num_actor):
-                actor_learner_queues.append(Manager().Queue())
-            learner_actor_queues = list()
-            for _ in range(P.num_actor):
-                learner_actor_queues.append(Manager().Queue())
+            with Manager() as manager:
+                finish = Value("b", False)
+                frames = Value("d", 0)
+                update = Value("b", True)
+                actor_learner_queues = list()
+                for _ in range(P.num_actor):
+                    actor_learner_queues.append(manager.Queue())
+                learner_actor_queues = list()
+                for _ in range(P.num_actor):
+                    learner_actor_queues.append(manager.Queue())
 
-            learner_process = Process(target=HighwayRL.learner_run, args=(
-                actor_learner_queues,
-                learner_actor_queues,
-                finish,
-                frames,
-                update,
-            ))
-            learner_process.start()
-
-            actor_processes = []
-            for id in range(P.num_actor):
-                p = Process(target=HighwayRL.actor_run, args=(
-                    id,
-                    actor_learner_queues[id],
-                    learner_actor_queues[id],
+                learner_process = Process(target=HighwayRL.learner_run, args=(
+                    actor_learner_queues,
+                    learner_actor_queues,
                     finish,
                     frames,
                     update,
                 ))
-                p.start()
-                actor_processes.append(p)
-            
-            while True:
-                try:
-                    learner_process.join()
-                    Logger.log("learner exit")
+                learner_process.start()
 
-                    for ind, p in enumerate(actor_processes, start=0):
-                        p.join()
-                    Logger.log("actor exit")
-                    break
-                except KeyboardInterrupt:
-                    Logger.error("ctrl-c pressed")
+                actor_processes = []
+                for id in range(P.num_actor):
+                    p = Process(target=HighwayRL.actor_run, args=(
+                        id,
+                        actor_learner_queues[id],
+                        learner_actor_queues[id],
+                        finish,
+                        frames,
+                        update,
+                    ))
+                    p.start()
+                    actor_processes.append(p)
+                
+                while True:
+                    try:
+                        learner_process.join()
+                        Logger.log("learner exit")
 
-            Logger.log("stage 1 finished")
+                        for ind, p in enumerate(actor_processes, start=0):
+                            p.join()
+                        Logger.log("actor exit")
+                        break
+                    except KeyboardInterrupt:
+                        Logger.error("ctrl-c pressed")
+
+                Logger.log("stage 1 finished")
         # 2. parameterize the highway graph to the dnn model
         if P.stages[1] is True:
             from src.module.agent.policy.neural.parameterizer import Parameterizer

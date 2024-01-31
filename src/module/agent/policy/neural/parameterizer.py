@@ -8,70 +8,74 @@ class Parameterizer:
         self.highscore = Value("f", -float("inf"))
 
     def utilize_graph_data(self, slaves=P.num_actor):
-        master_slave_queues = list()
-        for _ in range(slaves):
-            master_slave_queues.append(Manager().Queue())
-        slave_master_queues = list()
-        for _ in range(slaves):
-            slave_master_queues.append(Manager().Queue())
+        with Manager() as manager:
+            master_slave_queues = list()
+            for _ in range(slaves):
+                master_slave_queues.append(manager.Queue())
+            slave_master_queues = list()
+            for _ in range(slaves):
+                slave_master_queues.append(manager.Queue())
 
-        if P.env_type == "maze":
-            total_epoch = 1000
-            batch_size = 32
-            lr = 1e-2
-            early_stop = 0.90
-        if P.env_type == "toy_text":
-            total_epoch = 2000
-            batch_size = 48
-            lr = 1e-4
-            early_stop = float("inf")
-        if P.env_type == "football":
-            total_epoch = 2000
-            batch_size = 2560
-            lr = 1e-4
-            early_stop = 1.95
-        if P.env_type == "atari":
-            total_epoch = 1000
-            batch_size = 2560
-            lr = 1e-4
-            early_stop = float("inf")
-        
-        processes = []
-        for id in range(slaves):
-            p = Process(target=Parameterizer.parameterize, args=(
-                id,
-                master_slave_queues[id],
-                slave_master_queues[id],
-                self.highscore, 
-                int(total_epoch/slaves),
-                batch_size,
-                lr,
-                early_stop,
-            ))
-            p.start()
-            processes.append(p)
+            if P.env_type == "maze":
+                total_epoch = 1000
+                batch_size = 32
+                lr = 1e-2
+                early_stop = 0.90
+            if P.env_type == "toy_text":
+                total_epoch = 2000
+                batch_size = 48
+                lr = 1e-4
+                early_stop = float("inf")
+            if P.env_type == "football":
+                total_epoch = 2000
+                batch_size = 2560
+                lr = 1e-4
+                early_stop = 1.95
+            if P.env_type == "atari":
+                total_epoch = 1000
+                batch_size = 2560
+                lr = 1e-4
+                early_stop = float("inf")
+            
+            processes = []
+            for id in range(slaves):
+                p = Process(target=Parameterizer.parameterize, args=(
+                    id,
+                    master_slave_queues[id],
+                    slave_master_queues[id],
+                    self.highscore, 
+                    int(total_epoch/slaves),
+                    batch_size,
+                    lr,
+                    early_stop,
+                ))
+                p.start()
+                processes.append(p)
 
-        finish = 0
-        while True:
-            state_dicts = dict()
-            for id in range(slaves):
-                result = slave_master_queues[id].get()
-                if result is None:
-                    finish += 1
-                    continue
-                for key in result:
-                    if key not in state_dicts:
-                        state_dicts[key] = list()
-                    state_dicts[key].append(result[key])
-            if finish == slaves:
-                break
-            new_state_dict = dict()
-            for key in state_dicts:
-                value = np.array(state_dicts[key], dtype=state_dicts[key][0].dtype)
-                avg = np.average(value, axis=0)
-                new_state_dict[key] = avg
-            for id in range(slaves):
-                master_slave_queues[id].put(new_state_dict)
+            finish = 0
+            while True:
+                state_dicts = dict()
+                for id in range(slaves):
+                    result = slave_master_queues[id].get()
+                    if result is None:
+                        finish += 1
+                        continue
+                    for key in result:
+                        if key not in state_dicts:
+                            state_dicts[key] = list()
+                        state_dicts[key].append(result[key])
+                if finish == slaves:
+                    break
+                new_state_dict = dict()
+                for key in state_dicts:
+                    value = np.array(state_dicts[key], dtype=state_dicts[key][0].dtype)
+                    avg = np.average(value, axis=0)
+                    new_state_dict[key] = avg
+                for id in range(slaves):
+                    master_slave_queues[id].put(new_state_dict)
+            
+            for p in processes:
+                p.join()
 
         self.eval_dnn_model()
 
