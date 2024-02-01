@@ -18,7 +18,7 @@ class Context:
     prio_gpu = gpus[0]  # first device in gpu list
     stages = [
         [False, True][1],
-        [False, True][1],
+        [False, True][0],
     ]
     wandb_enabled = [False, True][1]
 
