@@ -23,7 +23,7 @@ class Graph:
         """
         clean all the transition data stored for highway graph construction
         """
-        # reward: [o][a]=r(o, a)
+        # reward: [(o, a)]=r(o, a)
         self.obs_action_reward = dict()
         # possible next obss of a obs: [o][a]=o'
         self.obs_next = dict()
@@ -74,7 +74,7 @@ class Graph:
                                 switch_to_new_trans = True
                             
                             # old trans is not in highscore traj
-                            old_reward = self.obs_action_reward[last_obs][prev_action]
+                            old_reward = self.obs_action_reward[(last_obs, prev_action)]
                             if [last_obs, prev_action, old_obs, old_reward] not in self.general_info["max_total_reward_traj"]:
                                 if last_obs in self.Q:
                                     if prev_action in self.Q[last_obs]:
@@ -95,9 +95,7 @@ class Graph:
                     self.obs_next[last_obs][prev_action] = obs
 
                 if first_time_transition or switch_to_new_trans:
-                    if last_obs not in self.obs_action_reward:
-                        self.obs_action_reward[last_obs] = dict()
-                    self.obs_action_reward[last_obs][prev_action] = float(last_reward)
+                    self.obs_action_reward[(last_obs, prev_action)] = float(last_reward)
 
                     if obs not in self.obs_prev:
                         self.obs_prev[obs] = dict()
@@ -182,7 +180,7 @@ class Graph:
                 current_action = action
                 visited_obs = list()
                 while True:
-                    value += np.power(P.gamma, length) * self.obs_action_reward[current_obs][current_action]
+                    value += np.power(P.gamma, length) * self.obs_action_reward[(current_obs, current_action)]
                     length += 1
                     current_obs = self.obs_next[current_obs][current_action]
                     if self.is_intersection(current_obs):
@@ -265,7 +263,7 @@ class Graph:
                         current_value = 0.0
                     while True:
                         current_action = list(self.obs_next[current_obs].keys())[0]
-                        current_reward = self.obs_action_reward[current_obs][current_action]
+                        current_reward = self.obs_action_reward[(current_obs, current_action)]
                         current_value = P.gamma * current_value + current_reward
                         if current_obs not in self.Q:
                             self.Q[current_obs] = dict()
@@ -401,10 +399,13 @@ class Graph:
         return None, None, steps
 
     def info(self):
-        return "ST/HW: {}/{}({:.1f}%) MaxEpiRwd: {:.2f}/{}".format(
+        return "ST/HW: n{}/{}({:.1f}%)e{}/{}({:.1f}%) MR: {:.2f}/{}".format(
             len(self.all_obs),
             len(self.node),
             100 * (len(self.node) / (len(self.all_obs) + 1e-8)),
+            len(self.obs_action_reward),
+            len(self.edge_value),
+            100 * (len(self.edge_value) / (len(self.obs_action_reward) + 1e-8)),
             self.general_info["max_total_reward"],
             str(self.general_info["max_total_reward_init_obs"])[-4:],
         )

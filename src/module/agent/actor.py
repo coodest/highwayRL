@@ -210,31 +210,36 @@ class Actor:
                             if abs(latest_avg_reward - P.target_total_rewrad) < 0.01:
                                 with self.update.get_lock():
                                     self.update.value = False
-                        Logger.log("evl_actor R: {:6.2f} AR: {:6.2f} MR: {:6.2f} RTN: {:6.2f} ARTN: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
-                            self.episodic_reward[-1],
-                            latest_avg_reward,
-                            self.max_episodic_reward,
-                            self.episodic_return[-1],
-                            latest_avg_return,
-                            self.fps[-1],
-                            hit_rate,
-                            last_step_before_loss,
-                            len(self.hit),
-                            str(proj_index_init_obs)[-4:]
-                        ))
-                        if P.wandb_enabled:
-                            try:
-                                wandb.log(data={"Expected_Return": self.episodic_return[-1], "Total_Reward": self.episodic_reward[-1], "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))
-                            except Exception:
-                                pass
-                    Logger.write(f"Actor_{self.id}/R", self.episodic_reward[-1], self.num_episode)
-                    Logger.write(f"Actor_{self.id}/Rtn", self.episodic_return[-1], self.num_episode)
-                    Logger.write(f"Actor_{self.id}/AvgR", latest_avg_reward, self.num_episode)
-                    Logger.write(f"Actor_{self.id}/MaxR", self.max_episodic_reward, self.num_episode)
-                    Logger.write(f"Actor_{self.id}/FPS", self.fps[-1], self.num_episode)
-                    Logger.write(f"Actor_{self.id}/Hit%", hit_rate, self.num_episode)
-                    Logger.write(f"Actor_{self.id}/LostAt", f"{last_step_before_loss}/{len(self.hit)}", self.num_episode, type="text")
-                    Logger.write(f"Actor_{self.id}/O_1", str(proj_index_init_obs)[-4:], self.num_episode, type="text")
+
+                    if self.num_episode % P.log_every == 0:
+                        if self.is_head():
+                            Logger.log("evl_actor #{} R: {:6.2f} AR: {:6.2f} MR: {:6.2f} RTN: {:6.2f} ARTN: {:6.2f} Fps: {:6.1f} H: {:4.1f}% L: {}/{} O1: {}".format(
+                                self.num_episode,
+                                self.episodic_reward[-1],
+                                latest_avg_reward,
+                                self.max_episodic_reward,
+                                self.episodic_return[-1],
+                                latest_avg_return,
+                                self.fps[-1],
+                                hit_rate,
+                                last_step_before_loss,
+                                len(self.hit),
+                                str(proj_index_init_obs)[-4:]
+                            ))
+                            if P.wandb_enabled:
+                                try:
+                                    wandb.log(data={"Expected_Return": self.episodic_return[-1], "Total_Reward": self.episodic_reward[-1], "Minutes": (time.time() - self.loop_start_time) / 60}, step=int(self.frames.value))
+                                except Exception:
+                                    pass
+                        if P.summary_enabled:
+                            Logger.write(f"Actor_{self.id}/R", self.episodic_reward[-1], self.num_episode)
+                            Logger.write(f"Actor_{self.id}/Rtn", self.episodic_return[-1], self.num_episode)
+                            Logger.write(f"Actor_{self.id}/AvgR", latest_avg_reward, self.num_episode)
+                            Logger.write(f"Actor_{self.id}/MaxR", self.max_episodic_reward, self.num_episode)
+                            Logger.write(f"Actor_{self.id}/FPS", self.fps[-1], self.num_episode)
+                            Logger.write(f"Actor_{self.id}/Hit%", hit_rate, self.num_episode)
+                            Logger.write(f"Actor_{self.id}/LostAt", f"{last_step_before_loss}/{len(self.hit)}", self.num_episode, type="text")
+                            Logger.write(f"Actor_{self.id}/O_1", str(proj_index_init_obs)[-4:], self.num_episode, type="text")
 
                     break
             self.num_episode += 1

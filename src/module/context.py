@@ -21,6 +21,7 @@ class Context:
         [False, True][0],
     ]
     wandb_enabled = [False, True][1]
+    summary_enabled = [False, True][0]
 
     # env
     total_frames = None  # default 1e7
@@ -56,6 +57,8 @@ class Context:
     projected_dim = 8
     projected_hidden_dim = 32
     hashing = None
+    save_transition = False
+    log_every = 1
     # agent:policy:graph
     load_graph = False
     max_node_draw = 500
@@ -115,6 +118,7 @@ class Profile(Context):
         C.hashing = False
         C.deterministic = True
         C.sync_every = 100
+        C.log_every = 50
         max_train_episode_steps = [2000, 4000, 6000, 10000][2]
         max_eval_episode_steps = [2000, 4000, 6000, 10000][2]
         dnn = C.dnn_types[1]
@@ -126,7 +130,8 @@ class Profile(Context):
         C.gamma = 0.99
         C.hashing = False
         C.deterministic = True
-        C.sync_every = 100
+        C.sync_every = 1000
+        C.log_every = 500
         C.render = False
         max_episode_steps = [200, 400, 600, 1000][0]
         dnn = C.dnn_types[1]

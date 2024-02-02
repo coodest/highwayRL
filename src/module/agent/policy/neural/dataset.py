@@ -24,7 +24,8 @@ class OfflineDataset(Dataset):
         self.obss.update(o)
 
     def add(self, obs, proj_obs):
-        self.obss[proj_obs] = obs
+        if P.save_transition:
+            self.obss[proj_obs] = obs
 
     def make(self, Q):
         for proj_obs in self.obss:
