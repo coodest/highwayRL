@@ -18,7 +18,7 @@ class Context:
     prio_gpu = gpus[0]  # first device in gpu list
     stages = [
         [False, True][1],
-        [False, True][0],
+        [False, True][1],
     ]
     wandb_enabled = [False, True][1]
     summary_enabled = [False, True][0]
@@ -57,7 +57,7 @@ class Context:
     projected_dim = 8
     projected_hidden_dim = 32
     hashing = None
-    save_transition = False
+    save_transition = [False, True][1]
     log_every = 1
     # agent:policy:graph
     load_graph = False

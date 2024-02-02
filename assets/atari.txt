@@ -1,4 +1,4 @@
 --Atari games--
-StarGunner
 BattleZone
+StarGunner
 Defender

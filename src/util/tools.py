@@ -8,7 +8,6 @@ import traceback
 from src.util.imports.numpy import np
 import hashlib
 import psutil
-import pytz
 from pathlib import Path
 import subprocess
 import signal 
@@ -211,10 +210,7 @@ class Logger:
 
     @staticmethod
     def get_date():
-        return datetime.datetime.fromtimestamp(
-            int(time.time()),
-            pytz.timezone("Asia/Shanghai")
-        ).strftime("%y%m%d%H%M%S")
+        return datetime.datetime.new().strftime("%y%m%d%H%M%S")
 
     @staticmethod
     def get_hardware_info():

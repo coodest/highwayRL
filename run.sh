@@ -15,9 +15,11 @@ docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)
 PARALLEL=--tty
 # PARALLEL=--detach
 
-for ENV_TYPE in atari maze toy_text football
+# for ENV_TYPE in atari maze toy_text football
+for ENV_TYPE in atari
 do
-    for RUN in {7..9}
+    # for RUN in {7..9}
+    for RUN in 0
     do
         for ENV in $(sed 1d ./assets/${ENV_TYPE}.txt)
         do
