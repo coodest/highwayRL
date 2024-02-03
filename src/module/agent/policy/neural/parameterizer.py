@@ -15,27 +15,6 @@ class Parameterizer:
             slave_master_queues = list()
             for _ in range(slaves):
                 slave_master_queues.append(manager.Queue())
-
-            if P.env_type == "maze":
-                total_epoch = 1000
-                batch_size = 32
-                lr = 1e-2
-                early_stop = 0.90
-            if P.env_type == "toy_text":
-                total_epoch = 2000
-                batch_size = 48
-                lr = 1e-4
-                early_stop = float("inf")
-            if P.env_type == "football":
-                total_epoch = 2000
-                batch_size = 2560
-                lr = 1e-4
-                early_stop = 1.95
-            if P.env_type == "atari":
-                total_epoch = 1000
-                batch_size = 2560
-                lr = 1e-4
-                early_stop = float("inf")
             
             processes = []
             for id in range(slaves):
@@ -44,10 +23,10 @@ class Parameterizer:
                     master_slave_queues[id],
                     slave_master_queues[id],
                     self.highscore, 
-                    int(total_epoch/slaves),
-                    batch_size,
-                    lr,
-                    early_stop,
+                    int(P.total_epoch/slaves),
+                    P.batch_size,
+                    P.lr,
+                    P.early_stop,
                 ))
                 p.start()
                 processes.append(p)

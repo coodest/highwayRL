@@ -20,7 +20,7 @@ class Context:
         [False, True][1],
         [False, True][0],
     ]
-    wandb_enabled = [False, True][1]
+    wandb_enabled = [False, True][0]
     summary_enabled = [False, True][0]
 
     # env
@@ -74,6 +74,9 @@ class Context:
         "dqn-q",
     ]
     dnn = None
+    batch_size = None
+    lr = None
+    early_stop = None
 
 
 class Profile(Context):
@@ -117,11 +120,15 @@ class Profile(Context):
         C.gamma = 0.99
         C.hashing = False
         C.deterministic = True
-        C.sync_every = 100
-        C.log_every = 50
+        C.sync_every = 50
+        C.log_every = 25
         max_train_episode_steps = [2000, 4000, 6000, 10000][2]
         max_eval_episode_steps = [2000, 4000, 6000, 10000][2]
-        dnn = C.dnn_types[1]
+        C.dnn = C.dnn_types[1]
+        C.total_epoch = 1000
+        C.batch_size = 32
+        C.lr = 1e-2
+        C.early_stop = 0.90
     if C.env_type == "toy_text":
         C.total_frames = [1e6, 1e8][0]
         C.num_actor = len(C.gpus) * 8
@@ -130,11 +137,15 @@ class Profile(Context):
         C.gamma = 0.99
         C.hashing = False
         C.deterministic = True
-        C.sync_every = 1000
-        C.log_every = 500
+        C.sync_every = 50
+        C.log_every = 25
         C.render = False
         max_episode_steps = [200, 400, 600, 1000][0]
-        dnn = C.dnn_types[1]
+        C.dnn = C.dnn_types[1]
+        C.total_epoch = 20000
+        C.batch_size = 48
+        C.lr = 1e-4
+        C.early_stop = float("inf")
     if C.env_type == "football":
         C.total_frames = [1e6, 1e5][0]
         C.num_actor = len(C.gpus) * 8
@@ -150,7 +161,11 @@ class Profile(Context):
         C.deterministic = True
         C.num_action_repeats = 1
         reward_type = ["scoring", "scoring,checkpoints"][1]
-        dnn = C.dnn_types[1]
+        C.dnn = C.dnn_types[1]
+        C.total_epoch = 20000
+        C.batch_size = 256
+        C.lr = 1e-4
+        C.early_stop = 1.95
     if C.env_type == "atari":
         C.total_frames = [1e7, 2e6, 1e6, 1e5][2]  # default 1e7
         C.num_actor = len(C.gpus) * 8
@@ -171,4 +186,8 @@ class Profile(Context):
         stack_frames = 4
         screen_size = 84
         sticky_action = False
-        dnn = C.dnn_types[1]
+        C.dnn = C.dnn_types[1]
+        C.total_epoch = 1000
+        C.batch_size = 2560
+        C.lr = 1e-4
+        C.early_stop = float("inf")
