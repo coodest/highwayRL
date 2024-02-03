@@ -120,8 +120,8 @@ class Profile(Context):
         C.gamma = 0.99
         C.hashing = False
         C.deterministic = True
-        C.sync_every = 50
-        C.log_every = 25
+        C.sync_every = 10
+        C.log_every = 5
         max_train_episode_steps = [2000, 4000, 6000, 10000][2]
         max_eval_episode_steps = [2000, 4000, 6000, 10000][2]
         C.dnn = C.dnn_types[1]
@@ -137,8 +137,8 @@ class Profile(Context):
         C.gamma = 0.99
         C.hashing = False
         C.deterministic = True
-        C.sync_every = 50
-        C.log_every = 25
+        C.sync_every = 10
+        C.log_every = 5
         C.render = False
         max_episode_steps = [200, 400, 600, 1000][0]
         C.dnn = C.dnn_types[1]
