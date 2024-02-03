@@ -210,7 +210,7 @@ class Logger:
 
     @staticmethod
     def get_date():
-        return datetime.datetime.new().strftime("%y%m%d%H%M%S")
+        return datetime.datetime.now().strftime("%y%m%d%H%M%S")
 
     @staticmethod
     def get_hardware_info():
