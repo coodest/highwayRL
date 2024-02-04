@@ -36,21 +36,15 @@ class Graph:
 
         # information about the graph for debugging
         self.general_info = dict()
-        self.general_info["max_total_reward"] = - float("inf")
-        self.general_info["max_total_reward_init_obs"] = None
-        self.general_info["max_total_reward_traj"] = None
+        self.general_info["max_income"] = - float("inf")
+        self.general_info["max_income_init_obs"] = None
+        self.general_info["max_income_traj"] = None
 
     def add_trajs(self, trajs, edge_spliting_support=True):
         num_switched_trans = 0
         total_trans = 0
         for traj, total_reward in trajs:
             # add transition
-            # update general info
-            if total_reward > self.general_info["max_total_reward"]:
-                self.general_info["max_total_reward"] = total_reward
-                self.general_info["max_total_reward_init_obs"] = traj[0][0]
-                self.general_info["max_total_reward_traj"] = traj
-
             self.starting_obs.add(traj[0][0])
             self.terminal_obs.add(traj[-1][2])
             current_value = 0.0
@@ -70,12 +64,12 @@ class Graph:
                         old_obs = self.obs_next[last_obs][prev_action]
                         if old_obs != obs:
                             # new trans is in highscore traj
-                            if [last_obs, prev_action, obs, last_reward] in self.general_info["max_total_reward_traj"]:
+                            if [last_obs, prev_action, obs, last_reward] in self.general_info["max_income_traj"]:
                                 switch_to_new_trans = True
                             
                             # old trans is not in highscore traj
                             old_reward = self.obs_action_reward[(last_obs, prev_action)]
-                            if [last_obs, prev_action, old_obs, old_reward] not in self.general_info["max_total_reward_traj"]:
+                            if [last_obs, prev_action, old_obs, old_reward] not in self.general_info["max_income_traj"]:
                                 if last_obs in self.Q:
                                     if prev_action in self.Q[last_obs]:
                                         if self.Q[last_obs][prev_action] > current_value:
@@ -102,6 +96,17 @@ class Graph:
                     if prev_action not in self.obs_prev[obs]:
                         self.obs_prev[obs][prev_action] = set()
                     self.obs_prev[obs][prev_action].add(last_obs)
+            
+            # update general info
+            income = - float("inf")
+            if P.income == "reward":
+                income = total_reward
+            if P.income == "expected_return":
+                income = current_value
+            if income > self.general_info["max_income"]:
+                self.general_info["max_income"] = income
+                self.general_info["max_income_init_obs"] = traj[0][0]
+                self.general_info["max_income_traj"] = traj
 
         return num_switched_trans, total_trans, len(trajs)
 
@@ -385,8 +390,8 @@ class Graph:
         self.draw_graph()
 
     def get_action(self, obs):
-        if self.general_info["max_total_reward_traj"] is not None:
-            steps = len(self.general_info["max_total_reward_traj"])
+        if self.general_info["max_income_traj"] is not None:
+            steps = len(self.general_info["max_income_traj"])
         else:
             steps = 0
 
@@ -406,6 +411,6 @@ class Graph:
             len(self.obs_action_reward),
             len(self.edge_value),
             100 * (len(self.edge_value) / (len(self.obs_action_reward) + 1e-8)),
-            self.general_info["max_total_reward"],
-            str(self.general_info["max_total_reward_init_obs"])[-4:],
+            self.general_info["max_income"],
+            str(self.general_info["max_income_init_obs"])[-4:],
         )

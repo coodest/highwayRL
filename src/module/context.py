@@ -20,7 +20,7 @@ class Context:
         [False, True][1],
         [False, True][0],
     ]
-    wandb_enabled = [False, True][0]
+    wandb_enabled = [False, True][1]
     summary_enabled = [False, True][0]
 
     # env
@@ -66,8 +66,11 @@ class Context:
     reward_filter_ratio = None
     gamma = None  # discount factor
     sync_every = 10  # in trajectories
+    sync_increase = 1  # multipled to sync_every after every sync
     e_greedy = [0.1, 1]
     max_vp_iter = 1e8  # num or float("inf")
+    income_types = ["total_reward", "expected_return"]
+    income = income_types[0]
     # agent:policy:dnn
     dnn_types = [
         "dqn",
@@ -120,8 +123,9 @@ class Profile(Context):
         C.gamma = 0.99
         C.hashing = False
         C.deterministic = True
-        C.sync_every = 10
-        C.log_every = 5
+        C.sync_every = 20
+        sync_increase = 10
+        C.log_every = 500
         max_train_episode_steps = [2000, 4000, 6000, 10000][2]
         max_eval_episode_steps = [2000, 4000, 6000, 10000][2]
         C.dnn = C.dnn_types[1]
@@ -137,8 +141,9 @@ class Profile(Context):
         C.gamma = 0.99
         C.hashing = False
         C.deterministic = True
-        C.sync_every = 10
-        C.log_every = 5
+        C.sync_every = 20
+        sync_increase = 10
+        C.log_every = 500
         C.render = False
         max_episode_steps = [200, 400, 600, 1000][0]
         C.dnn = C.dnn_types[1]
@@ -158,6 +163,7 @@ class Profile(Context):
         C.min_traj_reward = 1.2
         C.gamma = 0.99
         C.e_greedy = [0.1, 1]
+        C.income = C.income_types[1]
         C.deterministic = True
         C.num_action_repeats = 1
         reward_type = ["scoring", "scoring,checkpoints"][1]

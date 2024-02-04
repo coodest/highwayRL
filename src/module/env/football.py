@@ -1,4 +1,4 @@
-from src.util.tools import Logger, IO
+from src.util.tools import Logger, IO, Funcs
 from src.module.context import Profile as P
 import time
 import gym
@@ -566,7 +566,7 @@ class Scenario(object):
         self.config().end_episode_on_out_of_play = True
         self.config().end_episode_on_possession_change = True
 
-        random_offset = np.random.random() * 0.05
+        random_offset = (np.random.random() - 1) * 0.15
 
         # range of x: [-1, 1], y: [-0.44， 0.44]
         if P.env_name == "custom_3_vs_2":

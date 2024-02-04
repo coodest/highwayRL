@@ -71,7 +71,8 @@ class Learner:
 
             last_report = time.time()
             last_frame = frames.value
-            sync_count_down = P.sync_every
+            syncs = P.sync_every
+            sync_count_down = syncs
             memory = Memory(id, Learner.is_head(id))
             projector = Projector(id, Learner.is_head(id))
             offline_dataset = OfflineDataset(f"{P.env_name}-{id}")
@@ -105,7 +106,8 @@ class Learner:
                             ), color="yellow")
                             last_report = now
                             last_frame = cur_frame
-                            sync_count_down = P.sync_every
+                            syncs *= P.sync_increase
+                            sync_count_down = syncs
                             if frames.value > P.total_frames:
                                 with finish.get_lock():
                                     finish.value = True

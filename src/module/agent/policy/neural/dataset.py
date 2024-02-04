@@ -25,6 +25,8 @@ class OfflineDataset(Dataset):
 
     def add(self, obs, proj_obs):
         if P.save_transition:
+            if P.env_type == "football":
+                obs = proj_obs
             self.obss[proj_obs] = obs
 
     def make(self, Q):

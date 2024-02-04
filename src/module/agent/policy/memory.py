@@ -95,7 +95,7 @@ class Memory:
                 return
             
         if P.reward_filter_ratio is not None:
-            if total_reward < P.reward_filter_ratio * self.graph.general_info["max_total_reward"]:
+            if total_reward < P.reward_filter_ratio * self.graph.general_info["max_income"]:
                 return
         self.new_trajs.append([trajectory, total_reward])
 
