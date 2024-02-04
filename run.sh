@@ -12,8 +12,8 @@ xhost +"local:docker@"
 # clean existing container
 docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)
 
-# PARALLEL=--tty
-PARALLEL=--detach
+# PARALLEL=-t
+PARALLEL=-td
 
 # for ENV_TYPE in atari maze toy_text football
 for ENV_TYPE in toy_text
