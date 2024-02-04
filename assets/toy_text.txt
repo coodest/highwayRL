@@ -2,4 +2,3 @@
 CliffWalking-v0
 Taxi-v3
 Blackjack-v1
-FrozenLake-v1
