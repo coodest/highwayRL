@@ -123,9 +123,9 @@ class Profile(Context):
         C.gamma = 0.99
         C.hashing = False
         C.deterministic = True
-        C.sync_every = 20
-        sync_increase = 5
-        C.log_every = 500
+        C.sync_every = 10
+        sync_increase = 1
+        C.log_every = 1
         max_train_episode_steps = [2000, 4000, 6000, 10000][2]
         max_eval_episode_steps = [2000, 4000, 6000, 10000][2]
         C.dnn = C.dnn_types[1]
