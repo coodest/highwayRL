@@ -99,7 +99,7 @@ class Graph:
             
             # update general info
             income = - float("inf")
-            if P.income == "reward":
+            if P.income == "total_reward":
                 income = total_reward
             if P.income == "expected_return":
                 income = current_value
@@ -404,7 +404,7 @@ class Graph:
         return None, None, steps
 
     def info(self):
-        return "ST/HW: n{}/{}({:.1f}%)e{}/{}({:.1f}%) MR: {:.2f}/{}".format(
+        return "ST/HW: n{}/{}({:.1f}%)e{}/{}({:.1f}%) MI: {:.2f}/{}".format(
             len(self.all_obs),
             len(self.node),
             100 * (len(self.node) / (len(self.all_obs) + 1e-8)),

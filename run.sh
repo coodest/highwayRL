@@ -16,7 +16,7 @@ docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)
 PARALLEL=--detach
 
 # for ENV_TYPE in atari maze toy_text football
-for ENV_TYPE in maze toy_text
+for ENV_TYPE in toy_text
 do
     for RUN in {0..9}
     do
