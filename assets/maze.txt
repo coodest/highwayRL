@@ -1,4 +1,4 @@
 --maze maps--
-maze2d_3x3
-maze2d_5x5
+#maze2d_3x3
+#maze2d_5x5
 maze2d_15x15

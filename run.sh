@@ -19,9 +19,15 @@ PARALLEL=-td
 for ENV_TYPE in maze
 do
     for RUN in {0..2}
+    # for RUN in {3..5}
+    # for RUN in {6..8}
+    # for RUN in 9
     do
         for ENV in $(sed 1d ./assets/${ENV_TYPE}.txt)
-        do
+        do  
+            if [ ${ENV:0:1} == "#" ]; then
+                continue
+            fi
             docker run --user=worker --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --shm-size=40gb --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive $PARALLEL meetingdocker/rl:pt_0.1 python -X pycache_prefix=./cache -m src.app.highwayrl --env_type $ENV_TYPE --env_name $ENV --run $RUN
         done
     done
