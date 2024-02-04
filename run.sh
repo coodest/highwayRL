@@ -25,43 +25,6 @@ do
             docker run --user=worker --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --shm-size=40gb --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive $PARALLEL meetingdocker/rl:pt_0.1 python -X pycache_prefix=./cache -m src.app.highwayrl --env_type $ENV_TYPE --env_name $ENV --run $RUN
         done
     done
-    sleep 5
-    while [ `docker ps --all | wc -l` -gt 1 ]
-    do 
-        sleep 1
-    done
-    for RUN in {3..5}
-    do
-        for ENV in $(sed 1d ./assets/${ENV_TYPE}.txt)
-        do
-            docker run --user=worker --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --shm-size=40gb --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive $PARALLEL meetingdocker/rl:pt_0.1 python -X pycache_prefix=./cache -m src.app.highwayrl --env_type $ENV_TYPE --env_name $ENV --run $RUN
-        done
-    done
-    sleep 5
-    while [ `docker ps --all | wc -l` -gt 1 ]
-    do 
-        sleep 1
-    done
-    for RUN in {6..8}
-    do
-        for ENV in $(sed 1d ./assets/${ENV_TYPE}.txt)
-        do
-            docker run --user=worker --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --shm-size=40gb --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive $PARALLEL meetingdocker/rl:pt_0.1 python -X pycache_prefix=./cache -m src.app.highwayrl --env_type $ENV_TYPE --env_name $ENV --run $RUN
-        done
-    done
-    sleep 5
-    while [ `docker ps --all | wc -l` -gt 1 ]
-    do 
-        sleep 1
-    done
-    for RUN in 9
-    do
-        for ENV in $(sed 1d ./assets/${ENV_TYPE}.txt)
-        do
-            docker run --user=worker --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --shm-size=40gb --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive $PARALLEL meetingdocker/rl:pt_0.1 python -X pycache_prefix=./cache -m src.app.highwayrl --env_type $ENV_TYPE --env_name $ENV --run $RUN
-        done
-    done
-    sleep 5
     while [ `docker ps --all | wc -l` -gt 1 ]
     do 
         sleep 1
