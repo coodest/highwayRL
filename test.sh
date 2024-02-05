@@ -6,7 +6,7 @@ xhost +"local:docker@"
 PARALLEL=--tty
 
 # for ENV_TYPE in maze toy_text football atari
-for ENV_TYPE in atari
+for ENV_TYPE in toy_text
 do
     for ENV in $(sed 1d ./assets/${ENV_TYPE}.txt)
     do

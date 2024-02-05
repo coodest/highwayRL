@@ -24,7 +24,7 @@ class ToyText:
                     env = gym.make(P.env_name)
                     env = TimeLimit(env.env, max_episode_steps=P.max_episode_steps)
                     env = TTEnv(env)
-                    env.reset(seed=123)
+                    env.reset(seed=int(P.run))
                     IO.write_disk_dump(env_path, env)
                     break
 

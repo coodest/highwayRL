@@ -985,7 +985,7 @@ class Test:
     def toy_text(self):
         from src.module.env.toy_text import ToyText
 
-        a = ToyText.make_env(is_head=False)
+        a = ToyText.make_env(is_head=True)
 
         breakpoint()
 
@@ -1162,10 +1162,10 @@ if __name__ == "__main__":
     # test.save_maze_image()
     # test.maze_generator()
     # test.offline_dataset()
-    # test.toy_text()
+    test.toy_text()
     # test.graph_value_iteration()
     # test.networkx_graph()
-    test.drop_off()
+    # test.drop_off()
 
 # from ctypes import sizeof
 # from src.util.imports.numpy import np

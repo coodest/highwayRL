@@ -26,7 +26,7 @@ class Atari:
             # render_mode='human',
         )
 
-        env.seed(1)
+        env.seed(int(P.run))
 
         if is_head:
             env = TimeLimit(env.env, max_episode_steps=P.max_eval_episode_steps)
