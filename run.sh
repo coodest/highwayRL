@@ -15,13 +15,13 @@ docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)
 # PARALLEL=-t
 PARALLEL=-td
 
+START=0
+END=1
+
 # for ENV_TYPE in atari maze toy_text football
 for ENV_TYPE in maze
 do
-    for RUN in {0..2}
-    # for RUN in {3..5}
-    # for RUN in {6..8}
-    # for RUN in 9
+    for RUN in $(seq $START $END)
     do
         for ENV in $(sed 1d ./assets/${ENV_TYPE}.txt)
         do  
@@ -30,7 +30,13 @@ do
             fi
             docker run --user=worker --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --shm-size=40gb --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive $PARALLEL meetingdocker/rl:pt_0.1 python -X pycache_prefix=./cache -m src.app.highwayrl --env_type $ENV_TYPE --env_name $ENV --run $RUN
         done
+        sleep 1
+        while [ `docker ps --all | wc -l` -gt 2 ]
+        do 
+            sleep 1
+        done
     done
+    
     while [ `docker ps --all | wc -l` -gt 1 ]
     do 
         sleep 1

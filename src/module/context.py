@@ -124,7 +124,7 @@ class Profile(Context):
         C.hashing = False
         C.deterministic = True
         C.sync_every = 10
-        sync_increase = 1
+        sync_increase = 2
         C.log_every = 1
         max_train_episode_steps = [2000, 4000, 6000, 10000][2]
         max_eval_episode_steps = [2000, 4000, 6000, 10000][2]
