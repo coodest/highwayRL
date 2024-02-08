@@ -38,14 +38,14 @@ class Actor:
             with open("./wandb_key") as key_file:
                 os.environ["WANDB_API_KEY"] = key_file.readline()
             api = wandb.Api()
-            runs = api.runs('centergoodroid/OfflineRL')
+            runs = api.runs('centergoodroid/mrl')
             for run in runs:
                 if run.job_type==f"{P.env_name}" and run.group=="HG" and run.name==f"run-{P.run}":
                     run.delete()
             
             # init current run
             wandb.init(
-                project="OfflineRL",
+                project="mrl",
                 job_type=f"{P.env_name}",
                 group="HG",
                 name=f"run-{P.run}",
