@@ -11,3 +11,5 @@ __pycache__/
 .sokoban_cache
 
 assets/pretrained_projectors
+
+wandb_key

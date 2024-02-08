@@ -5,8 +5,8 @@ from multiprocessing import Queue
 from collections import deque
 from src.util.imports.random import random
 from src.util.imports.numpy import np
-import wandb
 import os
+import wandb
 import math
 from src.module.agent.policy.projector import Projector
 
@@ -35,15 +35,17 @@ class Actor:
         if self.is_head() and P.wandb_enabled:
             # delete previous run(s)
             os.environ["WANDB_MODE"] = "offline"
+            with open("./wandb_key") as key_file:
+                os.environ["WANDB_API_KEY"] = key_file.readline()
             api = wandb.Api()
-            runs = api.runs('centergoodroid/mrl')
+            runs = api.runs('centergoodroid/OfflineRL')
             for run in runs:
                 if run.job_type==f"{P.env_name}" and run.group=="HG" and run.name==f"run-{P.run}":
                     run.delete()
             
             # init current run
             wandb.init(
-                project="mrl",
+                project="OfflineRL",
                 job_type=f"{P.env_name}",
                 group="HG",
                 name=f"run-{P.run}",

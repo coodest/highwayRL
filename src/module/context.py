@@ -20,7 +20,7 @@ class Context:
         [False, True][1],
         [False, True][0],
     ]
-    wandb_enabled = [False, True][1]
+    wandb_enabled = [False, True][1]  # if enabled, '/wandb_key file must exist and valid
     summary_enabled = [False, True][0]
 
     # env

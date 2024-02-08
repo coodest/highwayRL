@@ -12,11 +12,11 @@ xhost +"local:docker@"
 # clean existing container
 docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)
 
-# PARALLEL=-t
-PARALLEL=-td
+PARALLEL=-t
+# PARALLEL=-td
 
 START=0
-END=1
+END=0
 
 # for ENV_TYPE in atari maze toy_text football
 for ENV_TYPE in maze
@@ -28,7 +28,7 @@ do
             if [ ${ENV:0:1} == "#" ]; then
                 continue
             fi
-            docker run --user=worker --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --shm-size=40gb --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive $PARALLEL meetingdocker/rl:pt_0.1 python -X pycache_prefix=./cache -m src.app.highwayrl --env_type $ENV_TYPE --env_name $ENV --run $RUN
+            docker run --user=worker --gpus all --env DISPLAY=$DISPLAY --env="MPLCONFIGDIR=/tmp/matplotlib" --env="NVIDIA_DRIVER_CAPABILITIES=all" --shm-size=40gb --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --volume $(pwd):/home/worker/work --rm --interactive $PARALLEL meetingdocker/rl:pt_0.2 python -X pycache_prefix=./cache -m src.app.highwayrl --env_type $ENV_TYPE --env_name $ENV --run $RUN
         done
         sleep 1
         while [ `docker ps --all | wc -l` -gt 2 ]

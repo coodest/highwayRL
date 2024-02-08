@@ -3,8 +3,8 @@
 ## build docker image (optional)
 One could build locally by:
 
-    sudo docker image build docker/ml/pt_0.1 --tag meetingdocker/ml:pt_0.1 --build-arg UID=$(id -u)
-    sudo docker image build docker/rl/pt_0.1 --tag meetingdocker/rl:pt_0.1
+    sudo docker image build docker/ml/pt_0.2 --tag meetingdocker/ml:pt_0.2 --build-arg UID=$(id -u)
+    sudo docker image build docker/rl/pt_0.2 --tag meetingdocker/rl:pt_0.2
 
 or download the built image when running the code.
  
