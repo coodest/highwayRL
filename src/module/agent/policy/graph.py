@@ -4,6 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from src.util.imports.numpy import np
 from src.module.agent.policy.iterator import Iterator
+import time
 
 
 class Graph:
@@ -229,8 +230,10 @@ class Graph:
                     adj[from_ind, to_ind] = 1
 
         # value propagation
+        start_time = time.time()
         val_n, n_iters, divider = self.iterator.iterate(rew, gamma, val_0, adj)
-        Logger.log(f"learner value propagation: {n_iters} iters * {divider} batch", color="yellow")
+        end_time = time.time()
+        Logger.log(f"learner value propagation: {n_iters} iters * {divider} batch using {(end_time - start_time) * 1000} ms", color="yellow")
         
         # update node and edge value
         for ind, val in enumerate(val_n):
