@@ -33,10 +33,16 @@ class Actor:
         self.update = update
         self.loop_start_time = None
         if self.is_head() and P.wandb_enabled:
+            # delete previous run(s)
             # offline setup
             os.environ["WANDB_MODE"] = "offline"
             with open("./wandb_key") as key_file:
                 os.environ["WANDB_API_KEY"] = key_file.readline()
+            api = wandb.Api()
+            runs = api.runs('centergoodroid/mrl')
+            for run in runs:
+                if run.job_type==f"{P.env_name}" and run.group=="HG" and run.name==f"run-{P.run}":
+                    run.delete()
             
             # init current run
             wandb.init(
