@@ -12,6 +12,8 @@ libdirectfb-dev libst-dev mesa-utils xvfb x11vnc
 # add display for video app
 RUN ln -sf /usr/lib/x86_64-linux-gnu/libffi.so.7 /opt/conda/lib/libffi.so.7
 
+# add conda packages
+RUN conda install -y python=3.10 pytorch=2.0.1 pytorch-cuda=11.8 -c pytorch -c nvidia
 # add conda source
 RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
 RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
@@ -20,8 +22,6 @@ RUN conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cl
 RUN conda config --set show_channel_urls yes
 RUN conda config --set always_yes True
 RUN conda clean -i
-# add conda packages
-RUN conda install -y python=3.10 pytorch=2.0.1 pytorch-cuda=11.8 -c pytorch -c nvidia
 
 # add pip source
 RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
