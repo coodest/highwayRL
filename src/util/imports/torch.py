@@ -4,10 +4,10 @@ from src.module.context import Profile as P
 if P.deterministic:
     seed = int(P.run)
 
-    torch.manual_seed(seed)  # cpu种子
-    torch.cuda.manual_seed(seed)  # 当前GPU的种子
-    torch.cuda.manual_seed_all(seed)  # 所有可用GPU的种子
-    torch.backends.cudnn.deterministic = True  # 默认为False
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     # remove dataloader randomness
     # def worker_init_fn(worker_id):

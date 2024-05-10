@@ -48,7 +48,6 @@ class Autoencoder(torch.nn.Module):
     def __init__(self):
         super(Autoencoder, self).__init__()
 
-        # 编码器
         self.enc1 = torch.nn.Linear(in_features=3136, out_features=784)  # Input image (28*28 = 784)
         self.enc2 = torch.nn.Linear(in_features=784, out_features=256)  # Input image (28*28 = 784)
         self.enc3 = torch.nn.Linear(in_features=256, out_features=128)
@@ -56,7 +55,6 @@ class Autoencoder(torch.nn.Module):
         self.enc5 = torch.nn.Linear(in_features=64, out_features=32)
         self.enc6 = torch.nn.Linear(in_features=32, out_features=16)
 
-        # 解码器 
         self.dec1 = torch.nn.Linear(in_features=16, out_features=32)
         self.dec2 = torch.nn.Linear(in_features=32, out_features=64)
         self.dec3 = torch.nn.Linear(in_features=64, out_features=128)
