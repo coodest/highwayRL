@@ -20,7 +20,7 @@ class Context:
         [False, True][1],
         [False, True][0],
     ]
-    wandb_enabled = [False, True][1]  # if enabled, '/wandb_key file must exist and valid
+    wandb_enabled = [False, True][0]  # if enabled, '/wandb_key file must exist and valid
     summary_enabled = [False, True][0]
 
     # env
@@ -94,10 +94,6 @@ class Profile(Context):
         "toy_text",  # 1
         "football",  # 2
         "atari",  # 3
-        "box_2d",  # 4
-        "sokoban",  # 5
-        "bullet",  # 6
-        "mujoco",  # 7
     ], help='type of the env')
     args, unk_args = parser.parse_known_args()
 

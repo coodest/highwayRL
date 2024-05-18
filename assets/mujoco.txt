@@ -1,2 +1,0 @@
---Mujoco games--
-halfcheetah-medium-expert-v2
