@@ -11,6 +11,9 @@ from absl import logging
 
 
 class Football:
+    """
+    environment class for Google Research Football
+    """
     @staticmethod
     def make_env(render=False, is_head=False, init_points=2 if not P.render else 1):
         logging.set_verbosity("error")
