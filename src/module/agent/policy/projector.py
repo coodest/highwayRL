@@ -7,6 +7,9 @@ import time
 
 
 class Projector:
+    """
+    the projector mapping from observations to states
+    """
     def __init__(self, id, is_head):
         if P.projector == "raw":
             self.projector = RawProjector(id)
