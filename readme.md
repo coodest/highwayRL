@@ -65,7 +65,7 @@ Finally, the `run.sh` file gives the ability to set the RL environmental informa
 ```
 @article{xxx,
   title={Highway Graph to Accelerate Reinforcement Learning},
-  author={Zidu Yin},
+  author={Zidu Yin, Zhen Zhang, Dong Gong, Stefano V. Albrecht, Javen Q. Shi},
   journal={arXiv preprint arXiv:},
   year={2024}
 }
