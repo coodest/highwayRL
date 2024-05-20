@@ -9,6 +9,7 @@ import time
 
 class Graph:
     """
+    highway graph
     node: intersection obss
     edge: highway with 1 to n transitions
     """
