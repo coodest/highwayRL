@@ -9,6 +9,9 @@ from src.module.context import Profile as P
 
 
 class Maze:
+    """
+    environment class for Simple Maze
+    """
     @staticmethod
     def make_env(render=False, is_head=False):
         """
