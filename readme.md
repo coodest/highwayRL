@@ -47,7 +47,7 @@ or download the built image when running the code.
     ./run.sh
 
 ## Changing the running setups
-All files are organized by the structure of levels:
+All source files (in the `src` folder) are organized by the structure of levels:
 
 `app-level`: top level of the code, defining the overall running logic of the application.
 
