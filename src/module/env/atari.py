@@ -10,6 +10,9 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 class Atari:
+    """
+    environment class for Atari games
+    """
     @staticmethod
     def make_env(render=False, is_head=False, use_projected_env=False):
         if P.sticky_action:
