@@ -49,7 +49,7 @@ class Context:
     average_window = 10
     # agent:policy:projector
     projector_types = [
-        "raw",  # 0(tuple of raw obs/state): for football, maze, toy_text, sokoban
+        "raw",  # 0(tuple of raw obs/state): for football, maze, toy_text
         "random_rnn",  # 1： for atari,
         "historical_hash",  # 2： for atari,
         "ae",  # 3: for atari,
