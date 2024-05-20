@@ -4,6 +4,9 @@ from src.util.imports.numpy import np
 
 
 class Parameterizer:
+    """
+    parameterizer for highway graph
+    """
     def __init__(self) -> None:
         self.highscore = Value("f", -float("inf"))
 
