@@ -53,12 +53,12 @@ All source files (in the `src` folder) are organized by the structure of levels:
 
 `module-level`: middle level for all components of the application.
 
-`util-level`: tools and utilities used by modules.
+`util-level`: tools and utilities used by modules at the bottom level.
 
 In the `module-level`, `context.py` acts as the control panel for experiment setup.
-The class `Context` is the structure to store default value of options, which can be specified and override by the class `Profile`.
-A customized profile can be done by editing and add the option with a value you desired.
-Finally, the `run.sh` file gives the ability to set RL environmental information of the experiments.
+The class `Context` is the structure to store the default value of options, which can be specified and overridden by the class `Profile`.
+A customized profile can be done by editing and adding the option with a value you desire.
+Finally, the `run.sh` file gives the ability to set the RL environmental information of the experiments.
 
 
 ## Bibtex
