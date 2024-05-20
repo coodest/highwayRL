@@ -2,6 +2,9 @@ import argparse
 
 
 class Context:
+    """
+    the control panel of options with default values
+    """
     # common
     work_dir = "./"
     asset_dir = work_dir + "assets/"
@@ -83,6 +86,10 @@ class Context:
 
 
 class Profile(Context):
+    """
+    the profile of runs with customized options
+    """
+    
     C = Context
 
     parser = argparse.ArgumentParser(description='HighwayRL')
