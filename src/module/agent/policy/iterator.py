@@ -3,6 +3,10 @@ from src.module.context import Profile as P
 
 
 class Iterator:
+    """
+    value iterator over highway graph
+    """
+    
     def __init__(self, id=0) -> None:
         self.id = id
         ind = P.prio_gpu
