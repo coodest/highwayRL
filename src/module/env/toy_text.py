@@ -9,6 +9,9 @@ import types
 
 
 class ToyText:
+    """
+    environment class for ToyText
+    """
     @staticmethod
     def make_env(render=False, is_head=False):
         env_path = f"{P.env_dir}{P.env_name}.pkl"
