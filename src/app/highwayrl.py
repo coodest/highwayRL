@@ -8,6 +8,9 @@ import os
 class HighwayRL:
     @staticmethod
     def start():
+        """
+        main entry
+        """
         # 1. init
         Logger.log_path = f"{P.log_dir}{P.env_name}.log"
         Logger.summary_dir = f"{P.summary_dir}{P.env_name}/"
@@ -29,6 +32,9 @@ class HighwayRL:
 
     @staticmethod
     def staging():
+        """
+        overall process flow with togggle-enabled stages
+        """
         # 1. learn the graph
         if P.stages[0] is True:
             with Manager() as manager:
@@ -86,6 +92,9 @@ class HighwayRL:
 
     @staticmethod
     def learner_run(actor_learner_queues, learner_actor_queues, finish, frames, update):
+        """
+        learner process
+        """
         try:
             from src.module.agent.learner import Learner
             os.environ["CUDA_VISIBLE_DEVICES"] = f"{str(P.gpus).replace(' ', '')[1:-1]}"
@@ -108,6 +117,9 @@ class HighwayRL:
         
     @staticmethod
     def actor_run(id, actor_learner_queues, learner_actor_queues, finish, frames, update):
+        """
+        actor process
+        """
         try:
             from src.module.agent.actor import Actor
 
