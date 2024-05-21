@@ -1,12 +1,8 @@
 # HighwayRL
 
-<p align="center">
-    <a href="https://arxiv.org/user/" alt="arXiv">
-        <img src="https://img.shields.io/badge/arXiv-.svg?style=flat" />
-    </a>
-</p>
+[![arXiv](https://img.shields.io/badge/arXiv-2405.11727-b31b1b.svg)]([https://arxiv.org/abs/1234.56789](https://arxiv.org/abs/2405.11727))
 
-This is the official PyTorch implementation of the Highway RL method proposed by our paper "[Highway Graph to Accelerate Reinforcement Learning](https://arxiv.org/user/)". 
+This is the official PyTorch implementation of the Highway RL method proposed by our paper "[Highway Graph to Accelerate Reinforcement Learning](https://arxiv.org/abs/2405.11727)". 
 
 The high cost of training RL agents has limited their research and applications.
 We explored an approach to significantly reduce this cost by applying the concept of highways in real-world transportation systems to the value-updating process of RL algorithms, introducing the highway RL method.
@@ -63,10 +59,12 @@ Finally, the `run.sh` file gives the ability to set the RL environmental informa
 
 ## Bibtex
 ```
-@article{xxx,
-  title={Highway Graph to Accelerate Reinforcement Learning},
-  author={Zidu Yin, Zhen Zhang, Dong Gong, Stefano V. Albrecht, Javen Q. Shi},
-  journal={arXiv preprint arXiv:},
-  year={2024}
+@misc{yin2024highway,
+      title={Highway Graph to Accelerate Reinforcement Learning}, 
+      author={Zidu Yin and Zhen Zhang and Dong Gong and Stefano V. Albrecht and Javen Q. Shi},
+      year={2024},
+      eprint={2405.11727},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
 }
 ```
