@@ -38,7 +38,7 @@ One could build the docker image locally by:
     sudo docker image build docker/ml/pt_0.2 --tag meetingdocker/ml:pt_0.2 --build-arg UID=$(id -u)
     sudo docker image build docker/rl/pt_0.2 --tag meetingdocker/rl:pt_0.2
 
-or download the built image when running the code.
+Or download the built image when running the code.
  
 ### 3. Run the code
 
@@ -49,14 +49,14 @@ All source files (in the `src` folder) are organized by the structure of levels:
 
 `app-level`: top level of the code, defining the overall running logic of the application.
 
-`module-level`: middle level for all components of the application.
+`module-level`: middle level to store all components of the application.
 
 `util-level`: tools and utilities used by modules at the bottom level.
 
 In the `module-level`, `context.py` acts as the control panel for experiment setup.
 The class `Context` is the structure to store the default value of options, which can be specified and overridden by the class `Profile`.
 A customized profile can be done by editing and adding the option with a value you desire.
-Finally, the `run.sh` file gives the ability to set the RL environmental information of the experiments.
+Finally, the `run.sh` file gives the ability to set the RL environmental information of the experiments. For example, change `atari` to `football` for `ENV_TYPE` in line 22 of `run.sh` will switch to GRF environments.
 
 
 ## Bibtex
