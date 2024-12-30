@@ -72,18 +72,9 @@ class Parameterizer:
         if P.env_type == "toy_text":
             from src.module.env.toy_text import ToyText
             return ToyText.make_env(render, is_head)
-        if P.env_type == "box_2d":
-            from src.module.env.box_2d import Box2D
-            return Box2D.make_env(render, is_head)
-        if P.env_type == "sokoban":
-            from src.module.env.sokoban import Sokoban
-            return Sokoban.make_env(render, is_head)
         if P.env_type == "football":
             from src.module.env.football import Football
             return Football.make_env(render, is_head)
-        if P.env_type == "mujoco":
-            from src.module.env.mujoco import Mujoco
-            return Mujoco.make_env(render, is_head)
 
     def eval_dnn_model(self, evals=10):
         from src.util.tools import Logger, Funcs, IO

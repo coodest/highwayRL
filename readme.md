@@ -59,12 +59,10 @@ Finally, the `run.sh` file gives the ability to set the RL environmental informa
 
 ## Bibtex
 ```
-@misc{yin2024highway,
-      title={Highway Graph to Accelerate Reinforcement Learning}, 
-      author={Zidu Yin and Zhen Zhang and Dong Gong and Stefano V. Albrecht and Javen Q. Shi},
-      year={2024},
-      eprint={2405.11727},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@article{yin2024highway,
+   title = {Highway Graph to Accelerate Reinforcement Learning},
+   author = {Zidu Yin and Zhen Zhang and Dong Gong and Stefano V. Albrecht and Javen Qinfeng Shi},
+   journal = {Transactions on Machine Learning Research (TMLR)},
+   year = {2024}
 }
 ```
