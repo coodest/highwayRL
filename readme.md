@@ -28,11 +28,11 @@ All experiments can be conducted within a docker container.
 Before you can run and see the results, you need to obtain the image with all decencies installed.
 Please see the following for more details.
 
-### 1. Prerequisite
+### 1. Prerequisite 📥 
 A Docker with the Nvidia GPU accessible should be on the Linux distribution. 
 The tested Linux distributions are Ubuntu 22.04 LTS and Fedora 39, and the docker version is 24.0.5. 
 
-### 2. Build or pull the docker image
+### 2. Build or pull the docker image 🐳
 The docker image with dependencies and RL environment setup is required.
 One could build the docker image locally by:
 
@@ -41,7 +41,7 @@ One could build the docker image locally by:
 
 Or download the built image when running the code.
  
-### 3. Run the code
+### 3. Run the code 🏃
 
     ./run.sh
 
@@ -60,7 +60,7 @@ A customized profile can be done by editing and adding the option with a value y
 Finally, the `run.sh` file gives the ability to set the RL environmental information of the experiments. For example, change `atari` to `football` for `ENV_TYPE` in line 22 of `run.sh` will switch to GRF environments.
 
 
-## Bibtex
+## Citation
 ```
 @article{yin2024highway,
    title = {Highway Graph to Accelerate Reinforcement Learning},
