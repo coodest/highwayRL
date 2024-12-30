@@ -1,8 +1,10 @@
 # HighwayRL
 
 [![arXiv](https://img.shields.io/badge/arXiv-2405.11727-b31b1b.svg)](https://arxiv.org/abs/2405.11727)
+[![OpenReview](https://img.shields.io/badge/OpenReview-b31b1b.svg)](https://github.com/coodest/highwayRL)
 
-This is the official PyTorch implementation of the Highway RL method proposed by our paper "[Highway Graph to Accelerate Reinforcement Learning](https://arxiv.org/abs/2405.11727)". 
+
+This is the official PyTorch implementation of the Highway RL method proposed by our paper "[Highway Graph to Accelerate Reinforcement Learning](https://github.com/coodest/highwayRL)". 
 
 The high cost of training RL agents has limited their research and applications.
 We explored an approach to significantly reduce this cost by applying the concept of highways in real-world transportation systems to the value-updating process of RL algorithms, introducing the highway RL method.
