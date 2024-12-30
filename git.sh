@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 # commit with context information
 echo "push"
-# git config --global credential.helper store
-# git config --global user.email 350526878@qq.com
-# git config --global user.name Heptagram
 git config core.filemode false
 git rm -r --cached .
 git add .
