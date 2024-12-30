@@ -42,14 +42,18 @@ class Memory:
                 if self.id == i:
                     continue  # head has no trajs stored
                 new_trajs = slave_head_queues[i].get()
-                switched_trans, total_trans, all_traj = self.merge_new_trajs(new_trajs)
+                if update.value:
+                    switched_trans, total_trans, all_traj = self.merge_new_trajs(new_trajs)
+                    num_switched_trans += switched_trans
+                    num_total_trans += total_trans
+                    num_all_traj += all_traj
                 del new_trajs
-                num_switched_trans += switched_trans
-                num_total_trans += total_trans
-                num_all_traj += all_traj
 
-            Logger.log(f"switched trans. / all trans. / all traj.: {num_switched_trans} / {num_total_trans} / {num_all_traj}", color="blue")
-            
+            Logger.log(
+                f"switched trans. / all trans. / all traj.: {num_switched_trans} / {num_total_trans} / {num_all_traj}",
+                color="blue",
+            )
+
             if update.value:
                 self.graph.update_graph()
             else:
@@ -81,25 +85,37 @@ class Memory:
         """
         if len(trajectory) == 0:
             return
-
-        total_reward = 0
-        for last_obs, prev_action, obs, last_reward in trajectory:
-            total_reward += last_reward
-            if last_obs is None or obs is None:
-                Logger.log(f"None in transition: {[last_obs, prev_action, obs, last_reward]}")
-                return
         
+        if P.negative_reward_filter:
+            # trunc traj before negative reward
+            for ind, (last_obs, prev_action, obs, last_reward) in enumerate(trajectory):
+                if last_reward < 0:
+                    trajectory = trajectory[:ind]
+        
+        total_reward = 0
+        expected_return = 0.0
+        
+        for last_obs, prev_action, obs, last_reward in trajectory[::-1]:
+            total_reward += last_reward
+            expected_return = expected_return * P.gamma + last_reward
+            if last_obs is None or obs is None:
+                Logger.log(
+                    f"None in transition: {[last_obs, prev_action, obs, last_reward]}"
+                )
+                return
+
         # filter trajs by min reward
         if P.min_traj_reward is not None:
             if total_reward < P.min_traj_reward:
                 return
-            
+
         if P.reward_filter_ratio is not None:
             if total_reward < P.reward_filter_ratio * self.graph.general_info["max_income"]:
                 return
-        self.new_trajs.append([trajectory, total_reward])
 
-    def merge_new_trajs(self, new_trajs): 
+        self.new_trajs.append([trajectory, total_reward, expected_return])
+
+    def merge_new_trajs(self, new_trajs):
         """
         merger increments to graph(s) by the head worker of learner
         """

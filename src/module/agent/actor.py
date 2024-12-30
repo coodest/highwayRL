@@ -26,7 +26,11 @@ class Actor:
         self.episodic_return = list()
         self.record_time = list()
         self.max_episodic_reward = None
-        self.p = (P.e_greedy[1] - P.e_greedy[0]) / (P.num_actor - 1) * self.id + P.e_greedy[0]
+        self.stick_on_graph = P.stick_on_graph[0]
+        if self.is_head():
+            self.p = 1.0
+        else:
+            self.p = (P.e_greedy[1] - P.e_greedy[0]) / (P.num_actor - 1) * self.id + P.e_greedy[0]
         self.hit = None
         self.total_reward = None
         self.frames = frames
@@ -130,8 +134,12 @@ class Actor:
         
         # epsilon-greedy
         if np.random.rand() > self.p:
-            if epi_step > steps * P.stick_on_graph:
-                action = self.env.sample_action()
+            if P.stick_on_mode == "ratio":
+                if epi_step > steps * self.stick_on_graph:
+                    action = self.env.sample_action()
+            if P.stick_on_mode == "value":
+                if value is None or value <= 0:
+                    action = self.env.sample_action()
         
         if self.random_ops > 0 and not self.is_head():
             self.random_ops -= 1
@@ -181,6 +189,8 @@ class Actor:
                     self.fps.append(
                         epi_step * P.num_action_repeats / (time.time() - start_time)
                     )
+                    # stick on graph adjust
+                    self.stick_on_graph = min(self.stick_on_graph + P.stick_on_graph_inc, P.stick_on_graph[1])
                     # 4.1 reward
                     self.episodic_reward.append(self.total_reward)
                     self.episodic_return.append(self.expected_return)

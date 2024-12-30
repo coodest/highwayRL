@@ -45,7 +45,7 @@ class Graph:
     def add_trajs(self, trajs, edge_spliting_support=True):
         num_switched_trans = 0
         total_trans = 0
-        for traj, total_reward in trajs:
+        for traj, total_reward, expected_return in trajs:
             # add transition
             self.starting_obs.add(traj[0][0])
             self.terminal_obs.add(traj[-1][2])

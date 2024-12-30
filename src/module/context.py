@@ -23,7 +23,7 @@ class Context:
         [False, True][1],
         [False, True][0],
     ]
-    wandb_enabled = [False, True][0]  # if enabled, '/wandb_key file must exist and valid
+    wandb_enabled = [False, True][0]  # if enabled, './wandb_key file must exist and valid
     summary_enabled = [False, True][0]
 
     # env
@@ -44,7 +44,6 @@ class Context:
     # agent:actor
     num_actor = len(gpus) * 8
     head_actor = num_actor - 1  # to report and evaluate
-    stick_on_graph = 0.0  # ratio to stick on current high-score traj
     target_total_rewrad = None
     average_window = 10
     # agent:policy:projector
@@ -74,6 +73,11 @@ class Context:
     max_vp_iter = 1e8  # num or float("inf")
     income_types = ["total_reward", "expected_return"]
     income = income_types[0]
+    stick_on_modes = ["ratio", "value"]
+    stick_on_mode = stick_on_modes[0]
+    stick_on_graph = [0., 0.]  # default not stick on
+    stick_on_graph_inc = 0.
+    negative_reward_filter = False
     # agent:policy:dnn
     dnn_types = [
         "dqn",
@@ -163,23 +167,24 @@ class Profile(Context):
         C.sync_every = 50
         C.target_total_rewrad = 2.0
         C.hashing = False
-        C.min_traj_reward = 1.2
+        C.min_traj_reward = 1.1
         C.gamma = 0.99
-        C.e_greedy = [0.1, 1]
+        C.e_greedy = [0.1, 0.4]
         C.income = C.income_types[1]
         C.deterministic = True
         C.num_action_repeats = 1
-        reward_type = ["scoring", "scoring,checkpoints"][1]
         C.dnn = C.dnn_types[1]
         C.total_epoch = 20000
         C.batch_size = 256
         C.lr = 1e-4
         C.early_stop = 1.95
+        C.stick_on_graph = [0.3, 0.3]
+        reward_type = ["scoring", "scoring,checkpoints"][1]
     if C.env_type == "atari":
-        C.total_frames = [1e7, 2e6, 1e6, 1e5][2]  # default 1e7
+        C.total_frames = [1e7, 5e6, 1e6, 1e5][2]  # default 1e7
         C.num_actor = len(C.gpus) * 8
         C.head_actor = C.num_actor - 1
-        C.sync_every = 10
+        C.sync_every = 2
         C.projector = C.projector_types[1]
         C.target_total_rewrad = None
         C.hashing = False
@@ -187,16 +192,22 @@ class Profile(Context):
         C.min_traj_reward = None
         C.gamma = [0.99, 1, 1 - 1e-8, 0.999999][3]
         C.num_action_repeats = 4  # equivelent to frame skip
-        C.e_greedy = [0.1, 1]
-        C.stick_on_graph = 0.0
-        C.reward_filter_ratio = 0.0
-        max_train_episode_steps = [108000, 1000, 27000][0]
-        max_eval_episode_steps = [108000, 1000, 27000][0]
-        stack_frames = 4
-        screen_size = 84
-        sticky_action = False
+        C.e_greedy = [[0.1, 1], [0.1, 0.9]][0]
+        C.reward_filter_ratio = None
         C.dnn = C.dnn_types[1]
         C.total_epoch = 1000
         C.batch_size = 2560
         C.lr = 1e-4
         C.early_stop = float("inf")
+        if C.env_name == "Pong":
+            C.stick_on_mode = C.stick_on_modes[1]
+        else:
+            C.stick_on_mode = C.stick_on_modes[0]
+        C.stick_on_graph = [0.75, 0.9]  # starting/end ratio to stick on current high-score traj
+        C.stick_on_graph_inc = [0.0, 5e-3][1]  # increaments of 'stick_on_graph' after each epi.
+        C.sticky_action = False
+        C.negative_reward_filter = True
+        max_train_episode_steps = [108000, 1000, 27000][0]
+        max_eval_episode_steps = [108000, 1000, 27000][0]
+        stack_frames = 4
+        screen_size = 84
