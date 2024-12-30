@@ -1,7 +1,7 @@
 # HighwayRL
 
-[![arXiv](https://img.shields.io/badge/arXiv-2405.11727-b31b1b.svg)](https://arxiv.org/abs/2405.11727)
 [![OpenReview.net](https://img.shields.io/badge/OpenReview.net-3mJZfL77WM-70160f.svg)](https://openreview.net/forum?id=3mJZfL77WM)
+[![arXiv](https://img.shields.io/badge/arXiv-2405.11727-b31b1b.svg)](https://arxiv.org/abs/2405.11727)
 
 
 This is the official PyTorch implementation of the Highway RL method proposed by our paper "[Highway Graph to Accelerate Reinforcement Learning](https://openreview.net/forum?id=3mJZfL77WM)". 
