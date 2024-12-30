@@ -6,10 +6,10 @@
 
 This is the official PyTorch implementation of the Highway RL method proposed by our paper "[Highway Graph to Accelerate Reinforcement Learning](https://openreview.net/forum?id=3mJZfL77WM)". 
 
+## Overview
+
 The high cost of training RL agents has limited their research and applications.
 We explored an approach to significantly reduce this cost by applying the concept of highways in real-world transportation systems to the value-updating process of RL algorithms, introducing the highway RL method.
-
-## Overview
 
 ![Alt text](docs/4_1.png)
 Figure 1. Overall data flow of our highway graph RL method. The actor (on the left) sends the sampled transitions by the behavior policy to the learner (on the right) which (1) constructs the empirical state-transition graph with rewards; (2) converts the empirical state-transition graph to the corresponding highway graph; (3) updates the value of state-actions in the highway graph by an improved value iteration algorithm and re-parameterize the highway graph to a neural network-based agent as the new behavior policy.
