@@ -19,7 +19,7 @@ START=0
 END=0
 
 # for ENV_TYPE in atari maze toy_text football
-for ENV_TYPE in atari
+for ENV_TYPE in maze
 do
     for RUN in $(seq $START $END)
     do
