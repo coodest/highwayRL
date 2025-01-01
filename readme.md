@@ -11,11 +11,11 @@ This is the official PyTorch implementation of the Highway RL method proposed by
 The high cost of training RL agents has limited their research and applications.
 We explored an approach to significantly reduce this cost by applying the concept of highways in real-world transportation systems to the value-updating process of RL algorithms, introducing the highway RL method.
 
-![Alt text](docs/4_1.png)
+![Overall data flow](docs/4_1.png)
 Figure 1. Overall data flow of our highway graph RL method. The actor (on the left) sends the sampled transitions by the behavior policy to the learner (on the right) which (1) constructs the empirical state-transition graph with rewards; (2) converts the empirical state-transition graph to the corresponding highway graph; (3) updates the value of state-actions in the highway graph by an improved value iteration algorithm and re-parameterize the highway graph to a neural network-based agent as the new behavior policy.
 
 
-![Alt text](docs/1_2.png)
+![Time comparison of training](docs/1_2.png)
 Figure 2. A comparison of converged time of training (within one million frames) and corresponding speedups by the highway graph compared to baselines.
 The first row of images are example states from each environment.
 The results demonstrate a 10 to more than 150 times faster RL agent training with higher evaluation return when adopting the highway graph.
@@ -42,7 +42,7 @@ One could build the docker image locally by:
 Or download the built image when running the code.
  
 ### 3) Run the code 🏃
-The default experiment setting trains a highway RL agent for a `Simple Maze` environment using 10M frames, by running the command below:
+The default experiment setting trains a highway RL agent for a `Simple Maze` environment using 1M frames, by running the command below:
 
  ./run.sh
 
@@ -70,6 +70,17 @@ The class `Context` is the structure to store the default value of options, whic
 A customized profile can be done by editing and adding the option with a value you desire.
 
 Meanwhile, the `run.sh` file in root folder gives the ability to set the RL environmental information of the experiments. For example, changing `maze` to `football` for `ENV_TYPE` in line 22 of `run.sh` will switch to GRF environments. Specific environments can be found and modified in the file under `assets` (unused environments can be commented out by `#`).
+
+## Results
+We show below the expected return and efficiency of our method (HG) on Atari games. The lines and shaded areas are for the
+average values and the corresponding range (±) of standard deviations, and dashed horizontal lines show the
+asymptotic performance. Each run of every method was recorded from three perspectives simultaneously:
+frames and minutes versus expected return to demonstrate the performance over frames and time (in the first two columns), and frames versus minutes to illustrate the relative training efficiency (in the last column).
+![Atari 1M](docs/5_1.png)
+
+The training of Atari Pong by increasing total frame budge to 10M is shown below.
+![Atari Pong 10M](docs/5_2.png)
+
 
 
 ## Citation
