@@ -44,7 +44,9 @@ Or download the built image when running the code.
 ### 3) Run the code 🏃
 The default experiment setting trains a highway RL agent for a `Simple Maze` environment using 1M frames, by running the command below:
 
- ./run.sh
+```shell
+./run.sh
+```
 
 ## Changing the running setups
 Before changing the settings, we briefly introduce the folder structure to help you find the settings to control the training.
