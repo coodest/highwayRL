@@ -24,7 +24,7 @@ All the experiments were performed on the same machine with a 12-core CPU and 12
 
 ## How to run the code
 
-All experiments can be conducted within a docker container.
+All experiments can be conducted within a Docker container.
 Before you can run and see the results, you need to obtain the image with all dependencies installed.
 Please see the following for more details.
 
@@ -34,10 +34,12 @@ The tested Linux distributions are Ubuntu 22.04 LTS and Fedora 39, and the docke
 
 ### 2) Build or pull the docker image 🐳
 The docker image with dependencies and RL environment setup is required.
-One could build the docker image locally by:
+One could build the Docker image locally by:
 
- sudo docker image build docker/ml/pt_0.2 --tag meetingdocker/ml:pt_0.2 --build-arg UID=$(id -u)
- sudo docker image build docker/rl/pt_0.2 --tag meetingdocker/rl:pt_0.2
+```shell
+sudo docker image build docker/ml/pt_0.2 --tag meetingdocker/ml:pt_0.2 --build-arg UID=$(id -u)
+sudo docker image build docker/rl/pt_0.2 --tag meetingdocker/rl:pt_0.2
+```
 
 Or download the built image when running the code.
  
@@ -71,7 +73,7 @@ In the `module-level`, `context.py` acts as the main control panel for experimen
 The class `Context` is the structure to store the default value of options, which can be specified and overridden by the class `Profile`.
 A customized profile can be done by editing and adding the option with a value you desire.
 
-Meanwhile, the `run.sh` file in root folder gives the ability to set the RL environmental information of the experiments. For example, changing `maze` to `football` for `ENV_TYPE` in line 22 of `run.sh` will switch to GRF environments. Specific environments can be found and modified in the file under `assets` (unused environments can be commented out by `#`).
+Meanwhile, the `run.sh` file in the root folder gives the ability to set the RL environmental information of the experiments. For example, changing `maze` to `football` for `ENV_TYPE` in line 22 of `run.sh` will switch to GRF environments. Specific environments can be found and modified in the file under `assets` (unused environments can be commented out by `#`).
 
 ## Results
 We show below the expected return and efficiency of our method (HG) on Atari games. The lines and shaded areas are for the
@@ -80,7 +82,7 @@ asymptotic performance. Each run of every method was recorded from three perspec
 frames and minutes versus expected return to demonstrate the performance over frames and time (in the first two columns), and frames versus minutes to illustrate the relative training efficiency (in the last column).
 ![Atari 1M](docs/5_1.png)
 
-The training of Atari Pong by increasing total frame budge to 10M is shown below.
+The training of Atari Pong by increasing the total frame budget to 10M is shown below.
 ![Atari Pong 10M](docs/5_2.png)
 
 
